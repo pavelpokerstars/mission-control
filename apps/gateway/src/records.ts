@@ -16,6 +16,7 @@
  */
 
 import {
+  projectMessages,
   projectStickies,
   type Connectors,
   type ConfluencePage,
@@ -63,8 +64,7 @@ export async function readRecord(
       // all is seeing what was said either side of it.
       const channels = await c.slack.listChannels();
       const channel =
-        channels.find((ch) => ch.id === ref.parentId) ??
-        (await firstChannelHolding(ref.id, channels, c));
+        channels.find((ch) => ch.id === ref.parentId) ?? channelHolding(ref.id, source);
       if (!channel) return undefined;
       const messages = await c.slack.listMessages(channel.id);
       return slackRecord(channel.name, messages, ref.id);
@@ -199,6 +199,8 @@ function pageRecord(p: ConfluencePage): RecordResult {
     surface: 'confluence',
     id: p.id,
     title: p.title,
+    // Not `format.ts`'s `stripHtml`: a citation's unit is the paragraph, so the
+    // split has to happen before the tags go.
     lines: p.html
       .split(/<\/p>/)
       .map((chunk, i) => ({ id: `p${i}`, text: chunk.replace(/<[^>]+>/g, '').trim() }))
@@ -207,15 +209,16 @@ function pageRecord(p: ConfluencePage): RecordResult {
   };
 }
 
-/** A message id with no channel on it — search for the channel that holds it. */
-async function firstChannelHolding(
-  ts: string,
-  channels: { id: string; name: string }[],
-  c: Connectors,
-): Promise<{ id: string; name: string } | undefined> {
-  for (const ch of channels) {
-    const messages = await c.slack.listMessages(ch.id);
-    if (messages.some((m) => m.ts === ts)) return ch;
-  }
-  return undefined;
+/**
+ * A citation with no channel on it — ask the graph, which already knows.
+ *
+ * This used to walk the channel list calling `listMessages` on each until one
+ * held the timestamp: O(channels × messages) and a round trip per channel, on a
+ * path nothing takes today because every citation the app produces carries
+ * `parentId`. One pass over the projection instead, from the same graph the
+ * Miro branch above reads for the same reason.
+ */
+function channelHolding(ts: string, source: GraphSource): { id: string; name: string } | undefined {
+  const m = projectMessages(source).find((x) => x.ts === ts);
+  return m ? { id: m.channelId, name: m.channelName } : undefined;
 }

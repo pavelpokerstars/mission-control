@@ -302,7 +302,14 @@ plausible, it renders, and it says the opposite of the truth.
 
 ---
 
-## 6. People are the join nobody has built
+## 6. People are the join everything else rests on
+
+> **Built — `ROADMAP.md` B3.** `StoredPerson` is a node kind, `buildIdentities`
+> resolves every person reference through `handles` at the projection seam, and
+> `import-slack-messages.mts --users` merges `handles.slack` into the person the
+> Jira import already wrote. `node scripts/inspect.mjs identities` lists every
+> reference the map could not place. The section below is why it is shaped this
+> way.
 
 `person` is a first-class node and **email is the id**. Every source carries one:
 `jira-cli` assigns by username-as-email, `confluence-cli` authenticates with one,
@@ -323,7 +330,8 @@ different strings and every "who should I ask" answer is guesswork.
 > a graph with every speaker on it is a hairball. That is right about a **render**
 > and wrong about **storage**. Store people; let each view filter to the kinds it
 > draws. Separating the storage model from the render model is what makes both
-> rules true at once.
+> rules true at once — which is why `GraphNodeKind` has four members and
+> `STORED_NODE_KINDS` has sixteen.
 
 ---
 
@@ -652,7 +660,7 @@ Miro owns `position` and nothing here may write it back.
   "recordRef": "records/pr/4198.json" }
 ```
 
-### People — the one nobody has built
+### People — the one that closes the identity map
 
 ```json
 { "id": "person:dana@example.com", "kind": "person",

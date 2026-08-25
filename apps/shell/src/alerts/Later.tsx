@@ -21,7 +21,7 @@
 import { useState, type JSX } from 'react';
 import type { Note } from '@mc/domain';
 import { deleteNote, explain, parkNote, restoreNote, useJson } from './api';
-import { AppWindow, type Counts } from './Chrome';
+import { AppWindow, UndoStrip, type Counts } from './Chrome';
 import { hrefFor, type Route } from './router';
 
 /**
@@ -118,12 +118,10 @@ export function Later({ route, counts }: { route: Route; counts: Counts }): JSX.
   };
 
   const undoBar = (
-    <div className="undobar">
-      <span className="what">Deleted &ldquo;{undone?.note.title || undone?.note.body.slice(0, 60)}&rdquo;</span>
-      <button type="button" onClick={() => void undo()}>
-        Undo
-      </button>
-    </div>
+    <UndoStrip
+      label={undone?.note.title || undone?.note.body.slice(0, 60) || ''}
+      onUndo={() => void undo()}
+    />
   );
 
   return (

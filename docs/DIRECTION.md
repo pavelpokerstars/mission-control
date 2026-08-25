@@ -227,12 +227,13 @@ A checklist item is a `commitment` note, which `@mc/domain` already defines as
 n.kind === 'commitment' && n.status === 'open' && n.relatedKeys.length === 0
 ```
 
-**The one change that makes this possible.** Today a commitment note is only ever
-written *when a ticket is created* — `tools.ts`, inside the `create_issue` accept
-branch, which stamps `created.key` straight into `relatedKeys`. Every commitment
-note in `vault/notes/` therefore has keys, and the state we need to detect is
-unreachable. Record the promise when it is made, whether or not anyone files
-anything. That is the whole unlock.
+**The one change that makes this possible — since done; this is why.** When this
+was written, a commitment note was only ever written *when a ticket is created* —
+`tools.ts`, inside the `create_issue` accept branch, which stamps `created.key`
+straight into `relatedKeys`. Every commitment note therefore had keys, and the
+state we need to detect was unreachable. Record the promise when it is made,
+whether or not anyone files anything. That is the whole unlock, and `/workshop`
+now does it — ROADMAP.md **D1**.
 
 `/tidy` already handles the inverse — commitments whose ticket has moved on
 (`skills.ts`, case 2). There is no case for a commitment with no key aging.
@@ -251,13 +252,15 @@ a week, which is the failure `surfaceMemory` is deliberately quiet to avoid.
 
 | Alert | Trigger | Status |
 |---|---|---|
-| missing ticket | epic closes · sprint ends · retro held | needs the change above |
-| circular dependency | an arrow closes a loop | exists — cycle detection + canvas poll |
-| sources disagree | a new record contradicts a "done" claim | exists — `findContradictions` |
-| sprint going sideways | daily, over the active sprint | partly — aging and stalled-blocker signals |
+| missing ticket | epic closes · sprint ends · retro held | ✔ `findMissingTickets`, once D1 landed |
+| circular dependency | an arrow closes a loop | ✔ cycle detection + canvas poll |
+| sources disagree | a new record contradicts a "done" claim | ✔ `findContradictions` |
+| sprint going sideways | daily, over the active sprint | ✔ as the `aging` finding |
 
-Five of six detectors already exist in some form. The work is re-homing them
-behind one type and adding one.
+Written as "five of six detectors already exist; the work is re-homing them
+behind one type and adding one". That is what happened — all six fire, and two
+of them live on Sources rather than the front door because they scale with the
+programme. `README.md`'s six-kind table is the built list.
 
 ### A `Finding` is not a `WorkSignal`
 
@@ -397,6 +400,13 @@ ticket rather than to a scroll position.
 
 ## 10. Scope — the plan is three projects
 
+> **This section is the sizing done at the time, and it is kept as the reasoning
+> behind the call below rather than as a description of the tree.** All three
+> tracks have since landed: the front end is `apps/shell/src/alerts/`, the alert
+> engine is `findings.ts`, and there are **five** collectors, not four — Jira,
+> Zoom, Confluence, Slack and GitHub, each an offline emitter into one
+> `graph.json`. `ROADMAP.md` track B is the ledger for them.
+
 The decisions commit to rebuilding the front end, building an alert engine that
 does not exist, **and** replacing fixtures with four live connectors that have
 never been written. `libs/connectors/src/real/` contains `miro.ts` and nothing
@@ -474,4 +484,6 @@ a differentiator.
 | Transcripts | 20 Aug 13:40–15:02, 21 Aug 13:33–14:46, both GMT+1 |
 
 Clickable previews of every page described in §3 were produced alongside this
-document and are not in the repo; they are Artifacts on claude.ai.
+document. They are **in the repo now**, as the single standalone page
+`docs/design-preview.html` — which is the reference this file and `DESIGN.md`
+are both written from, and which wins over either where they disagree.

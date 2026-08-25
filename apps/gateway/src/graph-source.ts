@@ -59,6 +59,7 @@ import {
   type StatusMapReport,
 } from '@mc/connectors';
 import type { StoredContainer, StoredGraph } from '@mc/domain';
+import { guardConnectors } from './safe-mode.js';
 
 /** Where the graph lives. The fixture by default; a collector's output later. */
 export const GRAPH_DIR = process.env.MC_GRAPH_DIR ?? join(process.cwd(), 'fixtures');
@@ -238,12 +239,12 @@ export function containersOf(source: GraphSource): StoredContainer[] {
  */
 export function connectorsFor(read: () => GraphSource = currentGraph): Connectors {
   const token = process.env.MIRO_ACCESS_TOKEN;
-  return {
+  // Guarded HERE, at the one place a `Connectors` is composed, so no consumer
+  // can hold an unguarded set and no future writer has to remember the rule.
+  return guardConnectors({
     ...createGraphConnectors(read, process.env.MIRO_BOARD_ID ?? 'demo-board'),
-    ...(token
-      ? { miro: createMiroConnector({ token, defaultBoardId: process.env.MIRO_BOARD_ID }) }
-      : {}),
-  };
+    ...(token ? { miro: createMiroConnector({ token }) } : {}),
+  });
 }
 
 // ---------------------------------------------------------------------------

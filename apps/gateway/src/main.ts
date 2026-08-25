@@ -49,7 +49,8 @@ import {
   loadStatusWords,
 } from './graph-source.js';
 import { findingDetail, runFindings } from './findings.js';
-import { actOnFinding, type ActionInput } from './act.js';
+import { actOnFinding, forgetAnswered, indexAnswer, type ActionInput } from './act.js';
+import { describeSafeMode, safeMode } from './safe-mode.js';
 import { readRecord } from './records.js';
 import { buildSources } from './sources.js';
 import { webhookRouter } from './webhooks.js';
@@ -162,15 +163,25 @@ async function main(): Promise<void> {
 
   const vault = await startVault();
 
-  // Fixtures describe a team's present. The timeline needs its recent past, and
-  // in mock mode there is nobody to have generated one. See seed.ts for why
-  // this bypasses the live event log rather than replaying through it.
-  if (MODE === 'mock') {
-    const seeded = await seedHistory(vault);
-    if (seeded) console.log(`[seed] wrote ${seeded} backdated event(s) — the fixture's own history`);
-    const notes = await seedNotes(vault);
-    if (notes) console.log(`[seed] wrote ${notes} claim(s) into the vault`);
-  }
+  /**
+   * Seed from whatever the GRAPH shipped, never from what the agent runs on.
+   *
+   * This used to be gated on `MODE === 'mock'`, which coupled two unrelated
+   * things: `MC_MODE` selects the chat provider, and Copilot is only reachable
+   * at `MC_MODE=live` — so choosing Copilot silently turned the fixture's
+   * history and claims off, and the flagship alert stopped firing with nothing
+   * failing anywhere. `seed.ts`'s own header says mock is "the live-collector
+   * path too", so the mode was never the right question.
+   *
+   * The gate is redundant as well as wrong: both functions already refuse to
+   * run into a non-empty vault and return 0 when the graph ships no
+   * `events.jsonl` / `notes/` — which is every real collector, since
+   * `import-programme-graph.mts` writes neither.
+   */
+  const seeded = await seedHistory(vault);
+  if (seeded) console.log(`[seed] wrote ${seeded} backdated event(s) — the graph's own history`);
+  const notes = await seedNotes(vault);
+  if (notes) console.log(`[seed] wrote ${notes} claim(s) into the vault`);
 
   // Before anything can act on one: put back the proposals already pending.
   const pending = await rehydrateProposals(vault);
@@ -201,9 +212,12 @@ async function main(): Promise<void> {
   // proposal — may have moved something the starter questions are derived from.
   // Cheaper than a shorter TTL in suggest.ts and more correct than a longer one:
   // the suggestions are a minute behind only when nothing has happened.
-  eventLog.subscribe(() => {
+  eventLog.subscribe((e) => {
     forgetSuggestionFacts();
     forgetBoardArrows();
+    // A dismissal or a deferral, folded straight into the front door's index so
+    // the next request does not re-read the whole log to find it.
+    indexAnswer(e);
   });
 
   /**
@@ -331,6 +345,7 @@ async function main(): Promise<void> {
        * answering means the honest report is which OTHERS are on.
        */
       notify: transports().map((t) => t.name),
+      safeMode: safeMode(),
       vault: { dir: VAULT_DIR, notes: vault.list().length },
     });
   });
@@ -710,18 +725,16 @@ async function main(): Promise<void> {
   });
 
   /**
-   * Correct one entry by hand. Only `summary` and `entityKey` are patchable —
-   * `payload` is what the source system actually sent and notes cite it. The
-   * store stamps `editedAt` so a corrected row is visibly corrected.
+   * Both delete paths drop the answered-findings index.
+   *
+   * It is built from this log and then kept current by *appends*, so a removal
+   * is the one mutation it cannot see: without this, dismissing a finding and
+   * then deleting the dismissal leaves it hidden until the next restart, which
+   * is exactly the silent staleness the unwindowed read existed to avoid.
    */
-  app.patch('/api/vault/log/:id', async (req, res) => {
-    const { summary, entityKey } = req.body as { summary?: string; entityKey?: string };
-    const updated = await vault.updateEvent(req.params.id, { summary, entityKey });
-    return updated ? res.json(updated) : res.status(404).json({ error: 'not found' });
-  });
-
   app.delete('/api/vault/log/:id', async (req, res) => {
     const removed = await vault.deleteEvents([req.params.id]);
+    forgetAnswered();
     return removed ? res.status(204).end() : res.status(404).json({ error: 'not found' });
   });
 
@@ -732,6 +745,7 @@ async function main(): Promise<void> {
   app.post('/api/vault/log/delete', async (req, res) => {
     const { ids, all } = req.body as { ids?: string[]; all?: boolean };
     const removed = all ? await vault.clearEvents() : await vault.deleteEvents(ids ?? []);
+    forgetAnswered();
     return res.json({ removed });
   });
 
@@ -927,6 +941,7 @@ async function main(): Promise<void> {
     }
     const reach = LOOPBACK ? `http://localhost:${PORT}` : `http://${BIND}:${PORT}`;
     console.log(`mission-control gateway  mode=${MODE}  ${reach}`);
+    console.log(`  ${describeSafeMode()}`);
     if (MODE === 'mock') {
       console.log('running on fixtures — no credentials needed. set MC_MODE=live to go real.');
     }

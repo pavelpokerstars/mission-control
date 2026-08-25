@@ -102,10 +102,13 @@ never true of our fixture and **always** true of a real collector, so the only
 path it could ever run on was the live one, where it wrote 431 transitions for a
 programme that does not exist. It reads `events.jsonl` and nothing else now.
 
-**A Slack citation with no channel scans every channel.** `firstChannelHolding`
-in `apps/gateway/src/records.ts` walks each channel's messages looking for a
-timestamp. Every citation the app produces carries `parentId`, so this is the
-path nothing takes — but it is O(channels × messages) if anything ever does.
+**~~A Slack citation with no channel scans every channel.~~ Fixed.**
+`firstChannelHolding` in `apps/gateway/src/records.ts` walked the channel list
+calling `listMessages` on each until one held the timestamp — O(channels ×
+messages) and a round trip per channel. Every citation the app produces carries
+`parentId`, so nothing took it; it was a cliff waiting for the first caller.
+`channelHolding` asks the graph instead, one pass over `projectMessages`, from
+the same source the Miro branch beside it already reads for the same reason.
 
 **A record renders whole.** `readRecord` returns every line of a channel or a
 transcript and the view marks one. At fixture size that is seven lines; a real
@@ -113,23 +116,41 @@ transcript and the view marks one. At fixture size that is seven lines; a real
 scrolled to, so the page works — it just downloads and renders a year of
 messages to show you five.
 
-**And the front door's read cannot be windowed.** `suppressedIds` takes
-`vault.readEvents({})` with no `since`, deliberately: an alert list is a promise
-that a decision made yesterday is still made today, and a window would silently
-expire dismissals. So the parse cost above is paid in full on the one route that
-matters most, and the fix has to be an index of answered findings rather than a
-narrower read.
+**~~And the front door's read cannot be windowed.~~ Still true, and no longer
+per-request.** `suppressedIds` takes the whole log with no `since`,
+deliberately: an alert list is a promise that a decision made yesterday is still
+made today, and a window would silently expire dismissals. So the fix was never
+a narrower read — it is an index of answered findings, which is what
+`answeredFindingIds` in `act.ts` now is.
 
-**The Copilot structured-output backend has never run against a real
-credential.** `askCopilotStructured` in `apps/gateway/src/copilot.ts` is written,
-typechecks, and its runtime path is exercised as far as the auth gate — the SDK
-loads, the bundled runtime spawns, `getAuthStatus` answers and the provider
-correctly degrades to null when it says no. What is unverified is the half that
-needs a login: `defineTool` + `createSession` + `sendAndWait` actually capturing
-the arguments. It is the backend that matters most for the intended deployment
-(Copilot approved, MCP forbidden), so it is the first thing to check on a machine
-with `GITHUB_TOKEN` or a `gh` login — `npx tsx scripts/probe-mcp.mts` prints a
-row per backend against one nested schema.
+Three things make it safe, and the third was a regression the fix introduced:
+
+| | |
+|---|---|
+| the **decisions** are cached, never the resolved set | a deferral expires with the clock rather than with an event, so `until` is compared per call and a parked finding returns on time with nothing to trigger it |
+| appends fold straight in | `indexAnswer`, on the `eventLog.subscribe` in `main.ts`, so answering an alert costs no re-read |
+| **deletes drop it** | built from appends, an index cannot see a *removal* — measured: dismissing a finding and then deleting the dismissal left it hidden until the next restart. Both log-delete routes call `forgetAnswered()` now |
+
+One rule, one fold: `suppressedIds` and the index share `foldAnswer`, so the
+whole-log read and the incremental one cannot drift. The tricky orderings are
+why — *any* deferral still in the future suppresses, whatever was written after
+it, which is why the index keeps the furthest-out date rather than the last one.
+
+**~~The Copilot structured-output backend returns `{}`.~~ Fixed — it was the
+token, and then it was the ladder.** `askCopilotStructured` in
+`apps/gateway/src/copilot.ts` is written, typechecks, and now answers: measured
+`OK` in ~3.5s against a nested schema. Two things stood in front of it, and both
+are the same shape — an auth gate reporting success while the turn fails:
+
+| | |
+|---|---|
+| a **personal access token** in `GITHUB_TOKEN` | Copilot's endpoint refuses it — `Personal Access Tokens are not supported for this endpoint` — while `start()` and `getAuthStatus()` both pass, so the provider reported itself live and only real turns failed. `copilotToken()` deny-lists `ghp_` / `github_pat_` and returns `undefined`, restoring `useLoggedInUser` and the OAuth token the endpoint accepts. Deny-listed rather than allow-listed: GitHub adds token formats, and discarding a *working* future credential is the worse failure |
+| `claudeCliAvailable()` read `subtype` alone | a logged-out CLI yields `{type:'result', subtype:'success', is_error:true, result:'Not logged in'}`. So the probe said yes, `MC_STRUCTURED=auto` picked `sdk-mcp` as the first *available* backend, and every structured call failed on a machine where Copilot had been working all along — for up to 24h at a time, because the answer is cached. It reads `is_error` too now |
+
+The second one is the more general lesson and `streamReply` had it as well:
+**this SDK's `subtype` is not a verdict.** `npx tsx scripts/probe-mcp.mts` is
+the check, and it deliberately treats "has a credential and answered wrongly"
+as the failing case while an absent credential is not.
 
 This is the same shape of gap `copilot.ts` already carried for the chat provider
 and for the same reason: no GitHub credential has been available on any machine
@@ -226,6 +247,38 @@ Every consumer is covered: the shared helper, plus the inline guards in
 render their own phrasing ("a long time"). A new formatter is only exposed if it
 reaches for `stalenessOf().days` without going through one of them.
 
+**~~`stripHtml` was written four times, and had drifted four ways.~~ Fixed, into
+the same file and for the same reason.** `infer.ts` and `skills.ts` each had one
+and `tools.ts` had the body inline twice. All four turn a Confluence body into
+prose; none of them agreed on how. Two collapsed whitespace and trimmed, one
+collapsed without trimming, one did neither, and the tag pattern was `<[^>]*>`
+in one place and `<[^>]+>` in the other three — so the *same* page reached the
+inference prompt, the workshop pack and two agent tools as four different
+strings. One `stripHtml` in `format.ts` now, replacing a tag with a **space**
+rather than nothing, because `fo<b>o</b>` is one word to a reader and `foo` to a
+tokeniser but a dropped tag glues `</b><b>` pairs across a real boundary far
+more often than it saves a word.
+
+`records.ts` is the deliberate exception and says so inline: it splits on
+`</p>` before stripping, because a citation's unit is the paragraph and not the
+body.
+
+**~~The undo strip was written twice, and the two had already disagreed.~~
+Fixed, and it was hiding a real defect.** `Ask` and `Later` each carried their
+own `.undobar` JSX and their own placement rule, and `Ask.tsx`'s comment said
+*"same rule as Later"* while implementing less of it. `Later` placed the strip
+past the end of the list when you deleted the last row and in its empty branch
+when you deleted the only one; `Ask` did **neither**, so deleting your last
+conversation removed it with no offer to undo — which is precisely what
+`DESIGN.md` §7 forbids, on the page where the rule is cheapest to honour.
+
+One `UndoStrip` in `Chrome.tsx` now, and `Ask` builds its row list once instead
+of rendering the same JSX in both the filtered and unfiltered branches — the
+"build a shared half once and place it twice" rule, which is what let the two
+halves drift in the first place. Verified in the browser rather than by
+typecheck: delete the last of two, delete down to empty, undo from both, and the
+row returns at its original index.
+
 **~~The recall budget under-counts by one character per note.~~ Fixed.**
 `renderContext` joins rendered notes with `\n` and the budget summed the
 rendered lengths without the separators, so a full block could run a few
@@ -283,8 +336,10 @@ through `createExtractor` itself, so the tool-call shape, the forced
 `accept_proposal` branches exist and are correct — before this they settled and
 wrote nothing, which was worse — but no code path emits one, so they have never
 run. A producer needs extraction good enough to name a specific field change.
-`linkItems` is also still a no-op in the mock, so `link_issues` will demo as an
-event with nothing behind it until a real Jira adapter exists.
+`linkItems` is also a deliberate no-op in the graph-backed Jira connector
+(`libs/connectors/src/graph/index.ts`) — arrows come from the graph and a demo
+write must not edit the fixture — so `link_issues` will demo as an event with
+nothing behind it until a real Jira adapter exists.
 
 ---
 
@@ -579,24 +634,36 @@ that policy. The import is still wrapped, which is right, but "Copilot is
 unavailable because koffi did not build" was a wrong diagnosis carried in two
 documents: measured, the runtime starts and only the credential is missing.
 
-**`askCopilotStructured` returns `{}` — the Copilot structured backend does not
-work.** B5 assumed this only needed a credential to *verify*; with one, it turns
-out to be a bug in our wrapper.
+**~~`askCopilotStructured` returns `{}` — the Copilot structured backend does not
+work.~~ Fixed.** B5 assumed this only needed a credential to *verify*; with one,
+it turned out to need two fixes, neither of them where the narrowing below was
+looking.
 
-Evidence, narrowed as far as is useful:
+Evidence, kept because the narrowing was sound and still landed short:
 
 | | |
 |---|---|
 | Copilot auth | **works** — `copilotAvailable() = true` once `gh auth login` is done |
 | the SDK's tool calling | **works** — a direct `defineTool` + `createSession` + `sendAndWait` fires the handler with `{"verdict":"works"}` |
-| our `askCopilotStructured` | returns `{}` on `claude-sonnet-5`, `gpt-5.6-sol` and `auto`, and on a **flat** schema as well as a nested one |
+| our `askCopilotStructured` | returned `{}` on `claude-sonnet-5`, `gpt-5.6-sol` and `auto`, and on a **flat** schema as well as a nested one |
 
-So it is not the model, not the account, and not the nested-schema bug that bit
-the CLI path — `zodShape` was the obvious suspect and is not it. What remains
-different between the direct call and ours is the `systemMessage: { mode:
-'append' }`, the `Call <name> with your answer.` suffix, and the fact that
-`copilotRuntime()` hands back a **shared memoised client** where the direct test
-built a fresh one. That last is the one to look at first.
+So it was not the model, not the account, and not the nested-schema bug that bit
+the CLI path — `zodShape` was the obvious suspect and was not it. The suspects
+left standing were `systemMessage: { mode: 'append' }`, the `Call <name> with
+your answer.` suffix and the shared memoised client. **It was none of those
+either.**
+
+It was the credential. `GITHUB_TOKEN` held a **personal access token**, which
+this endpoint refuses — `400 checking third-party user token: bad request:
+Personal Access Tokens are not supported for this endpoint` — while `start()`
+and `getAuthStatus()` both pass on one, so every check upstream of the turn said
+yes. `copilotToken()` ignores a PAT so `useLoggedInUser` reaches the OAuth token
+instead. Measured after the fix: `copilot OK 3557ms
+{"verdict":"works","n":42,"nested":{"colour":"green"}}`.
+
+**The general lesson is the one this file keeps paying for**: every check short
+of a real turn was passing, so the narrowing kept looking at our request shape
+rather than at what we were authenticating with.
 
 **It blocks nothing**, which is why it is recorded rather than fixed in place:
 `claude-cli` is the default, `MC_STRUCTURED=auto` walks past Copilot, and every
@@ -622,10 +689,11 @@ would close this.
 **`.env` was ignored by every module-level read, and was for a long time.**
 `main.ts` called `loadEnvFile` in its own body, and in ESM a module's body runs
 *after* every module it imports — so `ANTHROPIC_MODEL`, `ANTHROPIC_EFFORT`,
-`ANTHROPIC_MAX_TOKENS`, `COPILOT_MODEL`, the four MCP server URLs,
-`ANTHROPIC_EXTRACT_MODEL` and `MC_VAULT_DIR` all evaluated against defaults
-unless you exported them into the shell by hand. `PORT` and `MC_MODE` worked,
-which is why nobody noticed: they are read in `main.ts` itself, below the call.
+`ANTHROPIC_MAX_TOKENS`, `COPILOT_MODEL`, the four vendor MCP server URLs (since
+deleted — `ROADMAP.md` D5), `ANTHROPIC_EXTRACT_MODEL` and `MC_VAULT_DIR` all
+evaluated against defaults unless you exported them into the shell by hand.
+`PORT` and `MC_MODE` worked, which is why nobody noticed: they are read in
+`main.ts` itself, below the call.
 
 Fixed by `apps/gateway/src/env.ts`, imported first in `main.ts`. **That import
 must stay first** — an import sorter that moves it below the others silently
@@ -677,9 +745,11 @@ comments. The per-project tsconfigs are free to have them (`apps/shell` does).
 If one is ever added there, vite throws at startup naming the file and the
 reason, which is loud, immediate, and easier to diagnose than what it replaced.
 
-**Mock Jira comments are in-memory** and vanish on gateway restart, unlike notes
-and the event log. `linkItems` is a no-op in mock, so a drawn arrow produces a
-`workitem.linked` event with nothing observable behind it.
+**Jira comments are in-memory** and vanish on gateway restart, unlike notes and
+the event log — the graph-backed connector holds them in an array, because
+`graph.json` is the derived layer and a demo write must not edit it. `linkItems`
+is a no-op for the same reason, so a drawn arrow produces a `workitem.linked`
+event with nothing observable behind it.
 
 **~~`apps/shell/dist/` grows forever.~~ Fixed, without touching
 `emptyOutDir`.** That flag stays `false` on purpose — rmdir is not permitted on
@@ -706,12 +776,16 @@ one. These four are reached by nothing at all — not the shell, not
 |---|---|
 | `GET /api/jira/items/:key` | nothing wants one item; `/api/jira/items` returns the list |
 | `GET /api/jira/items/:key/comments` | the bulk `/api/jira/comments` answers the same question in one request |
-| `PATCH /api/vault/log/:id` | it mutates an **append-only** log, which is contrary to the model everything durable rests on |
 | `DELETE /api/vault/log/:id` | `POST /api/vault/log/delete` covers single *and* bulk, and is the one the docs name |
 
 They are left in rather than deleted — a route is an interface, and this gateway
-is explicitly documented as something you curl. The `PATCH` is the one that
-should go anyway, because it is an interface nobody should reach for. The
+is explicitly documented as something you curl.
+
+**A fourth was deleted rather than left in.** `PATCH /api/vault/log/:id` mutated
+an **append-only** log, which is contrary to the model everything durable rests
+on — an unused route is cheap, but an interface nobody should reach for is not.
+It went with `Vault.updateEvent` and the `editedAt` field only that method wrote.
+The
 per-key comments route is the shape a live Jira adapter would want, since the
 bulk one fans out N requests against the mock, which section 2 already flags.
 
@@ -721,10 +795,25 @@ Unused locals, parameters and imports fail `npm run typecheck`:
 `noUnusedLocals` and `noUnusedParameters` are on in `tsconfig.base.json`, so the
 compiler is the check and there is nothing to run by hand.
 
-**What no typecheck sees is a module nothing imports**, or a dependency nothing
-imports — `noUnusedLocals` works inside a file, and an unreferenced file is
-invisible to it. Two checks that do work, and are worth re-running rather than
-trusting this paragraph:
+**`noUnusedLocals` stops at the file, and it also stops at the declaration.** It
+sees an unused local; it does not see a module nothing imports, a dependency
+nothing imports, a **class method nobody calls**, or an **interface field
+nobody reads**. The last two are the ones that rot quietly, because the type
+still compiles and the field still serialises. Two were found that way and are
+gone:
+
+| | |
+|---|---|
+| `MiroConfig.defaultBoardId` | accepted at the call site (`connectorsFor` passed `MIRO_BOARD_ID` into it) and **never read** by `miro.ts`, whose every method takes an explicit `board`. The same shape as the `cfg.key` bug in `copilot.ts`: a config field that looks wired and is not |
+| `Vault.updateEvent` / `McEvent.editedAt` | the only writer of `editedAt` was the `PATCH` route above, so both went with it |
+
+And one was the reverse — a field with no reader because its reader was never
+written. `DossierOrigin.firstIsOrigin` decides whether the origin block says
+*"where it came from"* or *"earliest record outside Jira"*, and `CLAUDE.md` says
+to check both with `inspect.mjs issue MC-2` — which printed neither, because it
+only read `predatesTicket`. It reads both now.
+
+Checks worth re-running rather than trusting this paragraph:
 
 ```bash
 # a dependency nothing imports any more
@@ -740,20 +829,38 @@ Both have found real things: three npm dependencies and a whole `@mc/*` library
 outlived what imported them, and neither typecheck said a word.
 
 For unused *exports*, which the compiler will not flag either, the test is
-whether a symbol has any reference outside its own file; the surviving six below
-are the ones that do not, and are deliberate.
+whether a symbol has any reference outside its own file.
 
-### Over-exported symbols
+### Over-exported symbols — 100 of 388, and mostly on purpose
 
-Six symbols in `apps/` are `export`ed but referenced only inside their own file:
-`CopilotToolSpec` and `promptFor` (copilot.ts), `stripCommand` (memory.ts),
-`Skill` and `SkillResult` (skills.ts), and `ProposeOpts` (tools.ts).
+**This section used to say "six", and six was wrong by a factor of seventeen.**
+Measured rather than recalled: 100 of 390 exported symbols have no reference
+outside the file that declares them. None of them is *dead* — every one is used
+— the surface is just wider than anything needs.
 
-Not dead — every one is used — just a wider surface than anything needs. Left
-alone deliberately: `copilot.ts`'s neighbours are the seam
-`scripts/verify-providers.mts` reaches through, and `CopilotToolSpec` has to
-stay exported for `toCopilotTools`'s return type to be nameable. Worth knowing
-when judging what the module boundary is.
+**83 of the 100 are types**, and for most of those `export` is correct even with
+no importer: `StoredIssue`, `StoredNote` and the rest of `graph.ts` are the
+published contract in `GRAPH-SCHEMA.md`, which collectors written outside this
+repo are built against, and an interface naming a function's parameter has to be
+exportable for the signature to be nameable.
+
+**17 are values**, and the ones that stay exported have a reason:
+
+| | |
+|---|---|
+| `slotIsOpen`, and `structured.ts`'s neighbour | pure, and exported so the rule can be checked against a table rather than at 08:00 |
+| `buildStoryline`, `recordOfNode`, `STORYLINE_*`, `STATUS_FLOW` | the evidence view's specification — `CLAUDE.md` says do not delete these as unused |
+| `COVERAGE_KINDS`, `renderBrief`, `findJoinFailures`, `reviewInbox`, `slackBot`, `rankFindings`, `describeEvent`, `buildIdentities`, `FIXTURE_NOW` | named in the documents as the thing that decides something; a reader greps for them |
+| `CopilotToolSpec`, `promptFor`, `stripCommand`, `Skill`, `SkillResult`, `ProposeOpts` | `copilot.ts`'s neighbours are the seam `verify-providers.mts` reaches through, and `CopilotToolSpec` has to stay exported for `toCopilotTools`'s return type to be nameable |
+
+Ten were narrowed to file scope because they were module-internal and named in
+no document: `findFromWorkRows`, `slackBlocks`, `isEmptyDelta`,
+`updateObservations`, `parseRoute`, `validate`, and the four `project*`
+projections in `@mc/connectors` — which `export * from './graph/index.js'` was
+putting on the package's public API for no consumer.
+
+Re-measure rather than trusting the number above; it moves with every module
+added.
 
 ---
 

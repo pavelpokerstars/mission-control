@@ -22,6 +22,7 @@
 
 import { isAlertKind, newEvent, type Finding } from '@mc/domain';
 import { eventLog } from './events.js';
+import { refuseIfSafe } from './safe-mode.js';
 
 export interface Notification {
   findingId: string;
@@ -152,7 +153,7 @@ function sinceLine(oldest: string): string {
   return ` — one of them since ${when}`;
 }
 
-export function slackBlocks(d: Digest): unknown[] {
+function slackBlocks(d: Digest): unknown[] {
   // Worst first, then oldest: the lead is the one to open, and among equals the
   // one that has been ignored longest. `rankFindings` already ordered `fresh`,
   // so this only has to not disturb it.
@@ -199,6 +200,10 @@ export const slackBot: Transport = {
   },
   async sendDigest(d) {
     if (!SLACK_WEBHOOK || !d.fresh.length) return;
+    // The one outbound write that is not a connector call. `deliver()` collects
+    // failed transports rather than throwing, so refusing here costs the
+    // message and nothing else — the review inbox still records the run.
+    refuseIfSafe('posting the digest to the Slack webhook');
     const res = await fetch(SLACK_WEBHOOK, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },

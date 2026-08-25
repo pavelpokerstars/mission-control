@@ -301,22 +301,22 @@ frames often enough to mislead; computed styles and measured rectangles do not.
 **A class name is a namespace.** `.askhead` came to mean two different things and
 the second definition silently broke the first.
 
-**Check `claude-cli.ts` as well as `claude.ts`.** Two provider bugs so far have
+**Check `claude-cli.ts` as well as `claude.ts`.** Three provider bugs so far have
 been one-sided, correct on the Messages API path and broken on the CLI path —
-which is the default a fresh checkout uses. See `KNOWN-GAPS.md`.
+which is the rung a fresh checkout reaches first. See `KNOWN-GAPS.md` §1.
 
 ---
 
 ## 9. What the preview does not settle
 
-> **Three of these have been built since, and two things now differ from the
+> **Three of these have been built since, and three things now differ from the
 > preview on purpose.** The list below is kept as the record of what was open at
 > the time; the current state is marked inline.
 
 ### Where the built app knowingly differs from the preview
 
 The preview wins by default, so a difference has to be argued rather than
-allowed to drift. Two are:
+allowed to drift. Three are:
 
 - **A Miro citation opens the record, not the live board.** The preview's map
   card promises "the real board, framed on the stickies or arrows the alert is
@@ -329,6 +329,14 @@ allowed to drift. Two are:
   preview's own alert screen says four — *"Four actions, and two of them are
   'no' — because they are different answers."* The card is the stale half of a
   disagreement inside one document; the screen is the one that was tested.
+- **A cycle's primary action is `Ask about the loop`, where the preview says
+  `Show me the loop`.** The preview's result for it — *"framed on the four
+  tickets, with everything else dimmed"* — **is** the evidence view, which is
+  `DIRECTION.md` §1's one unbuilt promise. A button labelled "show me" that
+  shows nothing is worse than one that does what it says, so the label states
+  the effect the app can actually deliver. **This reverts to the preview's
+  wording the moment the evidence view lands**, and it is the only alert whose
+  primary label differs; every dismiss label matches the preview exactly.
 
 And one piece of the preview is **specified and not built**: Sources is where
 "the animated brain" belongs — the preview says so twice, and it is the reason

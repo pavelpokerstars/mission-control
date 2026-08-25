@@ -61,8 +61,6 @@ interface MiroCustomField {
 
 export interface MiroConfig {
   token: string;
-  /** Only used to build embed URLs when no board is named explicitly. */
-  defaultBoardId?: string;
 }
 
 export function createMiroConnector(cfg: MiroConfig): MiroConnector {

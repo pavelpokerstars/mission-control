@@ -35,17 +35,29 @@ its evidence and its actions. **Nothing built is thrown away — it is re-pointe
 
 ## 2. What already exists, and what it becomes
 
-Most of this is a re-point, not a rewrite. Verified against the tree:
+Most of this was a re-point rather than a rewrite, and the table is the
+argument: every row's left-hand side is still in the tree, doing the same job
+behind a different door.
 
-| Today | Becomes | Where |
+| Existed before, still does | Became | Where |
 |---|---|---|
-| `GET /api/work` — a ranked lane with `WorkSignal[]` per row | **Mission Control**, the alert list | `apps/gateway/src/work.ts` |
+| `GET /api/work` — a ranked lane with `WorkSignal[]` per row | the signals behind an alert | `apps/gateway/src/work.ts`, wrapped by `findings.ts` |
 | `GET /api/issue/:key` — the dossier | the alert page's evidence and chain | `apps/gateway/src/issue.ts` |
-| `GET /api/issue/:key/summary` | the alert's claim paragraph | `apps/gateway/src/summary.ts` |
-| `POST /api/chat` + `conversations.ts` | the conversation pages | `apps/gateway/src/agent.ts`, `apps/shell/src/components/conversations.ts` |
+| `GET /api/issue/:key/summary` | the alert's claim paragraph | `apps/gateway/src/summary.ts` — no screen reads it yet |
+| `POST /api/chat` + `conversations.ts` | the conversation pages | `apps/gateway/src/agent.ts`, `apps/shell/src/alerts/conversations.ts` |
 | the vault | **Later** | `libs/vault`, `apps/gateway/src/vault.ts` |
-| `GET /api/storyline` | **Sources**, and the "show me the loop" action | `apps/gateway/src/main.ts` |
-| `FocusPane` / `StorylinePane` / `VaultPane` / vendor panes | record views, reached only from a citation | `apps/shell/src/panes/` |
+
+**The navigation was not re-pointed. It was deleted**, and §1's "nothing built
+is thrown away" is about the engine rather than the screens: the five vendor
+panes, the two lens panes and the storyline route went, and what filled them —
+the contradiction detector, the citations, the dossier, the summariser — is what
+every alert page is now built from. Records survive as a *destination reached
+only from a citation* (`apps/shell/src/alerts/RecordView.tsx`), which is a
+different thing from a pane you could browse to.
+
+Their names are deliberately not listed here. A document that names a deleted
+component is how one gets rebuilt — `ROADMAP.md`'s "A wrong turn" is that
+mistake already made once, from a stale sentence in shipped code.
 
 **`WorkSignalKind` is already an alert taxonomy** — `disagreement`, `cycle`,
 `blocked_by`, `aging`, `unwritten`, `activity`, with severity ranking
@@ -62,11 +74,11 @@ There is no test framework here — verification is `npm run typecheck:all`,
 
 ### Step 1 — record a commitment when it is made
 
-**The single change everything else rests on.** Today a `commitment` note is
-only ever written *when a ticket is created* — `apps/gateway/src/tools.ts`,
-inside the `create_issue` accept branch, which stamps `created.key` straight into
-`relatedKeys`. So a promise that never became a ticket cannot exist in the vault,
-and the hero case is undetectable.
+**The single change everything else rests on.** When this was written, a
+`commitment` note was only ever written *when a ticket is created* —
+`apps/gateway/src/tools.ts`, inside the `create_issue` accept branch, which
+stamps `created.key` straight into `relatedKeys`. So a promise that never became
+a ticket could not exist in the vault, and the hero case was undetectable.
 
 Write the note when the promise is extracted, ticket or no ticket. `/workshop`
 already finds these (`apps/gateway/src/skills.ts`, and `extract.ts` for the ones
@@ -92,7 +104,7 @@ type FindingSubject =
 ```
 
 In `libs/domain/src/index.ts`, beside `WorkSignal`. Note that a change there
-invalidates all six nx projects, so `typecheck:affected` saves nothing.
+invalidates all five nx projects, so `typecheck:affected` saves nothing.
 
 ### Step 3 — the gap detector
 
@@ -133,23 +145,40 @@ then the conversation, then Later.
 detector, the citations, the dossier and the summariser are the substance behind
 every alert page. Delete the pane switcher and the sidebar; keep what fills them.
 
-Widen `PaneId`, never `Surface` — a finding is not a vendor and must never reach
-`FIELD_OWNER` or an `Evidence.surface`.
+A finding is not a vendor and must never reach `FIELD_OWNER` or an
+`Evidence.surface` — so **never widen `Surface`**. (This step originally read
+"widen `PaneId`"; `Lens` and `PaneId` went with the pane app rather than being
+widened, and `libs/domain/src/index.ts` records why.)
 
 ### Step 6 — the Slack bot
 
-Small, and outside this repo: the company Slack cannot be posted to, so it runs
-on a server we control. It is most of the "proactive" claim and it is the last
-thing to build, because everything above works without it.
+Planned as small and outside this repo: the company Slack cannot be posted to,
+so it runs on a server we control. It is most of the "proactive" claim and it is
+the last thing to build, because everything above works without it.
+
+> **Built, and it stayed in this repo** — `slackBot` in
+> `apps/gateway/src/notify.ts`, `ROADMAP.md` **G2**. An *incoming webhook* whose
+> button is a plain link, so Slack never posts back and nothing needs a public
+> request URL. That is what let it ship without waiting on the hosting decision.
+> One env var, `MC_SLACK_WEBHOOK_URL`; unset, the review inbox carries the run
+> alone.
 
 ---
 
 ## 4. Fixtures before connectors
 
 The recommendation in `DIRECTION.md` §10 stands: **take one real slice and freeze
-it into fixtures** rather than writing four live connectors. `libs/connectors/src/real/`
-contains `miro.ts` and nothing else; Jira, Slack, Zoom and Confluence are all
-mock-only, and that is days of work whose output nobody sees on camera.
+it into fixtures** rather than writing four live connectors. At the time,
+`libs/connectors/src/real/` contained `miro.ts` and nothing else and the other
+four surfaces were mock-only — days of work whose output nobody sees on camera.
+
+> **What happened instead, and it is the better outcome.** The mock connectors
+> were deleted and `createGraphConnectors` projects all five surfaces out of
+> `graph.json`, so the fixture *is* a collector's output rather than a parallel
+> data shape. The five collectors were then written as offline emitters into
+> that same file — `ROADMAP.md` track B. Miro remains the only live vendor
+> client. Freezing a slice and connecting a source became the same act, which is
+> what made both affordable.
 
 Two fixture jobs are needed either way:
 
@@ -173,9 +202,14 @@ From `DESIGN.md` §8 and `KNOWN-GAPS.md`, repeated because they cost real time:
   weaker and lets `process.env` into browser-safe libs.
 - **`@mc/vault` is gateway-only** and deliberately absent from the vite aliases.
   Don't "fix" that.
-- **Check `claude-cli.ts` as well as `claude.ts`.** Two provider bugs so far have
-  been correct on the API path and broken on the CLI path — which is the default.
-  One is still open; see `KNOWN-GAPS.md` §1.
+- **Check `claude-cli.ts` as well as `claude.ts`.** Three provider bugs so far
+  have been one-sided — correct on the Messages API path, broken on the CLI one:
+  `zodShape` not recursing into nested objects, a resumed thread losing its
+  history after a restart, and `subtype: 'success'` being read as a verdict when
+  a logged-out CLI returns it alongside `is_error: true`. The first and third
+  are fixed; the second is open in `KNOWN-GAPS.md` §1. A one-sided bug reads as
+  the model being stupid rather than as a wiring fault, which is what makes it
+  expensive.
 - **A class name is a namespace.** Three collisions so far, each silent.
 
 ---

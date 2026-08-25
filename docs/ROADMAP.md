@@ -41,7 +41,7 @@ is marked as such.
 | **B3** | The identity map | ✔ **Slack's half is built** — `import-slack-messages.mts --users` merges `handles.slack` into the person Jira already wrote |
 | **B4** | Collectors for Slack, Zoom, Confluence, GitHub | ✔ **all five are built** — Jira, Zoom, Confluence, Slack, GitHub. Each merges into one graph and passes `verify-collector` |
 | **B7** | Sprint state, without which the flagship cannot fire on real data | ✔ `scripts/fetch-jira-sprints.mts` — the chain is proven end to end |
-| **B5** | Verify `askCopilotStructured` against a real credential | ✔ **answered, and the answer is that it is broken.** Auth works; our wrapper returns `{}`. `KNOWN-GAPS.md` §4. Blocks nothing |
+| **B5** | Verify `askCopilotStructured` against a real credential | ✔ **answered, and then fixed.** A PAT in `GITHUB_TOKEN` was being refused by the endpoint while every auth check passed; the ladder then preferred a logged-out Claude CLI. Both fixed — `probe-mcp` reports `copilot OK` on a nested schema |
 | **B6** | Is the repo public, and what is it called | ✔ **private, `Mission Control`** — pushed as one squashed orphan commit, never this history. `KNOWN-GAPS.md` §3 |
 | **D1–D3, D6** | commitment on promise, `MC_GRAPH_DIR`, status map, scale | ✔ |
 | **D4** | Decide hosting | ✔ **single-tenant, loopback by default**; `MC_BIND` is the deliberate opt-out, and it warns at boot |
@@ -95,7 +95,7 @@ note page and the Ask index hang off Later and the conversation. Different
 number, different noun, and one must never be quoted as the other.
 
 Divergences from the preview are recorded in `DESIGN.md` §9 and must be argued
-rather than allowed to drift. There are two, plus one piece of it unbuilt.
+rather than allowed to drift. There are three, plus one piece of it unbuilt.
 
 ---
 
@@ -109,9 +109,14 @@ plainly:
 |---|---|
 | **The evidence view** | `DIRECTION.md` §1's one unkept promise: *"the graph, the timeline and the focus lens do not disappear — they are demoted from front door to evidence, reached by clicking why? on an alert."* Nothing in `apps/shell/src` imports `buildStoryline`, `buildTimeline` or `buildRelationGraph`. This is the only outstanding item that changes what the product **does**, and its specification is already written: those three models, plus the layout rules `CLAUDE.md` records, each of which was bought with a bug |
 | **A real Zoom capture** | the collector is written and checkable without an account (`verify-zoom-capture.mts`), but nobody has signed in and run it against Zoom's own DOM. Not code — a login |
-| **`askCopilotStructured`** | returns `{}` against a real credential. B5 wears a ✔ meaning *answered*, against a legend that reads *done and verified*; the answer was that it is broken. Blocks nothing — three other backends work |
 | **Authentication, CORS, webhook signatures** | `KNOWN-GAPS.md` §3, unstarted. D4's loopback bind makes them survivable rather than solved, and all three are live again the moment `MC_BIND` points off loopback |
-| **`PATCH /api/vault/log/:id`** | a callerless write that mutates an append-only log — contrary to the model everything durable rests on. Ten minutes to remove |
+
+**`PATCH /api/vault/log/:id` is gone**, and it used to be the fifth row here — a
+callerless write that mutated an append-only log, contrary to the model
+everything durable rests on. The route, `Vault.updateEvent` and the `editedAt`
+field only that method ever wrote all went with it. Dropping an entry
+(`DELETE /api/vault/log/:id`, `POST /api/vault/log/delete`) survives, because
+removing evidence is a different act from falsifying it.
 
 ---
 

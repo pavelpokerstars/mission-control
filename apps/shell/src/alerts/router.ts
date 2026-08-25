@@ -79,7 +79,7 @@ export type Route =
     }
 ;
 
-export function parseRoute(hash: string): Route {
+function parseRoute(hash: string): Route {
   // The query is kept for `record`, which carries `from` and the ref's own
   // parameters; every other route splits it off.
   const path = hash.replace(/^#\/?/, '').split('?')[0] ?? '';

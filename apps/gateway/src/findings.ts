@@ -35,7 +35,7 @@ import {
 import { projectArrows, type Connectors, type GraphSource } from '@mc/connectors';
 import type { VaultStore } from '@mc/vault';
 import { gatherWorkFacts } from './work.js';
-import { suppressedIds } from './act.js';
+import { answeredFindingIds } from './act.js';
 
 /**
  * How long past its due date before a missing ticket is `crit` rather than
@@ -119,15 +119,50 @@ export function findMissingTickets(notes: Note[], graph: StoredGraph, now = Date
     if (!container || container.state !== 'closed') continue;
 
     const overdueDays = Math.floor((now - Date.parse(n.dueAt)) / DAY_MS);
+    /**
+     * Whether anybody actually said that date.
+     *
+     * `/workshop` lets a promise made inside a sprint inherit the sprint's
+     * close, because teams name owners and almost never name dates — but an
+     * inherited date must not be read back as an agreed one. "Agreed by Jerry,
+     * due 20 August" is a quotation; if nobody said 20 August it is a
+     * fabricated one, on the page whose whole argument is that it never
+     * asserts anything a record does not support.
+     */
+    const dueFromSprint = n.tags?.includes('due-from-sprint') === true;
     out.push({
       id: `missing_ticket:${n.id}`,
       kind: 'missing_ticket',
       subject: { kind: 'commitment', noteId: n.id },
-      severity: overdueDays >= OVERDUE_CRIT_DAYS ? 'crit' : 'warn',
+      /**
+       * An inherited date never reaches `crit`, and this was got wrong once in
+       * the obvious way.
+       *
+       * The reasoning was: the date IS the container's close and the finding
+       * fires at that close, so `overdueDays` starts at zero and grows only if
+       * nobody acts. True in steady state, and false the first time it runs —
+       * a backfill over six closed sprints made **22 of 22** findings `crit`,
+       * because Frontier 31 closed a month before anybody looked. An alert list
+       * where everything is critical is a dashboard, which is the one thing the
+       * front door may not become.
+       *
+       * So the cap is explicit rather than arithmetic. It is also the honest
+       * ranking: "Jerry said the twelfth and it is three weeks past" is a
+       * stronger claim than "nobody gave a date and the sprint has closed", and
+       * the first should outrank the second. `warn` still counts on the front
+       * door — only `ok` does not — so nothing is hidden by this.
+       */
+      severity: !dueFromSprint && overdueDays >= OVERDUE_CRIT_DAYS ? 'crit' : 'warn',
       claim: `${n.title} was never filed`,
       impact: [
-        `Agreed by ${n.owner}, due ${n.dueAt.slice(0, 10)}`,
-        overdueDays > 0 ? `${overdueDays} day${overdueDays === 1 ? '' : 's'} past due` : 'not yet due',
+        dueFromSprint
+          ? `Taken by ${n.owner}, with no date given`
+          : `Agreed by ${n.owner}, due ${n.dueAt.slice(0, 10)}`,
+        dueFromSprint
+          ? `checked against ${container.label}'s close`
+          : overdueDays > 0
+            ? `${overdueDays} day${overdueDays === 1 ? '' : 's'} past due`
+            : 'not yet due',
         `${container.label} has closed and no issue references it`,
       ].join(' · '),
       // When the container closed, not when this pass ran. A finding that
@@ -249,7 +284,7 @@ const SIGNAL_FINDINGS: Partial<Record<WorkSignal['kind'], Finding['kind']>> = {
  * says "two sources disagree" and an alert that says the same cannot come from
  * two different ideas of disagreement.
  */
-export function findFromWorkRows(rows: WorkRow[], cycles: WorkItemKey[][]): Finding[] {
+function findFromWorkRows(rows: WorkRow[], cycles: WorkItemKey[][]): Finding[] {
   const out: Finding[] = [];
 
   for (const row of rows) {
@@ -386,9 +421,10 @@ export async function runFindings({
    * flag whether it has already run.
    *
    * Unwindowed on purpose — a dismissal from three months ago is still a
-   * dismissal, and a `since` here would silently expire decisions.
+   * dismissal, and a `since` here would silently expire decisions. Indexed
+   * rather than re-parsed per request; see `answeredFindingIds`.
    */
-  const answered = suppressedIds(await vault.readEvents({}));
+  const answered = await answeredFindingIds(vault);
 
   /**
    * STALENESS DOES NOT RANK A MISSING TICKET DOWN, and this was written the

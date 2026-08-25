@@ -242,8 +242,11 @@ switch (cmd) {
     const d = await get(`/api/issue/${encodeURIComponent(key)}`);
     console.log(`${d.key} — ${d.item?.title ?? '(unknown)'} · ${d.item?.status ?? '?'}`);
     if (d.origin?.first) {
+      // Two different questions: `firstIsOrigin` picks the heading (it allows a
+      // grace window either way), `predatesTicket` is the strict claim.
+      const head = d.origin.firstIsOrigin ? 'came from' : 'earliest record';
       const when = d.origin.predatesTicket ? 'BEFORE the ticket existed' : 'after it was filed';
-      console.log(`origin: ${d.origin.first.surface} · ${d.origin.first.label} · ${when}`);
+      console.log(`${head}: ${d.origin.first.surface} · ${d.origin.first.label} · ${when}`);
     }
     for (const c of d.contradictions) {
       console.log(`disagreement: "${c.claimsDone.label}" says done vs "${c.claimsBlocked.label}" says not`);

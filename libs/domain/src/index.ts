@@ -334,16 +334,6 @@ export interface McEvent<P = unknown> {
    * still resolves to what the source system actually sent.
    */
   summary?: string;
-
-  /**
-   * Set when the user has corrected this entry by hand.
-   *
-   * The log is the evidence base — notes cite events, and a silently rewritten
-   * history makes every citation untrustworthy. Editing is still allowed,
-   * because at one user's scale a log full of noise is worse than a log that
-   * has been curated. The stamp is the compromise: an edited entry says so.
-   */
-  editedAt?: string;
 }
 
 /**

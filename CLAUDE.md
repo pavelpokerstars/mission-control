@@ -441,6 +441,32 @@ with an empty `.env` gets a real agent over the fixtures instead of the stub —
 which is what "mock mode is a complete product" was always supposed to mean. It
 is tried before the metered API key on purpose.
 
+> **On a Copilot-only deployment, which is what this is being run on, read that
+> paragraph as describing a rung that is not there.** Copilot is reachable
+> *only* at `MC_MODE=live` — `agent.ts`'s `mode()` gates it — so going Copilot
+> means setting that variable, and two things follow that are easy to miss:
+>
+> - **Chat works.** `createCopilotAgent` comes up on `gh auth login` or
+>   `GITHUB_TOKEN`, and falls back to the stub with a named warning if it does
+>   not. `node scripts/inspect.mjs health` says which provider is about to
+>   answer.
+> - **Structured output works too, and both halves of why it did not are worth
+>   knowing**, because each failed with the auth gate reporting success.
+>   `askCopilotStructured` returned `{}` because `GITHUB_TOKEN` was a **personal
+>   access token**, which Copilot's endpoint refuses (`Personal Access Tokens
+>   are not supported for this endpoint`) while `start()` and `getAuthStatus()`
+>   both pass on it. `copilotToken()` deny-lists `ghp_` / `github_pat_` and
+>   returns `undefined`, which restores `useLoggedInUser` and the OAuth token
+>   the endpoint does accept. And `MC_STRUCTURED=auto` still walked to
+>   `sdk-mcp` first, because `claudeCliAvailable()` read `subtype` alone — a
+>   logged-out CLI yields `subtype:'success'` with `is_error:true`. Both fixed;
+>   `npx tsx scripts/probe-mcp.mts` reports `copilot OK` with a nested schema.
+>
+> `MC_MODE` used to gate vault seeding as well, so choosing Copilot silently
+> emptied the fixture's history and claims and the flagship alert stopped
+> firing. That is fixed — seeding follows the graph directory now, never the
+> mode.
+
 **It really is the CLI, despite the package name.**
 `@anthropic-ai/claude-agent-sdk` is not a second API client: it spawns the
 `claude` binary as a child process (`child_process.spawn`, an explicit

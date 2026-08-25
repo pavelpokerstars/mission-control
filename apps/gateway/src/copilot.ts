@@ -84,6 +84,43 @@ import type { AgentTool } from './tools.js';
 export const COPILOT_MODEL = process.env.COPILOT_MODEL ?? 'auto';
 
 /**
+ * The Copilot credential, or nothing — and a personal access token counts as
+ * nothing. This is the sibling of the trap documented at the `CopilotClient`
+ * construction below, one layer up.
+ *
+ * `gh auth login` leaves an OAuth token in the keyring, and plenty of machines
+ * also export a classic PAT as `GITHUB_TOKEN` for git and the API. The PAT wins
+ * because it is explicit, and Copilot's endpoint refuses it:
+ *
+ *   400 checking third-party user token: bad request:
+ *   Personal Access Tokens are not supported for this endpoint
+ *
+ * `start()` and `getAuthStatus()` both pass on a PAT, so the provider reports
+ * itself live and only real turns fail. Returning `undefined` restores
+ * `useLoggedInUser`, which reaches the OAuth token the endpoint does accept.
+ *
+ * Deny-listed rather than allow-listed: GitHub adds token formats, and silently
+ * discarding a *working* future credential is the worse failure.
+ */
+let patWarned = false;
+export function copilotToken(): string | undefined {
+  const token = process.env.GITHUB_TOKEN?.trim();
+  if (!token) return undefined;
+  if (token.startsWith('ghp_') || token.startsWith('github_pat_')) {
+    // The chat provider and the structured backend both ask, so say it once.
+    if (!patWarned) {
+      patWarned = true;
+      console.warn(
+        '[agent] GITHUB_TOKEN is a personal access token, which Copilot does not accept — ' +
+          'ignoring it and using the gh/OAuth login instead.',
+      );
+    }
+    return undefined;
+  }
+  return token;
+}
+
+/**
  * Is the SDK there?
  *
  * The specifier is a variable on purpose: a literal `import('@github/...')` is
@@ -407,7 +444,7 @@ async function copilotRuntime(): Promise<{
       console.warn(`[copilot] sdk failed to load — ${String(err)}`);
       return null;
     }
-    const token = process.env.GITHUB_TOKEN;
+    const token = copilotToken();
     const client = new sdk.CopilotClient(token ? { gitHubToken: token } : {}) as unknown as CopilotClientLike;
     try {
       await client.start();

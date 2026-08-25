@@ -153,6 +153,7 @@ byte-identical and a demo cannot rearrange itself between rehearsal and stage.
 | [docs/CEREMONY-FLOW.md](docs/CEREMONY-FLOW.md) | How a meeting becomes the commitment note the flagship alert fires on |
 | [docs/KNOWN-GAPS.md](docs/KNOWN-GAPS.md) | What is broken, approximate, or deliberately unfinished |
 | [CLAUDE.md](CLAUDE.md) | Working notes — commands, invariants, and what breaks if you change them |
+| [AGENTS.md](AGENTS.md) | A pointer to the above, for coding agents that do not read `CLAUDE.md` |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | The layer underneath — what each surface owns, how events move, echo suppression |
 
 `npm run docs` renders the lot as one page at `docs/html/everything.html` — run
@@ -316,6 +317,32 @@ the Claude CLI first — your own CLI login, no key and no credit — then
 checkout with an empty `.env` gets a real agent over the fixtures, which is what
 "mock mode is a complete product" was always supposed to mean.
 `node scripts/inspect.mjs health` says which one is about to answer.
+
+**On a Copilot deployment, two things change.** Copilot is reachable only at
+`MC_MODE=live`, so that is the switch — plus `gh auth login` or `GITHUB_TOKEN`:
+
+```bash
+gh auth login
+MC_MODE=live npm run dev
+node scripts/inspect.mjs health     # confirm Copilot, not the stub
+```
+
+Chat works, and so does structured output — but only after two bugs that both
+reported success at the auth gate. `GITHUB_TOKEN` set to a **personal access
+token** is refused by Copilot's endpoint while `start()` and `getAuthStatus()`
+both pass, so `askCopilotStructured` came back empty; `copilotToken()` now
+ignores a PAT and lets the `gh` OAuth login through. And `MC_STRUCTURED=auto`
+still picked the Claude CLI ahead of it, because the availability probe read
+`subtype` and a logged-out CLI answers `subtype:'success'` with `is_error:true`.
+
+```bash
+npx tsx scripts/probe-mcp.mts       # which structured backends this machine has
+```
+
+It ends in a verdict rather than four rows, and an absent credential is not
+counted as a failure — a backend that *has* one and answers wrongly is, because
+an auth gate passing and the turn failing is the one failure you cannot debug
+from outside.
 
 **Jira is three commands.** `programme_graph` emits no sprint state — sprints
 are bare names on an issue — and the flagship finding fires when a commitment's

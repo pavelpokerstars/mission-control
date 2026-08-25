@@ -34,6 +34,7 @@ import type { Connectors, GraphSource } from '@mc/connectors';
 import { recall, type VaultStore } from '@mc/vault';
 import { eventLog, type EventLog } from './events.js';
 import { runFindings } from './findings.js';
+import { stripHtml } from './format.js';
 import { buildDossier } from './issue.js';
 import { emitVaultEvent, journalProposal } from './vault.js';
 
@@ -657,7 +658,7 @@ export function buildCrossSurfaceTools(
 
         const hits = pages
           .map((p) => {
-            const text = p.html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
+            const text = stripHtml(p.html);
             const lower = text.toLowerCase();
             let shared = 0;
             for (const w of wanted) if (lower.includes(w)) shared++;
@@ -706,7 +707,7 @@ export function buildCrossSurfaceTools(
           url: page.url,
           updatedAt: page.updatedAt,
           relatedKeys: page.relatedKeys,
-          text: page.html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim(),
+          text: stripHtml(page.html),
         };
       },
     },

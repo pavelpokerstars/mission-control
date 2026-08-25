@@ -59,6 +59,7 @@ import {
 } from '@mc/domain';
 import type { Connectors } from '@mc/connectors';
 import type { VaultStore } from '@mc/vault';
+import { stripHtml } from './format.js';
 import { createStructured, type ProviderCaps } from './structured.js';
 import { VAULT_DIR } from './vault.js';
 
@@ -193,11 +194,6 @@ async function gatherCorpus(
   }
 
   return { catalogue, records: records.slice(0, MAX_RECORDS) };
-}
-
-/** Confluence bodies are HTML; the model wants prose and the tags cost tokens. */
-function stripHtml(html: string): string {
-  return html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
 }
 
 // ---------------------------------------------------------------------------

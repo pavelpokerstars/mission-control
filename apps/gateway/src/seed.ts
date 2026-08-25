@@ -1,18 +1,25 @@
 /**
- * Backdated history for mock mode.
+ * Backdated history, from the graph directory.
  *
  * The five surfaces answer "what is true now", and on a cold start the event
  * log agrees with them: it is empty. That is fine for anything reading current
  * state, and useless for `buildTimeline` — and therefore for the `aging`
  * finding — which has nothing to measure until a ticket has *moved* once.
  *
- * So on first boot — `MC_MODE=mock`, which is the default and therefore the
- * live-collector path too — we copy whatever history the graph shipped and
- * nothing else: `MC_GRAPH_DIR/events.jsonl`, 46 events across `PAY-*`, `PLT-*`
- * and `WEB-*` spanning 22 June to 20 August in the committed fixture. We invent
- * no transitions. A graph that shipped no history is a programme whose
- * transitions have not been observed yet; they accrue from the Jira webhook and
- * the scheduled re-derive from the first run.
+ * So on first boot we copy whatever history the graph shipped and nothing else:
+ * `MC_GRAPH_DIR/events.jsonl`, 46 events across `PAY-*`, `PLT-*` and `WEB-*`
+ * spanning 22 June to 20 August in the committed fixture. We invent no
+ * transitions. A graph that shipped no history is a programme whose transitions
+ * have not been observed yet; they accrue from the Jira webhook and the
+ * scheduled re-derive from the first run.
+ *
+ * **This follows the graph, never `MC_MODE`.** Both functions below are
+ * self-guarding — an empty vault and a file that is actually there — so a real
+ * collector's output seeds nothing, because `import-programme-graph.mts` writes
+ * `graph.json` and neither `events.jsonl` nor `notes/`. A `MODE === 'mock'`
+ * gate in `main.ts` used to stand in front of them, which meant selecting
+ * Copilot (`MC_MODE=live`, the only way to reach it) silently emptied the
+ * demo's own history and claims.
  *
  * TWO THINGS THIS DELIBERATELY DOES NOT DO:
  *

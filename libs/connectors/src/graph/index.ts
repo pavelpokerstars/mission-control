@@ -375,7 +375,7 @@ export function auditIdentities(
     .sort((a, b) => b.count - a.count);
 }
 
-export function projectWorkItems(g: StoredGraph): WorkItem[] {
+function projectWorkItems(g: StoredGraph): WorkItem[] {
   const sprints = new Map(g.nodes.filter(isNodeKind('sprint')).map((n) => [n.id, n.label]));
   const identities = buildIdentities(g);
 
@@ -437,7 +437,7 @@ export function projectArrows(g: StoredGraph): CanvasConnector[] {
 }
 
 /** Board cards, laid out in a readable grid. Position is ours only in the mock. */
-export function projectCards(items: WorkItem[], boardId: string): AppCardMirror[] {
+function projectCards(items: WorkItem[], boardId: string): AppCardMirror[] {
   const COLS = 5;
   return items.map((item, idx) => ({
     miroItemId: `miro-${item.key}`,
@@ -482,7 +482,7 @@ interface TranscriptRecord {
   body?: string;
 }
 
-export function projectTranscripts(g: GraphSource): Transcript[] {
+function projectTranscripts(g: GraphSource): Transcript[] {
   const identities = buildIdentities(g.graph);
   const out: Transcript[] = [];
   for (const n of g.graph.nodes.filter(isNodeKind('meeting'))) {
@@ -562,7 +562,7 @@ interface PageRecord {
   keys: string[];
 }
 
-export function projectPages(g: GraphSource): ConfluencePage[] {
+function projectPages(g: GraphSource): ConfluencePage[] {
   const out: ConfluencePage[] = [];
   for (const n of g.graph.nodes.filter(isNodeKind('page'))) {
     const id = n.id.replace(/^page:confluence\//, '');

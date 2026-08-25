@@ -142,3 +142,25 @@ export function BackLink({ to, label }: { to: Route; label: string }): JSX.Eleme
     </a>
   );
 }
+
+/**
+ * `DESIGN.md` §7 — delete acts, and stays undoable.
+ *
+ * Written twice before this, in `Ask` and `Later`, and the two had already
+ * disagreed: `Later` placed the strip past the end of the list when you deleted
+ * the last row, and `Ask` did not — so deleting your last conversation removed
+ * it with no offer to undo, which is the one thing §7 forbids.
+ *
+ * No timer. A strip that vanishes after a few seconds is one you must react to
+ * rather than decide about; it lives until you leave the page it belongs to.
+ */
+export function UndoStrip({ label, onUndo }: { label: string; onUndo: () => void }): JSX.Element {
+  return (
+    <div className="undobar">
+      <span className="what">Deleted &ldquo;{label}&rdquo;</span>
+      <button type="button" onClick={onUndo}>
+        Undo
+      </button>
+    </div>
+  );
+}

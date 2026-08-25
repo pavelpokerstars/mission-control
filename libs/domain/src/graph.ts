@@ -6,7 +6,7 @@
  * drifts fails a typecheck rather than a demo.
  *
  * WHY IT IS ITS OWN FILE. `index.ts` is 2,600 lines and every edit to it
- * invalidates all six nx projects. This is a self-contained contract with one
+ * invalidates all five nx projects. This is a self-contained contract with one
  * job, and it is re-exported from `index.ts` so the package surface is
  * unchanged.
  *

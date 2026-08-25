@@ -587,7 +587,7 @@ function build(): Built {
  * against it inherits the violation, and nobody finds out until real data
  * arrives and behaves differently.
  */
-export function validate(g: Built): string[] {
+function validate(g: Built): string[] {
   const problems: string[] = [];
   const ids = new Set(g.nodes.map((n) => n.id));
 

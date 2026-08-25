@@ -208,10 +208,11 @@ export async function createClaudeCliAgent(cfg: ProviderConfig): Promise<Agent |
           continue;
         }
 
-        if (m.type === 'result' && m.subtype !== 'success') {
+        if (m.type === 'result' && (m.subtype !== 'success' || m.is_error)) {
           // A refusal or a turn limit is not an exception, but the answer must
-          // not sit there looking like a dropped connection.
-          yield `\n\n_(the agent stopped: ${String(m.subtype)})_`;
+          // not sit there looking like a dropped connection. `is_error` is read
+          // as well as `subtype` for the reason `claudeCliAvailable` does.
+          yield `\n\n_(the agent stopped: ${String(m.result ?? m.subtype)})_`;
         }
       }
     },
@@ -230,6 +231,13 @@ export async function createClaudeCliAgent(cfg: ProviderConfig): Promise<Agent |
  * paying it per boot would put six seconds between saving a file and the
  * gateway answering. Cached next to the event log instead, the same way
  * extraction is: asked once a day per machine, not once per keystroke.
+ *
+ * **`subtype` alone is not the answer, and reading it alone was a bug.** A
+ * logged-out CLI yields `{type:'result', subtype:'success', is_error:true,
+ * result:'Not logged in · Please run /login'}` — so the probe said the provider
+ * was available, `auto` picked `sdk-mcp` as the first available backend, and
+ * every structured call then failed against a machine where Copilot was working
+ * the whole time. `is_error` is the field that tells the truth.
  *
  * Delete `vault/raw/provider-probe.json` to force a re-check — which is what
  * you want right after logging in or out.
@@ -256,9 +264,9 @@ export async function claudeCliAvailable(): Promise<boolean> {
       prompt: 'Reply with exactly: OK',
       options: { maxTurns: 1, permissionMode: 'bypassPermissions', allowedTools: [] },
     });
-    for await (const m of q as AsyncIterable<{ type: string; subtype?: string }>) {
+    for await (const m of q as AsyncIterable<{ type: string; subtype?: string; is_error?: boolean }>) {
       if (m.type === 'result') {
-        ok = m.subtype === 'success';
+        ok = m.subtype === 'success' && !m.is_error;
         break;
       }
     }

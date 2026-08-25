@@ -403,37 +403,6 @@ export class VaultStore {
     await rename(tmp, this.eventsPath);
   }
 
-  /**
-   * Hand-correct one entry.
-   *
-   * `payload` is deliberately not patchable — it is what the source system
-   * actually sent, and notes cite it as evidence. What the user can change is
-   * how the entry reads (`summary`) and what it is filed under (`entityKey`),
-   * which is where the log is actually wrong in practice: an event the join key
-   * never got attached to.
-   */
-  async updateEvent(
-    id: string,
-    patch: Pick<Partial<McEvent>, 'summary' | 'entityKey'>,
-  ): Promise<McEvent | undefined> {
-    let updated: McEvent | undefined;
-    await this.enqueueLog(async () => {
-      const events = await this.allEvents();
-      const next = events.map((e) => {
-        if (e.id !== id) return e;
-        updated = {
-          ...e,
-          ...(patch.summary !== undefined ? { summary: patch.summary || undefined } : {}),
-          ...(patch.entityKey !== undefined ? { entityKey: patch.entityKey || undefined } : {}),
-          editedAt: new Date().toISOString(),
-        };
-        return updated;
-      });
-      if (updated) await this.rewriteEvents(next);
-    });
-    return updated;
-  }
-
   /** Drop entries by id. Returns how many actually went. */
   async deleteEvents(ids: string[]): Promise<number> {
     const doomed = new Set(ids);

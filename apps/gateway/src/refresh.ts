@@ -140,7 +140,7 @@ export function diffSignatures(prev: Signature, next: Signature, at: string): Gr
   };
 }
 
-export function isEmptyDelta(d: GraphDelta): boolean {
+function isEmptyDelta(d: GraphDelta): boolean {
   return (
     !d.addedNodes.length &&
     !d.removedNodes.length &&
@@ -257,7 +257,7 @@ export function deltaToEvents(d: GraphDelta): McEvent[] {
  * So: treat this file as STATE. Delete it and the next run stamps every
  * surviving edge `firstSeen: now, seenCount: 1`.
  */
-export function updateObservations(
+function updateObservations(
   index: ObservationIndex,
   g: StoredGraph,
   at: string,

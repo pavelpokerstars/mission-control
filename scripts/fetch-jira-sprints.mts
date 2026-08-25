@@ -29,8 +29,9 @@
  * reasons about it.
  */
 
-import { readFile, writeFile } from 'node:fs/promises';
+import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
+import { dirname } from 'node:path';
 
 // ---------------------------------------------------------------------------
 
@@ -43,15 +44,21 @@ const opt = (name: string): string | undefined => {
 const BASE = (opt('base') ?? process.env.JIRA_BASE_URL ?? '').replace(/\/+$/, '');
 const EMAIL = opt('email') ?? process.env.JIRA_EMAIL ?? '';
 const TOKEN = opt('token') ?? process.env.JIRA_API_TOKEN ?? '';
+const PAT = opt('pat') ?? process.env.JIRA_PAT ?? '';
 const board = opt('board');
 const out = opt('out') ?? 'sprints.json';
 
-if (!BASE || !EMAIL || !TOKEN) {
+if (!BASE || (!PAT && !(EMAIL && TOKEN))) {
   console.error(
     'Missing credentials. Set these in the environment or pass them as flags:\n' +
       '\n' +
-      '  JIRA_BASE_URL   https://your-org.atlassian.net   (--base)\n' +
-      '  JIRA_EMAIL      the account the token belongs to (--email)\n' +
+      '  JIRA_BASE_URL   https://your-org.atlassian.net       (--base)\n' +
+      '\n' +
+      'then EITHER, for Jira Server / Data Centre:\n' +
+      '  JIRA_PAT        a personal access token             (--pat)\n' +
+      '\n' +
+      'or, for Jira Cloud:\n' +
+      '  JIRA_EMAIL      the account the token belongs to     (--email)\n' +
       '  JIRA_API_TOKEN  https://id.atlassian.com/manage-profile/security/api-tokens (--token)\n' +
       '\n' +
       'Read-only: this calls GET /rest/agile/1.0 and writes a local file.',
@@ -60,12 +67,17 @@ if (!BASE || !EMAIL || !TOKEN) {
 }
 
 /**
- * Basic auth, which is what Jira Cloud wants for an API token.
+ * Two deployments, two auth schemes, and each rejects the other's.
  *
- * Not a bearer token — that is the OAuth path, and it 401s with an API token in
- * a way whose message does not say so.
+ * Cloud wants an API token as BASIC (`email:token`), and bearer is the OAuth
+ * path there — it 401s in a way whose message does not say so, which is the
+ * hint below. Server and Data Centre want a personal access token as BEARER and
+ * have no email in the pair at all. Guessing wrong costs an afternoon against
+ * an API you have not used before, so the credential you set picks the scheme.
  */
-const AUTH = `Basic ${Buffer.from(`${EMAIL}:${TOKEN}`).toString('base64')}`;
+const AUTH = PAT
+  ? `Bearer ${PAT}`
+  : `Basic ${Buffer.from(`${EMAIL}:${TOKEN}`).toString('base64')}`;
 
 /**
  * A failed request is a message, not a stack trace.
@@ -95,7 +107,9 @@ async function get(path: string): Promise<Record<string, unknown>> {
      */
     const hint =
       res.status === 401
-        ? ' — check JIRA_EMAIL and JIRA_API_TOKEN (an API token uses basic auth, not bearer)'
+        ? PAT
+          ? ' — check JIRA_PAT (Server/DC wants a personal access token as a bearer)'
+          : ' — check JIRA_EMAIL and JIRA_API_TOKEN (Cloud uses basic auth, not bearer)'
         : res.status === 403
           ? ' — the account is authenticated but not permitted to read this board'
           : res.status === 404
@@ -210,6 +224,7 @@ if (existsSync(out)) {
 }
 const kept = Object.keys(existing).filter((n) => n in meta).length;
 const combined = { ...meta, ...existing };
+await mkdir(dirname(out), { recursive: true }).catch(() => {});
 await writeFile(out, `${JSON.stringify(combined, null, 2)}\n`, 'utf8');
 if (Object.keys(existing).length) {
   console.log(`  merged with ${Object.keys(existing).length} sprint(s) already in ${out}` +

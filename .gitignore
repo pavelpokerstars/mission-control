@@ -57,3 +57,9 @@ Thumbs.db
 
 # Generated documentation. The markdown files are the sources.
 docs/html/
+
+# Live-source working data: fetched payloads, the derived graph, the live vault.
+/live-raw/
+/live-graph/
+/live-vault/
+/live-status-map.json

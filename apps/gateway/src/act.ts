@@ -70,20 +70,83 @@ export interface ActionResult {
  * evaluates the watch — which is `A11`'s job. Holding indefinitely is the right
  * side to fail on: re-raising something somebody explicitly parked is the fastest
  * way to teach them the list is not listening.
+ *
+ * `forever` is a dismissal **or** a dateless deferral, and `until` is the LATEST
+ * date seen rather than the last one written — which is what keeps this
+ * equivalent to folding the raw log: any deferral still in the future
+ * suppresses, whatever was written after it.
  */
-export function suppressedIds(events: McEvent[], now = Date.now()): Set<string> {
+interface Answer {
+  forever: boolean;
+  /** Epoch ms, the furthest-out deferral seen. */
+  until?: number;
+}
+
+/** The rule, once. Both the whole-log read and the incremental index fold with this. */
+function foldAnswer(into: Map<string, Answer>, e: McEvent): void {
+  const p = e.payload as { findingId?: string; until?: string };
+  if (!p.findingId) return;
+  if (e.type !== 'mc.finding_dismissed' && e.type !== 'mc.finding_deferred') return;
+
+  const a = into.get(p.findingId) ?? { forever: false };
+  if (e.type === 'mc.finding_dismissed') a.forever = true;
+  else {
+    const due = p.until ? Date.parse(p.until) : Number.NaN;
+    // No parseable date means an event-based reminder. Held until watched.
+    if (!Number.isFinite(due)) a.forever = true;
+    else a.until = Math.max(a.until ?? -Infinity, due);
+  }
+  into.set(p.findingId, a);
+}
+
+function resolve(answers: Map<string, Answer>, now: number): Set<string> {
   const out = new Set<string>();
-  for (const e of events) {
-    const p = e.payload as { findingId?: string; until?: string };
-    if (!p.findingId) continue;
-    if (e.type === 'mc.finding_dismissed') out.add(p.findingId);
-    if (e.type === 'mc.finding_deferred') {
-      const due = p.until ? Date.parse(p.until) : Number.NaN;
-      // No parseable date means an event-based reminder. Held until watched.
-      if (!Number.isFinite(due) || due > now) out.add(p.findingId);
-    }
+  for (const [id, a] of answers) {
+    if (a.forever || (a.until !== undefined && a.until > now)) out.add(id);
   }
   return out;
+}
+
+export function suppressedIds(events: McEvent[], now = Date.now()): Set<string> {
+  const answers = new Map<string, Answer>();
+  for (const e of events) foldAnswer(answers, e);
+  return resolve(answers, now);
+}
+
+/**
+ * The same answer, without re-reading the whole log on every request.
+ *
+ * `runFindings` needs this on the front door, and the read has to be
+ * **unwindowed** — a `since` would silently expire dismissals, which is the one
+ * thing an alert list may not do. So it parses every line of
+ * `vault/raw/events.jsonl`: measured at ~150ms per request at 70k events, and
+ * the front door is where that shows up first.
+ *
+ * Built once, then kept current by the log itself (`indexAnswer`, wired in
+ * `main.ts`). What is cached is the DECISIONS, never the resolved set — a
+ * deferral expires with the clock rather than with an event, so `until` is
+ * compared per call and a parked finding returns on time with no event to
+ * trigger it.
+ */
+let answers: Map<string, Answer> | undefined;
+
+/** Fold a freshly appended decision in, so the next read costs nothing. */
+export function indexAnswer(e: McEvent): void {
+  if (answers) foldAnswer(answers, e);
+}
+
+/** Drop the index. For anything that rewrites the log out from under it. */
+export function forgetAnswered(): void {
+  answers = undefined;
+}
+
+export async function answeredFindingIds(vault: VaultStore, now = Date.now()): Promise<Set<string>> {
+  if (!answers) {
+    const built = new Map<string, Answer>();
+    for (const e of await vault.readEvents({})) foldAnswer(built, e);
+    answers = built;
+  }
+  return resolve(answers, now);
 }
 
 // ---------------------------------------------------------------------------

@@ -1,5 +1,5 @@
 /**
- * The two number formatters the ceremony briefs and the starter questions share.
+ * The formatters more than one gateway module needs.
  *
  * WHY THIS FILE EXISTS. `skills.ts` and `suggest.ts` each had their own `days()`
  * and their own `pct()`. `pct()` was byte-identical in both. `days()` was NOT,
@@ -13,6 +13,8 @@
  * left the cause standing: one rule written twice, in two files, free to
  * disagree again the next time either is touched. Here it is written once and
  * the only thing that varies is the suffix.
+ *
+ * `stripHtml` arrived the same way and had already drifted four ways.
  *
  * Gateway-local rather than in `@mc/domain` on purpose. These render server-side
  * prose for briefs and questions; `@mc/domain` is imported by the browser and
@@ -52,4 +54,24 @@ export function days(n: number, style: DayStyle = 'compact'): string {
 /** A ratio as a whole-number percentage. Flow efficiency, and nothing else yet. */
 export function pct(n: number): string {
   return `${Math.round(n * 100)}%`;
+}
+
+/**
+ * A Confluence body as prose.
+ *
+ * Four copies of this lived in `infer.ts`, `skills.ts` and `tools.ts` twice, and
+ * they had already drifted: two collapsed whitespace and trimmed, one collapsed
+ * without trimming, one did neither, and the tag pattern was `<[^>]*>` in one
+ * place and `<[^>]+>` in the others. Every one of them answers the same
+ * question, which is the argument this file was written for.
+ *
+ * A tag becomes a SPACE, never nothing — `fo<b>o</b>` is one word to a reader
+ * and `foo` to a tokeniser, but dropping the tag silently glues `</b><b>` pairs
+ * across a real boundary far more often than it saves a word.
+ *
+ * `records.ts` deliberately does not use this: it splits on `</p>` first,
+ * because a citation's unit is the paragraph rather than the body.
+ */
+export function stripHtml(html: string): string {
+  return html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
 }

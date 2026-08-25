@@ -249,19 +249,22 @@ Nothing calls anything else directly. Every change from every tool becomes one
 `McEvent` on a single append-only log, and the sync layer reacts to *the log*:
 
 ```ts
-{ id, ts, source, type, entityKey?, actor?, payload, causedBy?, summary?, editedAt? }
+{ id, ts, source, type, entityKey?, actor?, payload, causedBy?, summary? }
 ```
 
 This gives you one file to read when debugging "why did that Jira update happen"
 — which on day 5 at 2am is worth more than it sounds.
 
-The last two are the hand-correction pair. `PATCH /api/vault/log/:id` may rewrite
-`summary` — how the entry reads, which `describeEvent` returns in place of the
-derived line — and `entityKey`, what it is filed under, which is where the log is
-actually wrong in practice. It may never rewrite `payload`: that is what the
-source sent, and what notes cite as evidence. `updateEvent` stamps `editedAt` on
-every correction, because a silently rewritten history makes every citation
-untrustworthy.
+`summary` is how the entry reads — `describeEvent` returns it in place of the
+derived line — and it is set when the event is written, by the scheduler and by
+a skill run. Nothing rewrites an entry after the fact. **There is no edit path,
+deliberately**: a `PATCH /api/vault/log/:id` existed for a while, had no caller
+in the shell or anywhere else, and mutated the one store that everything durable
+is replayed from. The log is the evidence base — notes cite events — so a
+silently rewritten history makes every citation untrustworthy, and the cheapest
+way to guarantee that is for the write not to exist. Entries can still be
+**dropped** (`DELETE /api/vault/log/:id`, `POST /api/vault/log/delete`), which
+removes evidence rather than falsifying it.
 
 The in-memory log dies with the process, which is right for echo suppression and
 useless as history, so it is mirrored to `vault/raw/events.jsonl`. That file is

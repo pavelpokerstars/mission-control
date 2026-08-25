@@ -47,7 +47,7 @@ import { dirname, join } from 'node:path';
 import type { ConfluencePage, Connectors } from '@mc/connectors';
 import type { VaultStore } from '@mc/vault';
 import type { StoredContainer } from '@mc/domain';
-import { days, pct } from './format.js';
+import { days, pct, stripHtml } from './format.js';
 import { propose } from './tools.js';
 import { emitVaultEvent, VAULT_DIR } from './vault.js';
 
@@ -760,6 +760,55 @@ interface ActionCandidate {
   promiseText?: string;
 }
 
+/**
+ * A meeting ROOM is not a person, and nothing upstream can tell the difference.
+ *
+ * When somebody speaks from a shared room, Zoom attributes the line to the room
+ * — so the summary says "CATOR to post the pen testing requirements", and the
+ * extractor faithfully reports an owner called CATOR. Measured on this corpus:
+ * of 22 commitments, four were owned by a room, one read `Jerry (Cator)` and
+ * one read `CATOR / Sohrab / Jody`.
+ *
+ * That matters because of what the owner is FOR. `DIRECTION.md` §5 gates the
+ * flagship alert on a *named* owner precisely so it never fires on "someone
+ * should look at that" — and a room is that, wearing a name. An alert saying
+ * "Taken by CATOR" is worse than no alert: nobody is CATOR, so nobody picks it
+ * up, and the reader learns the list names people who do not exist.
+ *
+ * So a room is stripped, never mapped to a guess:
+ *
+ *   `Jerry (Cator)`        → `Jerry`          the room is where he sat
+ *   `CATOR / Sohrab / Jody`→ `Sohrab / Jody`  two named people, and a room
+ *   `CATOR`                → nothing          fails the gate, correctly
+ *
+ * `MC_MEETING_ROOMS` is a comma-separated list because rooms are per-office and
+ * a hardcoded one is wrong everywhere else. Read at call time, not at import.
+ */
+function meetingRooms(): string[] {
+  return (process.env.MC_MEETING_ROOMS ?? '')
+    .split(',')
+    .map((s) => s.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+export function namedOwner(raw: string | undefined): string | undefined {
+  const rooms = meetingRooms();
+  if (!raw?.trim()) return undefined;
+  if (!rooms.length) return raw.trim();
+
+  const isRoom = (s: string): boolean => rooms.includes(s.trim().toLowerCase());
+
+  const people = raw
+    .split(/\s*(?:,|\/|&|\band\b)\s*/)
+    .map((part) => part.trim())
+    // `Jerry (Cator)` — a trailing parenthetical naming a room is a location,
+    // not a second owner. Anything else in brackets is left alone.
+    .map((part) => part.replace(/\s*\(([^)]*)\)\s*$/, (m, inner: string) => (isRoom(inner) ? '' : m)).trim())
+    .filter((part) => part && !isRoom(part));
+
+  return people.length ? people.join(' / ') : undefined;
+}
+
 function candidate(
   text: string,
   evidence: Evidence[],
@@ -928,10 +977,6 @@ async function cachedActions(ctx: SkillContext, t: Transcript): Promise<Extracte
  * needed, which is the one outcome worse than saying nothing.
  */
 const DECISION_IN_PAGE = 0.7;
-
-function stripHtml(html: string): string {
-  return html.replace(/<[^>]+>/g, ' ');
-}
 
 /**
  * The page that appears to actually contain this decision, not merely to
@@ -1268,8 +1313,39 @@ const workshop: Skill = {
     const containerId = container?.id;
     const containerLabel = container?.label ?? activeSprintOf(g.items);
     for (const a of actions) {
-      // The gate. Both, or nothing.
-      if (!a.owner || !a.dueAt) continue;
+      /**
+       * THE PRECISION GATE, with the date allowed to come from the sprint.
+       *
+       * `DIRECTION.md` §5 requires a named owner and a date, because a promise
+       * with both is unambiguously trackable and "someone should look at that"
+       * is not. The owner half is never inferred — nobody but the room can say
+       * who took it.
+       *
+       * The date half is different, and measured: across thirty real ceremonies
+       * the model found an owner on 16 of 16 extracted actions and a spoken due
+       * date on **none**. Teams say "Jerry will confirm with DevOps", not "by
+       * the twelfth". Requiring a spoken date therefore did not make the alert
+       * precise, it made it silent — which is the failure mode this whole repo
+       * is written against.
+       *
+       * So a promise made *inside a sprint* inherits that sprint's end. That is
+       * not inventing a deadline: the sprint's close is a real, checkable date
+       * the team already committed to, and it is **the same moment the finding
+       * fires on** — `findMissingTickets` triggers when the container closes.
+       * The inherited date says "this was due by the time that sprint ended",
+       * which is exactly what everybody in the room understood.
+       *
+       * NO CONTAINER, NO INHERITANCE. A promise outside any sprint still needs
+       * a spoken date, because there is no close to hang it on — the gate holds
+       * where it has nothing to stand on.
+       */
+      const dueAt = a.dueAt ?? container?.endsAt;
+      const dueFromSprint = !a.dueAt && !!dueAt;
+      // A room is not a person — see `namedOwner`. Resolved BEFORE the gate, so
+      // "CATOR to post the requirements" fails it exactly as "someone should
+      // look at that" does.
+      const owner = namedOwner(a.owner);
+      if (!owner || !dueAt) continue;
       // Already tracked by a note, or already a ticket — either way the promise
       // is not floating loose and this would be a duplicate of it.
       if (tracking(a) || a.keys.length) continue;
@@ -1304,17 +1380,22 @@ const workshop: Skill = {
            * only writer in the system that produces that state.
            */
           relatedKeys: [],
-          owner: a.owner,
-          dueAt: a.dueAt,
+          owner,
+          dueAt,
           // Which closing should check it — `findMissingTickets` fires when the
           // container closes, and without this it has no moment to fire at.
           ...(containerId ? { container: containerId } : {}),
-          tags: ['workshop', 'promised'],
+          // The tag is the provenance of the DATE, and the alert reads it: a
+          // date nobody said must never be quoted back as one somebody did.
+          tags: ['workshop', 'promised', ...(dueFromSprint ? ['due-from-sprint'] : [])],
           evidence: a.evidence,
           body:
             `${promise}\n\n` +
             `Promised in ${t.meetingTopic} on ${t.startedAt.slice(0, 10)}. ` +
-            `${a.owner} took it${a.dueAt ? `, due ${a.dueAt}` : ''}. ` +
+            (dueFromSprint
+              ? `${owner} took it. No date was given, so it is checked against ` +
+                `${containerLabel ?? 'the sprint'}'s close on ${dueAt.slice(0, 10)}. `
+              : `${owner} took it, due ${dueAt.slice(0, 10)}. `) +
             `Nothing in the tracker references it yet — this note is what will notice ` +
             `if that is still true when ${containerLabel ?? 'the sprint'} closes.`,
         });

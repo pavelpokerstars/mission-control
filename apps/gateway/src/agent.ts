@@ -28,7 +28,7 @@ import type { Connectors, GraphSource } from '@mc/connectors';
 import { recall, type VaultStore } from '@mc/vault';
 import { eventLog } from './events.js';
 import { buildCrossSurfaceTools, type AgentTool } from './tools.js';
-import { COPILOT_MODEL, copilotSdkInstalled, createCopilotAgent } from './copilot.js';
+import { COPILOT_MODEL, copilotSdkInstalled, copilotToken, createCopilotAgent } from './copilot.js';
 import { CLAUDE_EFFORT, CLAUDE_MODEL, createClaudeAgent } from './claude.js';
 import { CLAUDE_CLI_MODEL, claudeCliAvailable, createClaudeCliAgent } from './claude-cli.js';
 
@@ -147,7 +147,6 @@ let copilotSdk = false;
 let copilotLive = false;
 /** Whether the Claude CLI answered a probe turn. */
 let claudeCliLive = false;
-const copilotKey = (): string | undefined => process.env.GITHUB_TOKEN || undefined;
 const claudeKey = (): string | undefined =>
   process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_AUTH_TOKEN || undefined;
 
@@ -178,9 +177,9 @@ export function agentStatus(): {
       : {
           provider: 'copilot',
           live: false,
-          model: copilotKey()
+          model: copilotToken()
             ? 'stub (copilot runtime did not start — see the gateway log)'
-            : 'stub (no GITHUB_TOKEN, and no gh/OAuth login the runtime could use)',
+            : 'stub (no usable GITHUB_TOKEN, and no gh/OAuth login the runtime could use)',
         };
   }
   // Mock mode, in the order `createAgent` actually tries them.
@@ -297,7 +296,7 @@ export async function createAgent(
     // its failure is caught below.
     copilotSdk = await copilotSdkInstalled();
     const copilot = copilotSdk
-      ? await createCopilotAgent({ ...cfg, key: copilotKey() })
+      ? await createCopilotAgent({ ...cfg, key: copilotToken() })
       : null;
     copilotLive = !!copilot;
     if (copilot) return copilot;

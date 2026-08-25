@@ -17,7 +17,7 @@
 import { Fragment, useState, type JSX } from 'react';
 import { ask } from './chat';
 import { historyOf, relativeTime, useConversations, type Conversation } from './conversations';
-import { AppWindow, BackLink, type Counts } from './Chrome';
+import { AppWindow, BackLink, UndoStrip, type Counts } from './Chrome';
 import { Composer } from './Thread';
 import { go, hrefFor, type Route } from './router';
 
@@ -94,16 +94,38 @@ export function Ask({
   };
 
   const undoBar = (
-    <div className="undobar">
-      <span className="what">Deleted &ldquo;{undone?.c.alertClaim ?? undone?.c.title}&rdquo;</span>
-      <button type="button" onClick={restore}>
-        Undo
-      </button>
-    </div>
+    <UndoStrip
+      label={undone?.c.alertClaim ?? undone?.c.title ?? ''}
+      onUndo={restore}
+    />
   );
 
   const all = historyOf(conversations);
   const rows = about ? all.filter((c) => c.alertId === about) : all;
+
+  /**
+   * Built once and placed twice — the filtered view and the index render the
+   * same list, and two copies of this JSX is how one of them quietly stops
+   * matching the other.
+   */
+  const rowList = (
+    <div className="rows">
+      {rows.map((c, i) => (
+        <Fragment key={c.id}>
+          {undone?.index === i && undoBar}
+          <Row
+            c={c}
+            onDelete={() => {
+              setUndone({ c, index: i });
+              removeConversation(c.id);
+            }}
+          />
+        </Fragment>
+      ))}
+      {/* Deleted the last row: its slot is past the end of the list. */}
+      {undone !== undefined && undone.index >= rows.length && undoBar}
+    </div>
+  );
 
   /**
    * A question typed here starts a chat and opens it.
@@ -126,20 +148,7 @@ export function Ask({
         <BackLink to={{ name: 'ask' }} label="all conversations" />
         {/* No summary bar: every row below carries the chip and the alert, so
             naming it once more at the top says it a third time. */}
-        <div className="rows">
-          {rows.map((c, i) => (
-            <Fragment key={c.id}>
-              {undone?.index === i && undoBar}
-              <Row
-                c={c}
-                onDelete={() => {
-                  setUndone({ c, index: i });
-                  removeConversation(c.id);
-                }}
-              />
-            </Fragment>
-          ))}
-        </div>
+        {rowList}
       </AppWindow>
     );
   }
@@ -161,25 +170,15 @@ export function Ask({
       </div>
 
       {rows.length ? (
-        <div className="rows">
-          {rows.map((c, i) => (
-            <Fragment key={c.id}>
-              {undone?.index === i && undoBar}
-              <Row
-                c={c}
-                onDelete={() => {
-                  setUndone({ c, index: i });
-                  removeConversation(c.id);
-                }}
-              />
-            </Fragment>
-          ))}
-        </div>
+        rowList
       ) : (
-        <p className="quiet">
-          Nothing yet. Ask something above, or ask about an alert — those stay with the alert, so
-          reopening it in October still shows what you asked in August.
-        </p>
+        <>
+          {undone !== undefined && undoBar}
+          <p className="quiet">
+            Nothing yet. Ask something above, or ask about an alert — those stay with the alert, so
+            reopening it in October still shows what you asked in August.
+          </p>
+        </>
       )}
     </AppWindow>
   );

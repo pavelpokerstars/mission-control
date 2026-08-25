@@ -289,9 +289,10 @@ export function createSummariser(caps: ProviderCaps): Summariser | null {
   if (!structured) return null;
 
   // The label on the card. The metered backend names the model it spent,
-  // because that is the fact a reader wants; both CLI backends are the same
-  // login and the same binary, so they say so.
-  const provider = structured.backend === 'messages-api' ? SUMMARY_MODEL : 'claude-cli';
+  // because that is the fact a reader wants; every other backend defers to the
+  // one mapping in `structured.ts`, because a card whose whole job is provenance
+  // must not carry a second guess at who wrote it.
+  const provider = structured.backend === 'messages-api' ? SUMMARY_MODEL : structured.provider;
   console.log(
     `[summary] status summaries are on — provider=${provider} backend=${structured.backend}`,
   );
