@@ -1,0 +1,59 @@
+# Dependencies — package-lock.json is committed, so this is reproducible.
+node_modules/
+
+# Build output
+dist/
+*.tsbuildinfo
+
+# Nx local cache and daemon state. nx.json IS committed; this never is.
+.nx/
+
+# Secrets. .env.example IS committed; the real thing never is.
+.env
+.env.local
+.env.*.local
+
+# Claude Code: launch.json is shared project config and stays tracked.
+# settings.local.json is per-machine permissions and does not.
+.claude/settings.local.json
+
+# The vault is WORKING STATE, not a fixture, and none of it is committed.
+#
+# The seed notes used to be committed here — demo fixtures like the mock
+# connectors. They described a programme that no longer exists once the
+# connectors read `graph.json`, and more to the point a committed vault means
+# running the demo dirties the repo: `seedNotes` writes into it on first boot,
+# so every clone that was opened once has a diff.
+#
+# The claims now ship in `fixtures/notes/`, which IS committed, and are copied
+# in on first boot. Input and working state, kept apart — the same split
+# `fixtures/events.jsonl` and `vault/raw/events.jsonl` already have.
+#
+# ANCHORED, and it has to be. `vault/` with no leading slash is a gitignore
+# pattern that matches a directory called `vault` at ANY depth — including
+# `libs/vault`, the library. Git itself was unaffected, because ignore rules do
+# not apply to files already tracked, so nothing looked wrong: `git status` was
+# clean and every file was committed. **nx** resolves the pattern against the
+# filesystem instead, so `@mc/vault` was not in the project graph at all, and
+# `npm run typecheck:all` — the check CLAUDE.md calls authoritative, and the
+# only one that applies `types: []` to the platform-neutral libs — silently
+# skipped it. The root `tsc -b` still covered it, which is why this never
+# surfaced as an error.
+/vault/
+
+# The record of the two August planning sessions — four named colleagues,
+# verbatim quotes, meeting times and live board ids. It is genuinely useful to
+# the team and has no purpose for anybody outside it, and pseudonymising it
+# would leave a document whose entire value is who said what, minus the who.
+# Kept locally, excluded from publication. DIRECTION.md carries the decisions.
+docs/HACKATHON.md
+
+# Editor / OS noise
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
+
+# Generated documentation. The markdown files are the sources.
+docs/html/

@@ -1,0 +1,48 @@
+{
+  "name": "mission-control",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": [
+    "apps/*",
+    "libs/*"
+  ],
+  "scripts": {
+    "build": "tsc -b && vite build --config apps/shell/vite.config.mts",
+    "dev": "concurrently -n shell,gateway -c cyan,magenta \"npm:dev:shell\" \"npm:dev:gateway\"",
+    "dev:gateway": "tsx watch apps/gateway/src/main.ts",
+    "dev:shell": "vite --config apps/shell/vite.config.mts",
+    "docs": "node scripts/render-docs.mjs",
+    "fixture": "tsx scripts/generate-fixture.mts",
+    "graph": "nx graph",
+    "prebuild": "node -e \"try{require('node:fs').rmSync('apps/shell/dist',{recursive:true,force:true})}catch(e){console.warn('[prebuild] left dist in place:',e.message)}\"",
+    "typecheck": "tsc -b --pretty",
+    "typecheck:affected": "nx affected -t typecheck",
+    "typecheck:all": "nx run-many -t typecheck",
+    "verify": "node scripts/verify.mjs"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.2.0",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
+    "@vitejs/plugin-react": "^6.0.5",
+    "concurrently": "^10.0.4",
+    "marked": "^18.0.9",
+    "nx": "^23.1.1",
+    "playwright": "^1.62.1",
+    "tsx": "^4.23.11",
+    "typescript": "^7.0.2",
+    "vite": "^8.2.1"
+  },
+  "dependencies": {
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "zustand": "^5.0.14"
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  }
+}

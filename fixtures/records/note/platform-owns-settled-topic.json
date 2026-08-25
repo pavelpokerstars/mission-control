@@ -1,0 +1,23 @@
+{
+  "id": "platform-owns-settled-topic",
+  "kind": "commitment",
+  "title": "Platform to provide the payments settled topic",
+  "owner": "sanjay@example.com",
+  "dueAt": "2026-08-12",
+  "container": "sprint:PAY Sprint 12",
+  "status": "open",
+  "joins": [],
+  "at": "2026-07-06T13:14:00Z",
+  "evidence": [
+    {
+      "record": "zoom:sprint-12-planning",
+      "at": 852,
+      "quote": "Platform can give us the topic. Sanjay owns it — his team said the twelfth of August at the latest."
+    },
+    {
+      "record": "miro:sticky-actions-1",
+      "quote": "Settled topic — PLATFORM own — due 12 Aug"
+    }
+  ],
+  "body": "Agreed aloud in Sprint 12 planning and never filed. The replay work assumes\nthe topic exists; nothing in Jira says anyone is building it.\n\nSanjay accepted it for the platform team. Note that he moved to Payments Core\non 31 July, so whoever picks this up is not who agreed it."
+}

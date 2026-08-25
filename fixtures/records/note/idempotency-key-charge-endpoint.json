@@ -1,0 +1,24 @@
+{
+  "id": "idempotency-key-charge-endpoint",
+  "kind": "commitment",
+  "title": "Add an idempotency key to the charge endpoint",
+  "owner": "riya@example.com",
+  "dueAt": "2026-07-24",
+  "container": "sprint:PAY Sprint 12",
+  "status": "resolved",
+  "joins": [
+    {
+      "key": "PAY-9011",
+      "tier": "EXTRACTED"
+    }
+  ],
+  "at": "2026-07-06T13:02:00Z",
+  "evidence": [
+    {
+      "record": "zoom:sprint-12-planning",
+      "at": 120,
+      "quote": "Two things this sprint: idempotency on the charge endpoint, and the replay path."
+    }
+  ],
+  "body": "Filed the same morning and closed inside the sprint."
+}

@@ -1,0 +1,7 @@
+{
+  "id": "eng-payments-6",
+  "channel": "eng-payments",
+  "author": "dana",
+  "at": "2026-08-20T09:02:00Z",
+  "text": "PAY-9041 is still blocked on the provider signing secret. I cannot test it until we have one."
+}

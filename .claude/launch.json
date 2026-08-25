@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "mission-control",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev:shell"],
+      "port": 4200
+    },
+    {
+      "name": "mission-control-gateway",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev:gateway"],
+      "port": 8787
+    }
+  ]
+}

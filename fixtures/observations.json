@@ -1,0 +1,772 @@
+{
+  "[\"person:riya@example.com\",\"squad:ORG-10000011\",\"member_of\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"person:dana@example.com\",\"squad:ORG-10000011\",\"member_of\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"person:sam@example.com\",\"squad:ORG-10000012\",\"member_of\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"person:priya@example.com\",\"squad:ORG-10000012\",\"member_of\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"person:marcus@example.com\",\"squad:ORG-10000013\",\"member_of\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"person:sanjay@example.com\",\"squad:ORG-10000011\",\"member_of\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"person:sanjay@example.com\",\"squad:ORG-10000013\",\"member_of\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"issue:PAY-9000\",\"goal:GOAL-10\",\"supports_goal\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"issue:PAY-9010\",\"issue:PAY-9000\",\"child_of\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"issue:PAY-9020\",\"issue:PAY-9000\",\"child_of\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"issue:PAY-9011\",\"issue:PAY-9010\",\"belongs_to_epic\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"issue:PAY-9011\",\"person:riya@example.com\",\"assigned_to\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"issue:PAY-9011\",\"sprint:PAY Sprint 12\",\"in_sprint\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"issue:PAY-9011\",\"squad:ORG-10000011\",\"owned_by\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"issue:PAY-9012\",\"issue:PAY-9010\",\"belongs_to_epic\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"issue:PAY-9012\",\"person:dana@example.com\",\"assigned_to\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"issue:PAY-9012\",\"sprint:PAY Sprint 12\",\"in_sprint\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"issue:PAY-9012\",\"squad:ORG-10000011\",\"owned_by\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"issue:PAY-9013\",\"issue:PAY-9010\",\"belongs_to_epic\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"issue:PAY-9013\",\"person:sam@example.com\",\"assigned_to\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"issue:PAY-9013\",\"sprint:PAY Sprint 12\",\"in_sprint\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"issue:PAY-9013\",\"squad:ORG-10000012\",\"owned_by\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"issue:PAY-9021\",\"issue:PAY-9020\",\"belongs_to_epic\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"issue:PAY-9021\",\"person:riya@example.com\",\"assigned_to\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"issue:PAY-9021\",\"sprint:PAY Sprint 13\",\"in_sprint\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"issue:PAY-9021\",\"squad:ORG-10000011\",\"owned_by\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"issue:PAY-9022\",\"issue:PAY-9010\",\"belongs_to_epic\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"issue:PAY-9022\",\"person:dana@example.com\",\"assigned_to\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"issue:PAY-9022\",\"sprint:PAY Sprint 13\",\"in_sprint\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"issue:PAY-9022\",\"squad:ORG-10000011\",\"owned_by\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"issue:PAY-9031\",\"issue:PAY-9020\",\"belongs_to_epic\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"issue:PAY-9031\",\"person:dana@example.com\",\"assigned_to\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"issue:PAY-9031\",\"sprint:PAY Sprint 14\",\"in_sprint\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"issue:PAY-9031\",\"squad:ORG-10000011\",\"owned_by\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"issue:PAY-9032\",\"issue:PAY-9020\",\"belongs_to_epic\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"issue:PAY-9032\",\"person:sam@example.com\",\"assigned_to\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"issue:PAY-9032\",\"sprint:PAY Sprint 14\",\"in_sprint\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"issue:PAY-9032\",\"squad:ORG-10000012\",\"owned_by\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"issue:PAY-9033\",\"issue:PAY-9020\",\"belongs_to_epic\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"issue:PAY-9033\",\"person:priya@example.com\",\"assigned_to\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"issue:PAY-9033\",\"sprint:PAY Sprint 14\",\"in_sprint\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"issue:PAY-9033\",\"squad:ORG-10000012\",\"owned_by\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"issue:PAY-9034\",\"issue:PAY-9020\",\"belongs_to_epic\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"issue:PAY-9034\",\"person:riya@example.com\",\"assigned_to\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"issue:PAY-9034\",\"sprint:PAY Sprint 14\",\"in_sprint\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"issue:PAY-9034\",\"squad:ORG-10000011\",\"owned_by\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"issue:PAY-9035\",\"issue:PAY-9020\",\"belongs_to_epic\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"issue:PAY-9035\",\"person:priya@example.com\",\"assigned_to\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"issue:PAY-9035\",\"sprint:PAY Sprint 14\",\"in_sprint\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"issue:PAY-9035\",\"squad:ORG-10000012\",\"owned_by\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"issue:PAY-9024\",\"issue:PAY-9020\",\"belongs_to_epic\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"issue:PAY-9024\",\"person:priya@example.com\",\"assigned_to\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"issue:PAY-9024\",\"sprint:PAY Sprint 14\",\"in_sprint\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"issue:PAY-9024\",\"squad:ORG-10000012\",\"owned_by\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"issue:PAY-9041\",\"issue:PAY-9020\",\"belongs_to_epic\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"issue:PAY-9041\",\"person:dana@example.com\",\"assigned_to\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"issue:PAY-9041\",\"sprint:PAY Sprint 14\",\"in_sprint\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"issue:PAY-9041\",\"squad:ORG-10000011\",\"owned_by\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"issue:PAY-9042\",\"issue:PAY-9020\",\"belongs_to_epic\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"issue:PAY-9042\",\"person:sam@example.com\",\"assigned_to\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"issue:PAY-9042\",\"sprint:PAY Sprint 14\",\"in_sprint\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"issue:PAY-9042\",\"squad:ORG-10000012\",\"owned_by\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"issue:PAY-9043\",\"issue:PAY-9020\",\"belongs_to_epic\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"issue:PAY-9043\",\"person:riya@example.com\",\"assigned_to\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"issue:PAY-9043\",\"sprint:PAY Sprint 14\",\"in_sprint\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"issue:PAY-9043\",\"squad:ORG-10000011\",\"owned_by\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"issue:PAY-9044\",\"issue:PAY-9020\",\"belongs_to_epic\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"issue:PAY-9044\",\"person:dana@example.com\",\"assigned_to\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"issue:PAY-9044\",\"sprint:PAY Sprint 14\",\"in_sprint\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"issue:PAY-9044\",\"squad:ORG-10000011\",\"owned_by\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"issue:PLT-4412\",\"issue:PLT-4400\",\"belongs_to_epic\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"issue:PLT-4412\",\"person:marcus@example.com\",\"assigned_to\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"issue:PLT-4412\",\"squad:ORG-10000013\",\"owned_by\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"issue:PLT-4405\",\"issue:PLT-4400\",\"belongs_to_epic\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"issue:PLT-4405\",\"person:marcus@example.com\",\"assigned_to\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"issue:PLT-4405\",\"squad:ORG-10000013\",\"owned_by\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"issue:WEB-2210\",\"person:sam@example.com\",\"assigned_to\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"issue:WEB-2210\",\"sprint:PAY Sprint 14\",\"in_sprint\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"issue:WEB-2210\",\"squad:ORG-10000012\",\"owned_by\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"issue:PAY-9032\",\"issue:PAY-9031\",\"depends_on\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"issue:PAY-9035\",\"issue:PAY-9013\",\"depends_on\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"issue:PAY-9041\",\"issue:PAY-9042\",\"depends_on\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"issue:PAY-9042\",\"issue:PAY-9043\",\"depends_on\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"issue:PAY-9043\",\"issue:PAY-9044\",\"depends_on\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"issue:PAY-9044\",\"issue:PAY-9041\",\"depends_on\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"issue:PAY-9031\",\"issue:PLT-4412\",\"depends_on\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"person:riya@example.com\",\"meeting:zoom/sprint-12-planning\",\"attended\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"person:dana@example.com\",\"meeting:zoom/sprint-12-planning\",\"attended\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"person:sam@example.com\",\"meeting:zoom/sprint-12-planning\",\"attended\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"person:sanjay@example.com\",\"meeting:zoom/sprint-12-planning\",\"attended\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"meeting:zoom/sprint-12-planning\",\"issue:PAY-9012\",\"mentions\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"meeting:zoom/sprint-12-planning\",\"issue:PAY-9013\",\"mentions\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"person:riya@example.com\",\"meeting:zoom/sprint-14-planning\",\"attended\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"person:dana@example.com\",\"meeting:zoom/sprint-14-planning\",\"attended\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"person:sam@example.com\",\"meeting:zoom/sprint-14-planning\",\"attended\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"person:priya@example.com\",\"meeting:zoom/sprint-14-planning\",\"attended\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"meeting:zoom/sprint-14-planning\",\"issue:PAY-9032\",\"mentions\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"meeting:zoom/sprint-14-planning\",\"issue:PAY-9031\",\"mentions\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"person:riya@example.com\",\"meeting:zoom/sprint-12-retro\",\"attended\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"person:dana@example.com\",\"meeting:zoom/sprint-12-retro\",\"attended\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"person:sam@example.com\",\"meeting:zoom/sprint-12-retro\",\"attended\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"message:slack/eng-payments/eng-payments-1\",\"person:dana@example.com\",\"authored_by\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"message:slack/eng-payments/eng-payments-1\",\"issue:PAY-9012\",\"mentions\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"message:slack/eng-payments/eng-payments-2\",\"person:riya@example.com\",\"authored_by\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"message:slack/eng-payments/eng-payments-2\",\"issue:PAY-9041\",\"mentions\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"message:slack/eng-payments/eng-payments-2\",\"issue:PAY-9044\",\"mentions\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"message:slack/standup/standup-1\",\"person:sam@example.com\",\"authored_by\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"message:slack/standup/standup-1\",\"issue:PAY-9031\",\"mentions\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"message:slack/eng-payments/eng-payments-3\",\"person:dana@example.com\",\"authored_by\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"message:slack/eng-payments/eng-payments-3\",\"issue:PAY-9031\",\"mentions\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"message:slack/eng-payments/eng-payments-4\",\"person:riya@example.com\",\"authored_by\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"message:slack/eng-payments/eng-payments-4\",\"page:confluence/48210331\",\"links_to\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"message:slack/eng-payments/eng-payments-5\",\"person:sam@example.com\",\"authored_by\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"message:slack/eng-payments/eng-payments-6\",\"person:dana@example.com\",\"authored_by\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"message:slack/eng-payments/eng-payments-6\",\"issue:PAY-9041\",\"mentions\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"message:slack/eng-platform/eng-platform-1\",\"person:marcus@example.com\",\"authored_by\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"message:slack/eng-platform/eng-platform-1\",\"issue:PLT-4412\",\"mentions\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"message:slack/standup/standup-2\",\"person:priya@example.com\",\"authored_by\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"message:slack/standup/standup-2\",\"issue:PAY-9035\",\"mentions\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"page:confluence/48210331\",\"person:riya@example.com\",\"authored_by\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"page:confluence/48210331\",\"issue:PAY-9012\",\"documents\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"page:confluence/48210488\",\"person:riya@example.com\",\"authored_by\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"page:confluence/48210488\",\"issue:PAY-9021\",\"documents\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"page:confluence/48210502\",\"person:marcus@example.com\",\"authored_by\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"frame:miro/uXjVFIXTURE01=/Actions\",\"board:miro/uXjVFIXTURE01=\",\"on_board\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"frame:miro/uXjVFIXTURE01=/Went well\",\"board:miro/uXjVFIXTURE01=\",\"on_board\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"frame:miro/uXjVFIXTURE01=/Watch\",\"board:miro/uXjVFIXTURE01=\",\"on_board\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"sticky:miro/uXjVFIXTURE01=/sticky-actions-1\",\"frame:miro/uXjVFIXTURE01=/Actions\",\"in_frame\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"sticky:miro/uXjVFIXTURE01=/sticky-actions-1\",\"person:riya@example.com\",\"authored_by\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"sticky:miro/uXjVFIXTURE01=/sticky-actions-2\",\"frame:miro/uXjVFIXTURE01=/Actions\",\"in_frame\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"sticky:miro/uXjVFIXTURE01=/sticky-actions-2\",\"person:sam@example.com\",\"authored_by\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"sticky:miro/uXjVFIXTURE01=/sticky-actions-2\",\"issue:PAY-9013\",\"mentions\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"sticky:miro/uXjVFIXTURE01=/sticky-went-well-1\",\"frame:miro/uXjVFIXTURE01=/Went well\",\"in_frame\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"sticky:miro/uXjVFIXTURE01=/sticky-went-well-1\",\"person:dana@example.com\",\"authored_by\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"sticky:miro/uXjVFIXTURE01=/sticky-watch-1\",\"frame:miro/uXjVFIXTURE01=/Watch\",\"in_frame\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"sticky:miro/uXjVFIXTURE01=/sticky-watch-1\",\"person:sam@example.com\",\"authored_by\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"pr:github/example-org/payments-web/4210\",\"person:dana@example.com\",\"authored_by\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"pr:github/example-org/payments-web/4210\",\"issue:PAY-9031\",\"mentions\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"pr:github/example-org/payments-web/4198\",\"person:dana@example.com\",\"authored_by\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"pr:github/example-org/payments-web/4198\",\"issue:PAY-9012\",\"mentions\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"pr:github/example-org/payments-web/4221\",\"person:dana@example.com\",\"authored_by\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"pr:github/example-org/payments-web/4221\",\"issue:PAY-9044\",\"mentions\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"note:platform-owns-settled-topic\",\"person:sanjay@example.com\",\"assigned_to\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"note:idempotency-key-charge-endpoint\",\"issue:PAY-9011\",\"annotates\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"note:idempotency-key-charge-endpoint\",\"person:riya@example.com\",\"assigned_to\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"note:dedupe-cache-staging\",\"issue:PAY-9012\",\"annotates\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"note:dedupe-cache-staging\",\"person:dana@example.com\",\"assigned_to\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"note:load-test-before-freeze\",\"issue:PAY-9013\",\"annotates\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"note:load-test-before-freeze\",\"person:sam@example.com\",\"assigned_to\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"note:dana-owns-settled-event\",\"issue:PAY-9031\",\"annotates\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"note:dana-owns-settled-event\",\"person:dana@example.com\",\"assigned_to\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"note:cache-over-constraint\",\"issue:PAY-9012\",\"annotates\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"note:provider-secret-blocks-reconciliation\",\"issue:PAY-9041\",\"annotates\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  },
+  "[\"note:provider-secret-blocks-reconciliation\",\"person:dana@example.com\",\"assigned_to\"]": {
+    "firstSeen": "2026-08-23T09:00:00.000Z",
+    "lastConfirmed": "2026-08-23T09:00:00.000Z",
+    "seenCount": 1
+  }
+}

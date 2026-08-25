@@ -1,0 +1,2434 @@
+{
+  "directed": true,
+  "multigraph": true,
+  "graph": {
+    "generatedAt": "2026-08-23T09:00:00.000Z",
+    "generator": "mission-control fixture generator",
+    "sources": [
+      "jira",
+      "slack",
+      "zoom",
+      "confluence",
+      "miro",
+      "github",
+      "vault"
+    ]
+  },
+  "nodes": [
+    {
+      "id": "tribe:TRB-100",
+      "kind": "tribe",
+      "label": "Payments and Wallet",
+      "source": "jira"
+    },
+    {
+      "id": "goal:GOAL-10",
+      "kind": "goal",
+      "label": "Reduce payment failure rate",
+      "source": "jira"
+    },
+    {
+      "id": "squad:ORG-10000011",
+      "kind": "squad",
+      "label": "Payments Core",
+      "source": "jira"
+    },
+    {
+      "id": "squad:ORG-10000012",
+      "kind": "squad",
+      "label": "Payments Web",
+      "source": "jira"
+    },
+    {
+      "id": "squad:ORG-10000013",
+      "kind": "squad",
+      "label": "Platform Services",
+      "source": "jira"
+    },
+    {
+      "id": "person:riya@example.com",
+      "kind": "person",
+      "label": "Riya Nair",
+      "source": "jira",
+      "email": "riya@example.com",
+      "displayName": "Riya Nair",
+      "handles": {
+        "slack": "riya",
+        "jira": "riya",
+        "zoom": "Riya Nair",
+        "github": "riya-dev"
+      }
+    },
+    {
+      "id": "person:dana@example.com",
+      "kind": "person",
+      "label": "Dana Okafor",
+      "source": "jira",
+      "email": "dana@example.com",
+      "displayName": "Dana Okafor",
+      "handles": {
+        "slack": "dana",
+        "jira": "dana",
+        "zoom": "Dana Okafor",
+        "github": "dana-dev"
+      }
+    },
+    {
+      "id": "person:sam@example.com",
+      "kind": "person",
+      "label": "Sam Whitfield",
+      "source": "jira",
+      "email": "sam@example.com",
+      "displayName": "Sam Whitfield",
+      "handles": {
+        "slack": "sam",
+        "jira": "sam",
+        "zoom": "Sam Whitfield",
+        "github": "sam-dev"
+      }
+    },
+    {
+      "id": "person:priya@example.com",
+      "kind": "person",
+      "label": "Priya Mehta",
+      "source": "jira",
+      "email": "priya@example.com",
+      "displayName": "Priya Mehta",
+      "handles": {
+        "slack": "priya",
+        "jira": "priya",
+        "zoom": "Priya Mehta",
+        "github": "priya-dev"
+      }
+    },
+    {
+      "id": "person:marcus@example.com",
+      "kind": "person",
+      "label": "Marcus Hale",
+      "source": "jira",
+      "email": "marcus@example.com",
+      "displayName": "Marcus Hale",
+      "handles": {
+        "slack": "marcus",
+        "jira": "marcus",
+        "zoom": "Marcus Hale",
+        "github": "marcus-dev"
+      }
+    },
+    {
+      "id": "person:sanjay@example.com",
+      "kind": "person",
+      "label": "Sanjay Rao",
+      "source": "jira",
+      "email": "sanjay@example.com",
+      "displayName": "Sanjay Rao",
+      "handles": {
+        "slack": "sanjay",
+        "jira": "sanjay",
+        "zoom": "Sanjay Rao",
+        "github": "sanjay-dev"
+      }
+    },
+    {
+      "id": "sprint:PAY Sprint 12",
+      "kind": "sprint",
+      "label": "PAY Sprint 12",
+      "source": "jira",
+      "state": "closed",
+      "startsAt": "2026-07-06T09:00:00.000Z",
+      "endsAt": "2026-07-31T17:00:00.000Z",
+      "closedAt": "2026-07-31T17:00:00.000Z"
+    },
+    {
+      "id": "sprint:PAY Sprint 13",
+      "kind": "sprint",
+      "label": "PAY Sprint 13",
+      "source": "jira",
+      "state": "closed",
+      "startsAt": "2026-08-03T09:00:00.000Z",
+      "endsAt": "2026-08-14T17:00:00.000Z",
+      "closedAt": "2026-08-14T17:00:00.000Z"
+    },
+    {
+      "id": "sprint:PAY Sprint 14",
+      "kind": "sprint",
+      "label": "PAY Sprint 14",
+      "source": "jira",
+      "state": "active",
+      "startsAt": "2026-08-17T09:00:00.000Z",
+      "endsAt": "2026-09-04T17:00:00.000Z"
+    },
+    {
+      "id": "issue:PAY-9000",
+      "kind": "issue",
+      "label": "Payment reliability programme",
+      "source": "jira",
+      "key": "PAY-9000",
+      "level": "initiative",
+      "status": "In Progress",
+      "statusCategory": "doing",
+      "createdAt": "2026-06-01T09:00:00.000Z",
+      "url": "https://example.atlassian.net/browse/PAY-9000",
+      "updatedAt": "2026-06-01T12:00:00.000Z"
+    },
+    {
+      "id": "issue:PAY-9010",
+      "kind": "issue",
+      "label": "Idempotency on the charge endpoint",
+      "source": "jira",
+      "key": "PAY-9010",
+      "level": "epic",
+      "status": "Closed",
+      "statusCategory": "done",
+      "createdAt": "2026-06-08T09:00:00.000Z",
+      "resolvedAt": "2026-07-31T17:00:00.000Z",
+      "url": "https://example.atlassian.net/browse/PAY-9010",
+      "updatedAt": "2026-07-31T12:00:00.000Z"
+    },
+    {
+      "id": "issue:PAY-9020",
+      "kind": "issue",
+      "label": "Replay tooling for failed batches",
+      "source": "jira",
+      "key": "PAY-9020",
+      "level": "epic",
+      "status": "In Progress",
+      "statusCategory": "doing",
+      "createdAt": "2026-06-08T09:00:00.000Z",
+      "url": "https://example.atlassian.net/browse/PAY-9020",
+      "updatedAt": "2026-06-08T12:00:00.000Z"
+    },
+    {
+      "id": "issue:PLT-4400",
+      "kind": "issue",
+      "label": "Event backbone",
+      "source": "jira",
+      "key": "PLT-4400",
+      "level": "epic",
+      "status": "In Progress",
+      "statusCategory": "doing",
+      "createdAt": "2026-05-20T09:00:00.000Z",
+      "url": "https://example.atlassian.net/browse/PLT-4400",
+      "updatedAt": "2026-05-20T12:00:00.000Z"
+    },
+    {
+      "id": "issue:PAY-9011",
+      "kind": "issue",
+      "label": "Add an idempotency key to the charge endpoint",
+      "source": "jira",
+      "key": "PAY-9011",
+      "level": "story",
+      "status": "Closed",
+      "statusCategory": "done",
+      "assignee": "riya@example.com",
+      "points": 5,
+      "createdAt": "2026-07-06T09:00:00.000Z",
+      "resolvedAt": "2026-07-24T17:00:00.000Z",
+      "url": "https://example.atlassian.net/browse/PAY-9011",
+      "updatedAt": "2026-07-24T12:00:00.000Z"
+    },
+    {
+      "id": "issue:PAY-9012",
+      "kind": "issue",
+      "label": "Dedupe cache in front of the charge endpoint",
+      "source": "jira",
+      "key": "PAY-9012",
+      "level": "story",
+      "status": "Closed",
+      "statusCategory": "done",
+      "assignee": "dana@example.com",
+      "points": 3,
+      "createdAt": "2026-07-06T09:00:00.000Z",
+      "resolvedAt": "2026-07-29T17:00:00.000Z",
+      "url": "https://example.atlassian.net/browse/PAY-9012",
+      "updatedAt": "2026-07-29T12:00:00.000Z"
+    },
+    {
+      "id": "issue:PAY-9013",
+      "kind": "issue",
+      "label": "Load test the charge path before the freeze",
+      "source": "jira",
+      "key": "PAY-9013",
+      "level": "task",
+      "status": "Closed",
+      "statusCategory": "done",
+      "assignee": "sam@example.com",
+      "points": 2,
+      "createdAt": "2026-07-09T09:00:00.000Z",
+      "resolvedAt": "2026-07-30T17:00:00.000Z",
+      "url": "https://example.atlassian.net/browse/PAY-9013",
+      "updatedAt": "2026-07-30T12:00:00.000Z"
+    },
+    {
+      "id": "issue:PAY-9021",
+      "kind": "issue",
+      "label": "Replay a failed batch from the audit log",
+      "source": "jira",
+      "key": "PAY-9021",
+      "level": "story",
+      "status": "Closed",
+      "statusCategory": "done",
+      "assignee": "riya@example.com",
+      "points": 5,
+      "createdAt": "2026-08-03T09:00:00.000Z",
+      "resolvedAt": "2026-08-13T17:00:00.000Z",
+      "url": "https://example.atlassian.net/browse/PAY-9021",
+      "updatedAt": "2026-08-13T12:00:00.000Z"
+    },
+    {
+      "id": "issue:PAY-9022",
+      "kind": "issue",
+      "label": "Duplicate charge on retry after a 504",
+      "source": "jira",
+      "key": "PAY-9022",
+      "level": "bug",
+      "status": "Closed",
+      "statusCategory": "done",
+      "assignee": "dana@example.com",
+      "points": 3,
+      "createdAt": "2026-08-04T09:00:00.000Z",
+      "resolvedAt": "2026-08-12T17:00:00.000Z",
+      "url": "https://example.atlassian.net/browse/PAY-9022",
+      "updatedAt": "2026-08-12T12:00:00.000Z"
+    },
+    {
+      "id": "issue:PAY-9031",
+      "kind": "issue",
+      "label": "Emit a payment-settled event on the topic",
+      "source": "jira",
+      "key": "PAY-9031",
+      "level": "story",
+      "status": "Code Review",
+      "statusCategory": "doing",
+      "assignee": "dana@example.com",
+      "points": 5,
+      "createdAt": "2026-08-17T09:00:00.000Z",
+      "url": "https://example.atlassian.net/browse/PAY-9031",
+      "updatedAt": "2026-08-17T12:00:00.000Z"
+    },
+    {
+      "id": "issue:PAY-9032",
+      "kind": "issue",
+      "label": "Consume settled events in the web client",
+      "source": "jira",
+      "key": "PAY-9032",
+      "level": "story",
+      "status": "To Do",
+      "statusCategory": "todo",
+      "assignee": "sam@example.com",
+      "points": 3,
+      "createdAt": "2026-08-17T09:00:00.000Z",
+      "url": "https://example.atlassian.net/browse/PAY-9032",
+      "updatedAt": "2026-08-17T12:00:00.000Z"
+    },
+    {
+      "id": "issue:PAY-9033",
+      "kind": "issue",
+      "label": "Backfill settled events for July",
+      "source": "jira",
+      "key": "PAY-9033",
+      "level": "task",
+      "status": "To Do",
+      "statusCategory": "todo",
+      "assignee": "priya@example.com",
+      "points": 2,
+      "createdAt": "2026-08-18T09:00:00.000Z",
+      "url": "https://example.atlassian.net/browse/PAY-9033",
+      "updatedAt": "2026-08-18T12:00:00.000Z"
+    },
+    {
+      "id": "issue:PAY-9034",
+      "kind": "issue",
+      "label": "How do we replay without double-charging?",
+      "source": "jira",
+      "key": "PAY-9034",
+      "level": "spike",
+      "status": "Closed",
+      "statusCategory": "done",
+      "assignee": "riya@example.com",
+      "points": 1,
+      "createdAt": "2026-08-17T09:00:00.000Z",
+      "resolvedAt": "2026-08-19T17:00:00.000Z",
+      "url": "https://example.atlassian.net/browse/PAY-9034",
+      "updatedAt": "2026-08-19T12:00:00.000Z"
+    },
+    {
+      "id": "issue:PAY-9035",
+      "kind": "issue",
+      "label": "Alert on settlement lag",
+      "source": "jira",
+      "key": "PAY-9035",
+      "level": "story",
+      "status": "To Do",
+      "statusCategory": "todo",
+      "assignee": "priya@example.com",
+      "points": 3,
+      "createdAt": "2026-08-18T09:00:00.000Z",
+      "url": "https://example.atlassian.net/browse/PAY-9035",
+      "updatedAt": "2026-08-18T12:00:00.000Z"
+    },
+    {
+      "id": "issue:PAY-9024",
+      "kind": "issue",
+      "label": "Retry policy for the settlement webhook",
+      "source": "jira",
+      "key": "PAY-9024",
+      "level": "story",
+      "status": "In Progress",
+      "statusCategory": "doing",
+      "assignee": "priya@example.com",
+      "points": 3,
+      "createdAt": "2026-08-05T09:00:00.000Z",
+      "url": "https://example.atlassian.net/browse/PAY-9024",
+      "updatedAt": "2026-08-05T12:00:00.000Z"
+    },
+    {
+      "id": "issue:PAY-9041",
+      "kind": "issue",
+      "label": "Reconcile the ledger against the provider",
+      "source": "jira",
+      "key": "PAY-9041",
+      "level": "story",
+      "status": "Blocked",
+      "statusCategory": "doing",
+      "assignee": "dana@example.com",
+      "points": 5,
+      "createdAt": "2026-08-17T09:00:00.000Z",
+      "url": "https://example.atlassian.net/browse/PAY-9041",
+      "updatedAt": "2026-08-17T12:00:00.000Z"
+    },
+    {
+      "id": "issue:PAY-9042",
+      "kind": "issue",
+      "label": "Normalise the provider statement format",
+      "source": "jira",
+      "key": "PAY-9042",
+      "level": "story",
+      "status": "To Do",
+      "statusCategory": "todo",
+      "assignee": "sam@example.com",
+      "points": 3,
+      "createdAt": "2026-08-17T09:00:00.000Z",
+      "url": "https://example.atlassian.net/browse/PAY-9042",
+      "updatedAt": "2026-08-17T12:00:00.000Z"
+    },
+    {
+      "id": "issue:PAY-9043",
+      "kind": "issue",
+      "label": "Agree the provider field mapping",
+      "source": "jira",
+      "key": "PAY-9043",
+      "level": "task",
+      "status": "To Do",
+      "statusCategory": "todo",
+      "assignee": "riya@example.com",
+      "points": 2,
+      "createdAt": "2026-08-17T09:00:00.000Z",
+      "url": "https://example.atlassian.net/browse/PAY-9043",
+      "updatedAt": "2026-08-17T12:00:00.000Z"
+    },
+    {
+      "id": "issue:PAY-9044",
+      "kind": "issue",
+      "label": "Freeze the ledger schema",
+      "source": "jira",
+      "key": "PAY-9044",
+      "level": "task",
+      "status": "To Do",
+      "statusCategory": "todo",
+      "assignee": "dana@example.com",
+      "points": 2,
+      "createdAt": "2026-08-17T09:00:00.000Z",
+      "url": "https://example.atlassian.net/browse/PAY-9044",
+      "updatedAt": "2026-08-17T12:00:00.000Z"
+    },
+    {
+      "id": "issue:PLT-4412",
+      "kind": "issue",
+      "label": "Provision the payments settled topic",
+      "source": "jira",
+      "key": "PLT-4412",
+      "level": "story",
+      "status": "To Do",
+      "statusCategory": "todo",
+      "assignee": "marcus@example.com",
+      "points": 3,
+      "createdAt": "2026-08-19T09:00:00.000Z",
+      "url": "https://example.atlassian.net/browse/PLT-4412",
+      "updatedAt": "2026-08-19T12:00:00.000Z"
+    },
+    {
+      "id": "issue:PLT-4405",
+      "kind": "issue",
+      "label": "Retention policy for payment topics",
+      "source": "jira",
+      "key": "PLT-4405",
+      "level": "story",
+      "status": "Closed",
+      "statusCategory": "done",
+      "assignee": "marcus@example.com",
+      "points": 2,
+      "createdAt": "2026-06-22T09:00:00.000Z",
+      "resolvedAt": "2026-07-18T17:00:00.000Z",
+      "url": "https://example.atlassian.net/browse/PLT-4405",
+      "updatedAt": "2026-07-18T12:00:00.000Z"
+    },
+    {
+      "id": "issue:WEB-2210",
+      "kind": "issue",
+      "label": "Settlement status in the account page",
+      "source": "jira",
+      "key": "WEB-2210",
+      "level": "task",
+      "status": "To Do",
+      "statusCategory": "todo",
+      "assignee": "sam@example.com",
+      "points": 3,
+      "createdAt": "2026-08-18T09:00:00.000Z",
+      "url": "https://example.atlassian.net/browse/WEB-2210",
+      "updatedAt": "2026-08-18T12:00:00.000Z"
+    },
+    {
+      "id": "meeting:zoom/sprint-12-planning",
+      "kind": "meeting",
+      "label": "PAY Sprint 12 planning",
+      "source": "zoom",
+      "at": "2026-07-06T13:00:00.000Z",
+      "recordRef": "records/meeting/sprint-12-planning.json"
+    },
+    {
+      "id": "meeting:zoom/sprint-14-planning",
+      "kind": "meeting",
+      "label": "PAY Sprint 14 planning",
+      "source": "zoom",
+      "at": "2026-08-17T13:00:00.000Z",
+      "recordRef": "records/meeting/sprint-14-planning.json"
+    },
+    {
+      "id": "meeting:zoom/sprint-12-retro",
+      "kind": "meeting",
+      "label": "PAY Sprint 12 retro",
+      "source": "zoom",
+      "at": "2026-07-31T15:00:00.000Z",
+      "recordRef": "records/meeting/sprint-12-retro.json"
+    },
+    {
+      "id": "message:slack/eng-payments/eng-payments-1",
+      "kind": "message",
+      "label": "#eng-payments — dana",
+      "source": "slack",
+      "at": "2026-07-29T10:12:00.000Z",
+      "container": "channel:slack/eng-payments",
+      "recordRef": "records/message/eng-payments-1.json"
+    },
+    {
+      "id": "message:slack/eng-payments/eng-payments-2",
+      "kind": "message",
+      "label": "#eng-payments — riya",
+      "source": "slack",
+      "at": "2026-08-17T09:40:00.000Z",
+      "container": "channel:slack/eng-payments",
+      "recordRef": "records/message/eng-payments-2.json"
+    },
+    {
+      "id": "message:slack/standup/standup-1",
+      "kind": "message",
+      "label": "#standup — sam",
+      "source": "slack",
+      "at": "2026-08-18T09:14:00.000Z",
+      "container": "channel:slack/standup",
+      "recordRef": "records/message/standup-1.json"
+    },
+    {
+      "id": "message:slack/eng-payments/eng-payments-3",
+      "kind": "message",
+      "label": "#eng-payments — dana",
+      "source": "slack",
+      "at": "2026-08-19T16:20:00.000Z",
+      "container": "channel:slack/eng-payments",
+      "recordRef": "records/message/eng-payments-3.json"
+    },
+    {
+      "id": "message:slack/eng-payments/eng-payments-4",
+      "kind": "message",
+      "label": "#eng-payments — riya",
+      "source": "slack",
+      "at": "2026-07-10T11:05:00.000Z",
+      "container": "channel:slack/eng-payments",
+      "recordRef": "records/message/eng-payments-4.json"
+    },
+    {
+      "id": "message:slack/eng-payments/eng-payments-5",
+      "kind": "message",
+      "label": "#eng-payments — sam",
+      "source": "slack",
+      "at": "2026-07-10T11:31:00.000Z",
+      "container": "channel:slack/eng-payments",
+      "recordRef": "records/message/eng-payments-5.json"
+    },
+    {
+      "id": "message:slack/eng-payments/eng-payments-6",
+      "kind": "message",
+      "label": "#eng-payments — dana",
+      "source": "slack",
+      "at": "2026-08-20T09:02:00.000Z",
+      "container": "channel:slack/eng-payments",
+      "recordRef": "records/message/eng-payments-6.json"
+    },
+    {
+      "id": "message:slack/eng-platform/eng-platform-1",
+      "kind": "message",
+      "label": "#eng-platform — marcus",
+      "source": "slack",
+      "at": "2026-08-19T14:02:00.000Z",
+      "container": "channel:slack/eng-platform",
+      "recordRef": "records/message/eng-platform-1.json"
+    },
+    {
+      "id": "message:slack/standup/standup-2",
+      "kind": "message",
+      "label": "#standup — priya",
+      "source": "slack",
+      "at": "2026-08-20T09:11:00.000Z",
+      "container": "channel:slack/standup",
+      "recordRef": "records/message/standup-2.json"
+    },
+    {
+      "id": "page:confluence/48210331",
+      "kind": "page",
+      "label": "Cache over constraint",
+      "source": "confluence",
+      "at": "2026-07-10T10:50:00.000Z",
+      "container": "space:confluence/PAY",
+      "url": "https://example.atlassian.net/wiki/spaces/PAY/pages/48210331",
+      "recordRef": "records/page/48210331.json"
+    },
+    {
+      "id": "page:confluence/48210488",
+      "kind": "page",
+      "label": "Replay runbook",
+      "source": "confluence",
+      "at": "2026-08-13T16:00:00.000Z",
+      "container": "space:confluence/PAY",
+      "url": "https://example.atlassian.net/wiki/spaces/PAY/pages/48210488",
+      "recordRef": "records/page/48210488.json"
+    },
+    {
+      "id": "page:confluence/48210502",
+      "kind": "page",
+      "label": "Provider onboarding notes",
+      "source": "confluence",
+      "at": "2026-08-05T09:00:00.000Z",
+      "container": "space:confluence/PAY",
+      "url": "https://example.atlassian.net/wiki/spaces/PAY/pages/48210502",
+      "recordRef": "records/page/48210502.json"
+    },
+    {
+      "id": "board:miro/uXjVFIXTURE01=",
+      "kind": "board",
+      "label": "Payments reliability",
+      "source": "miro"
+    },
+    {
+      "id": "frame:miro/uXjVFIXTURE01=/Actions",
+      "kind": "frame",
+      "label": "Actions",
+      "source": "miro"
+    },
+    {
+      "id": "frame:miro/uXjVFIXTURE01=/Went well",
+      "kind": "frame",
+      "label": "Went well",
+      "source": "miro"
+    },
+    {
+      "id": "frame:miro/uXjVFIXTURE01=/Watch",
+      "kind": "frame",
+      "label": "Watch",
+      "source": "miro"
+    },
+    {
+      "id": "sticky:miro/uXjVFIXTURE01=/sticky-actions-1",
+      "kind": "sticky",
+      "label": "Settled topic — PLATFORM own — due 12 Aug",
+      "source": "miro",
+      "recordRef": "records/sticky/sticky-actions-1.json"
+    },
+    {
+      "id": "sticky:miro/uXjVFIXTURE01=/sticky-actions-2",
+      "kind": "sticky",
+      "label": "Load test before the freeze — PAY-9013",
+      "source": "miro",
+      "recordRef": "records/sticky/sticky-actions-2.json"
+    },
+    {
+      "id": "sticky:miro/uXjVFIXTURE01=/sticky-went-well-1",
+      "kind": "sticky",
+      "label": "Cache shipped inside the sprint",
+      "source": "miro",
+      "recordRef": "records/sticky/sticky-went-well-1.json"
+    },
+    {
+      "id": "sticky:miro/uXjVFIXTURE01=/sticky-watch-1",
+      "kind": "sticky",
+      "label": "The provider keeps changing the statement format",
+      "source": "miro",
+      "recordRef": "records/sticky/sticky-watch-1.json"
+    },
+    {
+      "id": "pr:github/example-org/payments-web/4210",
+      "kind": "pr",
+      "label": "Publish settled events",
+      "source": "github",
+      "at": "2026-08-19T11:00:00.000Z",
+      "url": "https://github.com/example-org/payments-web/pull/4210",
+      "recordRef": "records/pr/4210.json"
+    },
+    {
+      "id": "pr:github/example-org/payments-web/4198",
+      "kind": "pr",
+      "label": "Dedupe cache",
+      "source": "github",
+      "at": "2026-07-28T15:20:00.000Z",
+      "url": "https://github.com/example-org/payments-web/pull/4198",
+      "recordRef": "records/pr/4198.json"
+    },
+    {
+      "id": "pr:github/example-org/payments-web/4221",
+      "kind": "pr",
+      "label": "Ledger schema draft",
+      "source": "github",
+      "at": "2026-08-21T09:30:00.000Z",
+      "url": "https://github.com/example-org/payments-web/pull/4221",
+      "recordRef": "records/pr/4221.json"
+    },
+    {
+      "id": "note:platform-owns-settled-topic",
+      "kind": "note",
+      "label": "Platform to provide the payments settled topic",
+      "source": "vault",
+      "noteKind": "commitment",
+      "status": "open",
+      "recency": "dated",
+      "verifiedAt": "2026-07-06T13:14:00.000Z",
+      "owner": "sanjay@example.com",
+      "dueAt": "2026-08-12T17:00:00.000Z",
+      "container": "sprint:PAY Sprint 12",
+      "updatedAt": "2026-07-06T13:14:00.000Z",
+      "recordRef": "records/note/platform-owns-settled-topic.json"
+    },
+    {
+      "id": "note:idempotency-key-charge-endpoint",
+      "kind": "note",
+      "label": "Add an idempotency key to the charge endpoint",
+      "source": "vault",
+      "noteKind": "commitment",
+      "status": "resolved",
+      "recency": "dated",
+      "verifiedAt": "2026-07-06T13:02:00.000Z",
+      "owner": "riya@example.com",
+      "dueAt": "2026-07-24T17:00:00.000Z",
+      "container": "sprint:PAY Sprint 12",
+      "updatedAt": "2026-07-06T13:02:00.000Z",
+      "recordRef": "records/note/idempotency-key-charge-endpoint.json"
+    },
+    {
+      "id": "note:dedupe-cache-staging",
+      "kind": "note",
+      "label": "Dedupe cache in front of the charge endpoint",
+      "source": "vault",
+      "noteKind": "commitment",
+      "status": "resolved",
+      "recency": "dated",
+      "verifiedAt": "2026-07-06T13:10:00.000Z",
+      "owner": "dana@example.com",
+      "dueAt": "2026-07-29T17:00:00.000Z",
+      "container": "sprint:PAY Sprint 12",
+      "updatedAt": "2026-07-06T13:10:00.000Z",
+      "recordRef": "records/note/dedupe-cache-staging.json"
+    },
+    {
+      "id": "note:load-test-before-freeze",
+      "kind": "note",
+      "label": "Load test the charge path before the freeze",
+      "source": "vault",
+      "noteKind": "commitment",
+      "status": "resolved",
+      "recency": "dated",
+      "verifiedAt": "2026-07-06T13:36:00.000Z",
+      "owner": "sam@example.com",
+      "dueAt": "2026-07-30T17:00:00.000Z",
+      "container": "sprint:PAY Sprint 12",
+      "updatedAt": "2026-07-06T13:36:00.000Z",
+      "recordRef": "records/note/load-test-before-freeze.json"
+    },
+    {
+      "id": "note:write-down-cache-decision",
+      "kind": "note",
+      "label": "Somebody should write down why we chose a cache over a constraint",
+      "source": "vault",
+      "noteKind": "commitment",
+      "status": "open",
+      "recency": "dated",
+      "verifiedAt": "2026-07-06T13:31:00.000Z",
+      "container": "sprint:PAY Sprint 12",
+      "updatedAt": "2026-07-06T13:31:00.000Z",
+      "recordRef": "records/note/write-down-cache-decision.json"
+    },
+    {
+      "id": "note:dana-owns-settled-event",
+      "kind": "note",
+      "label": "Dana takes the settled event end to end",
+      "source": "vault",
+      "noteKind": "commitment",
+      "status": "open",
+      "recency": "dated",
+      "verifiedAt": "2026-08-17T13:09:00.000Z",
+      "owner": "dana@example.com",
+      "dueAt": "2026-08-29T17:00:00.000Z",
+      "container": "sprint:PAY Sprint 14",
+      "updatedAt": "2026-08-17T13:09:00.000Z",
+      "recordRef": "records/note/dana-owns-settled-event.json"
+    },
+    {
+      "id": "note:cache-over-constraint",
+      "kind": "note",
+      "label": "A dedupe cache, not a database constraint",
+      "source": "vault",
+      "noteKind": "decision",
+      "status": "resolved",
+      "recency": "dated",
+      "verifiedAt": "2026-07-06T13:28:00.000Z",
+      "container": "sprint:PAY Sprint 12",
+      "updatedAt": "2026-07-06T13:28:00.000Z",
+      "recordRef": "records/note/cache-over-constraint.json"
+    },
+    {
+      "id": "note:provider-secret-blocks-reconciliation",
+      "kind": "note",
+      "label": "Reconciliation is blocked on a provider signing secret",
+      "source": "vault",
+      "noteKind": "impediment",
+      "status": "open",
+      "recency": "dated",
+      "verifiedAt": "2026-08-20T09:02:00.000Z",
+      "owner": "dana@example.com",
+      "dueAt": "2026-08-26T17:00:00.000Z",
+      "container": "sprint:PAY Sprint 14",
+      "updatedAt": "2026-08-20T09:02:00.000Z",
+      "recordRef": "records/note/provider-secret-blocks-reconciliation.json"
+    }
+  ],
+  "links": [
+    {
+      "source": "person:riya@example.com",
+      "target": "squad:ORG-10000011",
+      "relation": "member_of",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "person:dana@example.com",
+      "target": "squad:ORG-10000011",
+      "relation": "member_of",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "person:sam@example.com",
+      "target": "squad:ORG-10000012",
+      "relation": "member_of",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "person:priya@example.com",
+      "target": "squad:ORG-10000012",
+      "relation": "member_of",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "person:marcus@example.com",
+      "target": "squad:ORG-10000013",
+      "relation": "member_of",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "person:sanjay@example.com",
+      "target": "squad:ORG-10000011",
+      "relation": "member_of",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": [],
+      "validFrom": "2026-07-31T09:00:00.000Z"
+    },
+    {
+      "source": "person:sanjay@example.com",
+      "target": "squad:ORG-10000013",
+      "relation": "member_of",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": [],
+      "validTo": "2026-07-31T09:00:00.000Z",
+      "why": "moved teams in the July reorg"
+    },
+    {
+      "source": "issue:PAY-9000",
+      "target": "goal:GOAL-10",
+      "relation": "supports_goal",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "issue:PAY-9010",
+      "target": "issue:PAY-9000",
+      "relation": "child_of",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": [
+        {
+          "source": "jira",
+          "ref": "issue:PAY-9000"
+        }
+      ]
+    },
+    {
+      "source": "issue:PAY-9020",
+      "target": "issue:PAY-9000",
+      "relation": "child_of",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": [
+        {
+          "source": "jira",
+          "ref": "issue:PAY-9000"
+        }
+      ]
+    },
+    {
+      "source": "issue:PAY-9011",
+      "target": "issue:PAY-9010",
+      "relation": "belongs_to_epic",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": [
+        {
+          "source": "jira",
+          "ref": "issue:PAY-9010"
+        }
+      ]
+    },
+    {
+      "source": "issue:PAY-9011",
+      "target": "person:riya@example.com",
+      "relation": "assigned_to",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "issue:PAY-9011",
+      "target": "sprint:PAY Sprint 12",
+      "relation": "in_sprint",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "issue:PAY-9011",
+      "target": "squad:ORG-10000011",
+      "relation": "owned_by",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "issue:PAY-9012",
+      "target": "issue:PAY-9010",
+      "relation": "belongs_to_epic",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": [
+        {
+          "source": "jira",
+          "ref": "issue:PAY-9010"
+        }
+      ]
+    },
+    {
+      "source": "issue:PAY-9012",
+      "target": "person:dana@example.com",
+      "relation": "assigned_to",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "issue:PAY-9012",
+      "target": "sprint:PAY Sprint 12",
+      "relation": "in_sprint",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "issue:PAY-9012",
+      "target": "squad:ORG-10000011",
+      "relation": "owned_by",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "issue:PAY-9013",
+      "target": "issue:PAY-9010",
+      "relation": "belongs_to_epic",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": [
+        {
+          "source": "jira",
+          "ref": "issue:PAY-9010"
+        }
+      ]
+    },
+    {
+      "source": "issue:PAY-9013",
+      "target": "person:sam@example.com",
+      "relation": "assigned_to",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "issue:PAY-9013",
+      "target": "sprint:PAY Sprint 12",
+      "relation": "in_sprint",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "issue:PAY-9013",
+      "target": "squad:ORG-10000012",
+      "relation": "owned_by",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "issue:PAY-9021",
+      "target": "issue:PAY-9020",
+      "relation": "belongs_to_epic",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": [
+        {
+          "source": "jira",
+          "ref": "issue:PAY-9020"
+        }
+      ]
+    },
+    {
+      "source": "issue:PAY-9021",
+      "target": "person:riya@example.com",
+      "relation": "assigned_to",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "issue:PAY-9021",
+      "target": "sprint:PAY Sprint 13",
+      "relation": "in_sprint",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "issue:PAY-9021",
+      "target": "squad:ORG-10000011",
+      "relation": "owned_by",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "issue:PAY-9022",
+      "target": "issue:PAY-9010",
+      "relation": "belongs_to_epic",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": [
+        {
+          "source": "jira",
+          "ref": "issue:PAY-9010"
+        }
+      ]
+    },
+    {
+      "source": "issue:PAY-9022",
+      "target": "person:dana@example.com",
+      "relation": "assigned_to",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "issue:PAY-9022",
+      "target": "sprint:PAY Sprint 13",
+      "relation": "in_sprint",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "issue:PAY-9022",
+      "target": "squad:ORG-10000011",
+      "relation": "owned_by",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "issue:PAY-9031",
+      "target": "issue:PAY-9020",
+      "relation": "belongs_to_epic",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": [
+        {
+          "source": "jira",
+          "ref": "issue:PAY-9020"
+        }
+      ]
+    },
+    {
+      "source": "issue:PAY-9031",
+      "target": "person:dana@example.com",
+      "relation": "assigned_to",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "issue:PAY-9031",
+      "target": "sprint:PAY Sprint 14",
+      "relation": "in_sprint",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "issue:PAY-9031",
+      "target": "squad:ORG-10000011",
+      "relation": "owned_by",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "issue:PAY-9032",
+      "target": "issue:PAY-9020",
+      "relation": "belongs_to_epic",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": [
+        {
+          "source": "jira",
+          "ref": "issue:PAY-9020"
+        }
+      ]
+    },
+    {
+      "source": "issue:PAY-9032",
+      "target": "person:sam@example.com",
+      "relation": "assigned_to",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "issue:PAY-9032",
+      "target": "sprint:PAY Sprint 14",
+      "relation": "in_sprint",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "issue:PAY-9032",
+      "target": "squad:ORG-10000012",
+      "relation": "owned_by",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "issue:PAY-9033",
+      "target": "issue:PAY-9020",
+      "relation": "belongs_to_epic",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": [
+        {
+          "source": "jira",
+          "ref": "issue:PAY-9020"
+        }
+      ]
+    },
+    {
+      "source": "issue:PAY-9033",
+      "target": "person:priya@example.com",
+      "relation": "assigned_to",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "issue:PAY-9033",
+      "target": "sprint:PAY Sprint 14",
+      "relation": "in_sprint",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "issue:PAY-9033",
+      "target": "squad:ORG-10000012",
+      "relation": "owned_by",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "issue:PAY-9034",
+      "target": "issue:PAY-9020",
+      "relation": "belongs_to_epic",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": [
+        {
+          "source": "jira",
+          "ref": "issue:PAY-9020"
+        }
+      ]
+    },
+    {
+      "source": "issue:PAY-9034",
+      "target": "person:riya@example.com",
+      "relation": "assigned_to",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "issue:PAY-9034",
+      "target": "sprint:PAY Sprint 14",
+      "relation": "in_sprint",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "issue:PAY-9034",
+      "target": "squad:ORG-10000011",
+      "relation": "owned_by",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "issue:PAY-9035",
+      "target": "issue:PAY-9020",
+      "relation": "belongs_to_epic",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": [
+        {
+          "source": "jira",
+          "ref": "issue:PAY-9020"
+        }
+      ]
+    },
+    {
+      "source": "issue:PAY-9035",
+      "target": "person:priya@example.com",
+      "relation": "assigned_to",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "issue:PAY-9035",
+      "target": "sprint:PAY Sprint 14",
+      "relation": "in_sprint",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "issue:PAY-9035",
+      "target": "squad:ORG-10000012",
+      "relation": "owned_by",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "issue:PAY-9024",
+      "target": "issue:PAY-9020",
+      "relation": "belongs_to_epic",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": [
+        {
+          "source": "jira",
+          "ref": "issue:PAY-9020"
+        }
+      ]
+    },
+    {
+      "source": "issue:PAY-9024",
+      "target": "person:priya@example.com",
+      "relation": "assigned_to",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "issue:PAY-9024",
+      "target": "sprint:PAY Sprint 14",
+      "relation": "in_sprint",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "issue:PAY-9024",
+      "target": "squad:ORG-10000012",
+      "relation": "owned_by",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "issue:PAY-9041",
+      "target": "issue:PAY-9020",
+      "relation": "belongs_to_epic",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": [
+        {
+          "source": "jira",
+          "ref": "issue:PAY-9020"
+        }
+      ]
+    },
+    {
+      "source": "issue:PAY-9041",
+      "target": "person:dana@example.com",
+      "relation": "assigned_to",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "issue:PAY-9041",
+      "target": "sprint:PAY Sprint 14",
+      "relation": "in_sprint",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "issue:PAY-9041",
+      "target": "squad:ORG-10000011",
+      "relation": "owned_by",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "issue:PAY-9042",
+      "target": "issue:PAY-9020",
+      "relation": "belongs_to_epic",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": [
+        {
+          "source": "jira",
+          "ref": "issue:PAY-9020"
+        }
+      ]
+    },
+    {
+      "source": "issue:PAY-9042",
+      "target": "person:sam@example.com",
+      "relation": "assigned_to",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "issue:PAY-9042",
+      "target": "sprint:PAY Sprint 14",
+      "relation": "in_sprint",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "issue:PAY-9042",
+      "target": "squad:ORG-10000012",
+      "relation": "owned_by",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "issue:PAY-9043",
+      "target": "issue:PAY-9020",
+      "relation": "belongs_to_epic",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": [
+        {
+          "source": "jira",
+          "ref": "issue:PAY-9020"
+        }
+      ]
+    },
+    {
+      "source": "issue:PAY-9043",
+      "target": "person:riya@example.com",
+      "relation": "assigned_to",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "issue:PAY-9043",
+      "target": "sprint:PAY Sprint 14",
+      "relation": "in_sprint",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "issue:PAY-9043",
+      "target": "squad:ORG-10000011",
+      "relation": "owned_by",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "issue:PAY-9044",
+      "target": "issue:PAY-9020",
+      "relation": "belongs_to_epic",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": [
+        {
+          "source": "jira",
+          "ref": "issue:PAY-9020"
+        }
+      ]
+    },
+    {
+      "source": "issue:PAY-9044",
+      "target": "person:dana@example.com",
+      "relation": "assigned_to",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "issue:PAY-9044",
+      "target": "sprint:PAY Sprint 14",
+      "relation": "in_sprint",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "issue:PAY-9044",
+      "target": "squad:ORG-10000011",
+      "relation": "owned_by",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "issue:PLT-4412",
+      "target": "issue:PLT-4400",
+      "relation": "belongs_to_epic",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": [
+        {
+          "source": "jira",
+          "ref": "issue:PLT-4400"
+        }
+      ]
+    },
+    {
+      "source": "issue:PLT-4412",
+      "target": "person:marcus@example.com",
+      "relation": "assigned_to",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "issue:PLT-4412",
+      "target": "squad:ORG-10000013",
+      "relation": "owned_by",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "issue:PLT-4405",
+      "target": "issue:PLT-4400",
+      "relation": "belongs_to_epic",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": [
+        {
+          "source": "jira",
+          "ref": "issue:PLT-4400"
+        }
+      ]
+    },
+    {
+      "source": "issue:PLT-4405",
+      "target": "person:marcus@example.com",
+      "relation": "assigned_to",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "issue:PLT-4405",
+      "target": "squad:ORG-10000013",
+      "relation": "owned_by",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "issue:WEB-2210",
+      "target": "person:sam@example.com",
+      "relation": "assigned_to",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "issue:WEB-2210",
+      "target": "sprint:PAY Sprint 14",
+      "relation": "in_sprint",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "issue:WEB-2210",
+      "target": "squad:ORG-10000012",
+      "relation": "owned_by",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "issue:PAY-9032",
+      "target": "issue:PAY-9031",
+      "relation": "depends_on",
+      "tier": "AMBIGUOUS",
+      "origin": "declared",
+      "evidence": [
+        {
+          "source": "jira",
+          "ref": "PAY-9032 is blocked by PAY-9031"
+        }
+      ],
+      "reconciled": true,
+      "why": "declared in Jira with nothing independent behind it"
+    },
+    {
+      "source": "issue:PAY-9035",
+      "target": "issue:PAY-9013",
+      "relation": "depends_on",
+      "tier": "AMBIGUOUS",
+      "origin": "declared",
+      "evidence": [
+        {
+          "source": "jira",
+          "ref": "PAY-9035 is blocked by PAY-9013"
+        }
+      ],
+      "reconciled": true,
+      "why": "declared, uncorroborated, and PAY-9013 is already Closed"
+    },
+    {
+      "source": "issue:PAY-9041",
+      "target": "issue:PAY-9042",
+      "relation": "depends_on",
+      "tier": "EXTRACTED",
+      "origin": "declared",
+      "evidence": [
+        {
+          "source": "jira",
+          "ref": "PAY-9041 is blocked by PAY-9042"
+        }
+      ],
+      "reconciled": true,
+      "why": "declared in Jira and corroborated by the ticket description"
+    },
+    {
+      "source": "issue:PAY-9042",
+      "target": "issue:PAY-9043",
+      "relation": "depends_on",
+      "tier": "EXTRACTED",
+      "origin": "declared",
+      "evidence": [
+        {
+          "source": "jira",
+          "ref": "PAY-9042 is blocked by PAY-9043"
+        }
+      ],
+      "reconciled": true,
+      "why": "declared in Jira and corroborated by the ticket description"
+    },
+    {
+      "source": "issue:PAY-9043",
+      "target": "issue:PAY-9044",
+      "relation": "depends_on",
+      "tier": "EXTRACTED",
+      "origin": "declared",
+      "evidence": [
+        {
+          "source": "jira",
+          "ref": "PAY-9043 is blocked by PAY-9044"
+        }
+      ],
+      "reconciled": true,
+      "why": "declared in Jira and corroborated by the ticket description"
+    },
+    {
+      "source": "issue:PAY-9044",
+      "target": "issue:PAY-9041",
+      "relation": "depends_on",
+      "tier": "EXTRACTED",
+      "origin": "declared",
+      "evidence": [
+        {
+          "source": "jira",
+          "ref": "PAY-9044 is blocked by PAY-9041"
+        }
+      ],
+      "reconciled": true,
+      "why": "declared in Jira and corroborated by the ticket description"
+    },
+    {
+      "source": "issue:PAY-9031",
+      "target": "issue:PLT-4412",
+      "relation": "depends_on",
+      "tier": "INFERRED",
+      "origin": "reconstructed",
+      "evidence": [
+        {
+          "source": "jira",
+          "ref": "issue:PAY-9031",
+          "quote": "Blocked by PLT-4412"
+        }
+      ],
+      "why": "PAY-9031's description says it is blocked by PLT-4412",
+      "score": 3
+    },
+    {
+      "source": "issue:PAY-9041",
+      "target": "issue:PAY-9042",
+      "relation": "depends_on",
+      "tier": "INFERRED",
+      "origin": "reconstructed",
+      "evidence": [
+        {
+          "source": "jira",
+          "ref": "issue:PAY-9041",
+          "quote": "Blocked by PAY-9042"
+        }
+      ],
+      "why": "PAY-9041's description says it is blocked by PAY-9042",
+      "score": 3
+    },
+    {
+      "source": "issue:PAY-9042",
+      "target": "issue:PAY-9043",
+      "relation": "depends_on",
+      "tier": "INFERRED",
+      "origin": "reconstructed",
+      "evidence": [
+        {
+          "source": "jira",
+          "ref": "issue:PAY-9042",
+          "quote": "Blocked by PAY-9043"
+        }
+      ],
+      "why": "PAY-9042's description says it is blocked by PAY-9043",
+      "score": 3
+    },
+    {
+      "source": "issue:PAY-9043",
+      "target": "issue:PAY-9044",
+      "relation": "depends_on",
+      "tier": "INFERRED",
+      "origin": "reconstructed",
+      "evidence": [
+        {
+          "source": "jira",
+          "ref": "issue:PAY-9043",
+          "quote": "Blocked by PAY-9044"
+        }
+      ],
+      "why": "PAY-9043's description says it is blocked by PAY-9044",
+      "score": 3
+    },
+    {
+      "source": "issue:PAY-9044",
+      "target": "issue:PAY-9041",
+      "relation": "depends_on",
+      "tier": "INFERRED",
+      "origin": "reconstructed",
+      "evidence": [
+        {
+          "source": "jira",
+          "ref": "issue:PAY-9044",
+          "quote": "Blocked by PAY-9041"
+        }
+      ],
+      "why": "PAY-9044's description says it is blocked by PAY-9041",
+      "score": 3
+    },
+    {
+      "source": "person:riya@example.com",
+      "target": "meeting:zoom/sprint-12-planning",
+      "relation": "attended",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "person:dana@example.com",
+      "target": "meeting:zoom/sprint-12-planning",
+      "relation": "attended",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "person:sam@example.com",
+      "target": "meeting:zoom/sprint-12-planning",
+      "relation": "attended",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "person:sanjay@example.com",
+      "target": "meeting:zoom/sprint-12-planning",
+      "relation": "attended",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "meeting:zoom/sprint-12-planning",
+      "target": "issue:PAY-9012",
+      "relation": "mentions",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": [
+        {
+          "source": "zoom",
+          "ref": "meeting:zoom/sprint-12-planning",
+          "quote": "PAY-9012 is the cache. I can have it in staging inside the week.",
+          "at": 610
+        }
+      ]
+    },
+    {
+      "source": "meeting:zoom/sprint-12-planning",
+      "target": "issue:PAY-9013",
+      "relation": "mentions",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": [
+        {
+          "source": "zoom",
+          "ref": "meeting:zoom/sprint-12-planning",
+          "quote": "I will load test the charge path before the freeze. That is PAY-9013.",
+          "at": 2210
+        }
+      ]
+    },
+    {
+      "source": "person:riya@example.com",
+      "target": "meeting:zoom/sprint-14-planning",
+      "relation": "attended",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "person:dana@example.com",
+      "target": "meeting:zoom/sprint-14-planning",
+      "relation": "attended",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "person:sam@example.com",
+      "target": "meeting:zoom/sprint-14-planning",
+      "relation": "attended",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "person:priya@example.com",
+      "target": "meeting:zoom/sprint-14-planning",
+      "relation": "attended",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "meeting:zoom/sprint-14-planning",
+      "target": "issue:PAY-9032",
+      "relation": "mentions",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": [
+        {
+          "source": "zoom",
+          "ref": "meeting:zoom/sprint-14-planning",
+          "quote": "I cannot start the consumer until the publisher exists, so PAY-9032 waits on PAY-9031.",
+          "at": 780
+        }
+      ]
+    },
+    {
+      "source": "meeting:zoom/sprint-14-planning",
+      "target": "issue:PAY-9031",
+      "relation": "mentions",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": [
+        {
+          "source": "zoom",
+          "ref": "meeting:zoom/sprint-14-planning",
+          "quote": "I cannot start the consumer until the publisher exists, so PAY-9032 waits on PAY-9031.",
+          "at": 780
+        }
+      ]
+    },
+    {
+      "source": "person:riya@example.com",
+      "target": "meeting:zoom/sprint-12-retro",
+      "relation": "attended",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "person:dana@example.com",
+      "target": "meeting:zoom/sprint-12-retro",
+      "relation": "attended",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "person:sam@example.com",
+      "target": "meeting:zoom/sprint-12-retro",
+      "relation": "attended",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "message:slack/eng-payments/eng-payments-1",
+      "target": "person:dana@example.com",
+      "relation": "authored_by",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "message:slack/eng-payments/eng-payments-1",
+      "target": "issue:PAY-9012",
+      "relation": "mentions",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": [
+        {
+          "source": "slack",
+          "ref": "message:slack/eng-payments/eng-payments-1",
+          "quote": "Dedupe cache is on staging. PAY-9012 done from my side."
+        }
+      ]
+    },
+    {
+      "source": "message:slack/eng-payments/eng-payments-2",
+      "target": "person:riya@example.com",
+      "relation": "authored_by",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "message:slack/eng-payments/eng-payments-2",
+      "target": "issue:PAY-9041",
+      "relation": "mentions",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": [
+        {
+          "source": "slack",
+          "ref": "message:slack/eng-payments/eng-payments-2",
+          "quote": "Sprint 14 board is up. PAY-9041 through PAY-9044 are the reconciliation chain."
+        }
+      ]
+    },
+    {
+      "source": "message:slack/eng-payments/eng-payments-2",
+      "target": "issue:PAY-9044",
+      "relation": "mentions",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": [
+        {
+          "source": "slack",
+          "ref": "message:slack/eng-payments/eng-payments-2",
+          "quote": "Sprint 14 board is up. PAY-9041 through PAY-9044 are the reconciliation chain."
+        }
+      ]
+    },
+    {
+      "source": "message:slack/standup/standup-1",
+      "target": "person:sam@example.com",
+      "relation": "authored_by",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "message:slack/standup/standup-1",
+      "target": "issue:PAY-9031",
+      "relation": "mentions",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": [
+        {
+          "source": "slack",
+          "ref": "message:slack/standup/standup-1",
+          "quote": "PAY-9031 is done, moving on to the consumer side."
+        }
+      ]
+    },
+    {
+      "source": "message:slack/eng-payments/eng-payments-3",
+      "target": "person:dana@example.com",
+      "relation": "authored_by",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "message:slack/eng-payments/eng-payments-3",
+      "target": "issue:PAY-9031",
+      "relation": "mentions",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": [
+        {
+          "source": "slack",
+          "ref": "message:slack/eng-payments/eng-payments-3",
+          "quote": "PAY-9031 is not done — it cannot publish anywhere until the topic exists. Still waiting on platform."
+        }
+      ]
+    },
+    {
+      "source": "message:slack/eng-payments/eng-payments-4",
+      "target": "person:riya@example.com",
+      "relation": "authored_by",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "message:slack/eng-payments/eng-payments-4",
+      "target": "page:confluence/48210331",
+      "relation": "links_to",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": [
+        {
+          "source": "slack",
+          "ref": "message:slack/eng-payments/eng-payments-4",
+          "quote": "https://example.atlassian.net/wiki/spaces/PAY/pages/48210331/Cache+over+constraint"
+        }
+      ]
+    },
+    {
+      "source": "message:slack/eng-payments/eng-payments-5",
+      "target": "person:sam@example.com",
+      "relation": "authored_by",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "message:slack/eng-payments/eng-payments-6",
+      "target": "person:dana@example.com",
+      "relation": "authored_by",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "message:slack/eng-payments/eng-payments-6",
+      "target": "issue:PAY-9041",
+      "relation": "mentions",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": [
+        {
+          "source": "slack",
+          "ref": "message:slack/eng-payments/eng-payments-6",
+          "quote": "PAY-9041 is still blocked on the provider signing secret. I cannot test it until we have one."
+        }
+      ]
+    },
+    {
+      "source": "message:slack/eng-platform/eng-platform-1",
+      "target": "person:marcus@example.com",
+      "relation": "authored_by",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "message:slack/eng-platform/eng-platform-1",
+      "target": "issue:PLT-4412",
+      "relation": "mentions",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": [
+        {
+          "source": "slack",
+          "ref": "message:slack/eng-platform/eng-platform-1",
+          "quote": "Picked up PLT-4412. Nobody told us it was urgent — it landed on our board yesterday."
+        }
+      ]
+    },
+    {
+      "source": "message:slack/standup/standup-2",
+      "target": "person:priya@example.com",
+      "relation": "authored_by",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "message:slack/standup/standup-2",
+      "target": "issue:PAY-9035",
+      "relation": "mentions",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": [
+        {
+          "source": "slack",
+          "ref": "message:slack/standup/standup-2",
+          "quote": "On PAY-9035. Waiting to hear what it actually blocks on."
+        }
+      ]
+    },
+    {
+      "source": "page:confluence/48210331",
+      "target": "person:riya@example.com",
+      "relation": "authored_by",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "page:confluence/48210331",
+      "target": "issue:PAY-9012",
+      "relation": "documents",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": [
+        {
+          "source": "confluence",
+          "ref": "page:confluence/48210331",
+          "quote": "Cache over constraint"
+        }
+      ]
+    },
+    {
+      "source": "page:confluence/48210488",
+      "target": "person:riya@example.com",
+      "relation": "authored_by",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "page:confluence/48210488",
+      "target": "issue:PAY-9021",
+      "relation": "documents",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": [
+        {
+          "source": "confluence",
+          "ref": "page:confluence/48210488",
+          "quote": "Replay runbook"
+        }
+      ]
+    },
+    {
+      "source": "page:confluence/48210502",
+      "target": "person:marcus@example.com",
+      "relation": "authored_by",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "frame:miro/uXjVFIXTURE01=/Actions",
+      "target": "board:miro/uXjVFIXTURE01=",
+      "relation": "on_board",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "frame:miro/uXjVFIXTURE01=/Went well",
+      "target": "board:miro/uXjVFIXTURE01=",
+      "relation": "on_board",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "frame:miro/uXjVFIXTURE01=/Watch",
+      "target": "board:miro/uXjVFIXTURE01=",
+      "relation": "on_board",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "sticky:miro/uXjVFIXTURE01=/sticky-actions-1",
+      "target": "frame:miro/uXjVFIXTURE01=/Actions",
+      "relation": "in_frame",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "sticky:miro/uXjVFIXTURE01=/sticky-actions-1",
+      "target": "person:riya@example.com",
+      "relation": "authored_by",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "sticky:miro/uXjVFIXTURE01=/sticky-actions-2",
+      "target": "frame:miro/uXjVFIXTURE01=/Actions",
+      "relation": "in_frame",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "sticky:miro/uXjVFIXTURE01=/sticky-actions-2",
+      "target": "person:sam@example.com",
+      "relation": "authored_by",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "sticky:miro/uXjVFIXTURE01=/sticky-actions-2",
+      "target": "issue:PAY-9013",
+      "relation": "mentions",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": [
+        {
+          "source": "miro",
+          "ref": "sticky:miro/uXjVFIXTURE01=/sticky-actions-2",
+          "quote": "Load test before the freeze — PAY-9013"
+        }
+      ]
+    },
+    {
+      "source": "sticky:miro/uXjVFIXTURE01=/sticky-went-well-1",
+      "target": "frame:miro/uXjVFIXTURE01=/Went well",
+      "relation": "in_frame",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "sticky:miro/uXjVFIXTURE01=/sticky-went-well-1",
+      "target": "person:dana@example.com",
+      "relation": "authored_by",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "sticky:miro/uXjVFIXTURE01=/sticky-watch-1",
+      "target": "frame:miro/uXjVFIXTURE01=/Watch",
+      "relation": "in_frame",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "sticky:miro/uXjVFIXTURE01=/sticky-watch-1",
+      "target": "person:sam@example.com",
+      "relation": "authored_by",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "pr:github/example-org/payments-web/4210",
+      "target": "person:dana@example.com",
+      "relation": "authored_by",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "pr:github/example-org/payments-web/4210",
+      "target": "issue:PAY-9031",
+      "relation": "mentions",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": [
+        {
+          "source": "github",
+          "ref": "pr:github/example-org/payments-web/4210",
+          "quote": "feature/PAY-9031-settled-events"
+        }
+      ]
+    },
+    {
+      "source": "pr:github/example-org/payments-web/4198",
+      "target": "person:dana@example.com",
+      "relation": "authored_by",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "pr:github/example-org/payments-web/4198",
+      "target": "issue:PAY-9012",
+      "relation": "mentions",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": [
+        {
+          "source": "github",
+          "ref": "pr:github/example-org/payments-web/4198",
+          "quote": "feature/PAY-9012-dedupe-cache"
+        }
+      ]
+    },
+    {
+      "source": "pr:github/example-org/payments-web/4221",
+      "target": "person:dana@example.com",
+      "relation": "authored_by",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "pr:github/example-org/payments-web/4221",
+      "target": "issue:PAY-9044",
+      "relation": "mentions",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": [
+        {
+          "source": "github",
+          "ref": "pr:github/example-org/payments-web/4221",
+          "quote": "feature/PAY-9044-ledger-schema"
+        }
+      ]
+    },
+    {
+      "source": "note:platform-owns-settled-topic",
+      "target": "person:sanjay@example.com",
+      "relation": "assigned_to",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "note:idempotency-key-charge-endpoint",
+      "target": "issue:PAY-9011",
+      "relation": "annotates",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": [
+        {
+          "source": "zoom",
+          "ref": "zoom:sprint-12-planning",
+          "quote": "Two things this sprint: idempotency on the charge endpoint, and the replay path.",
+          "at": 120
+        }
+      ]
+    },
+    {
+      "source": "note:idempotency-key-charge-endpoint",
+      "target": "person:riya@example.com",
+      "relation": "assigned_to",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "note:dedupe-cache-staging",
+      "target": "issue:PAY-9012",
+      "relation": "annotates",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": [
+        {
+          "source": "zoom",
+          "ref": "zoom:sprint-12-planning",
+          "quote": "PAY-9012 is the cache. I can have it in staging inside the week.",
+          "at": 610
+        }
+      ]
+    },
+    {
+      "source": "note:dedupe-cache-staging",
+      "target": "person:dana@example.com",
+      "relation": "assigned_to",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "note:load-test-before-freeze",
+      "target": "issue:PAY-9013",
+      "relation": "annotates",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": [
+        {
+          "source": "miro",
+          "ref": "miro:sticky-actions-2",
+          "quote": "Load test before the freeze — PAY-9013"
+        },
+        {
+          "source": "zoom",
+          "ref": "zoom:sprint-12-planning",
+          "quote": "I will load test the charge path before the freeze. That is PAY-9013.",
+          "at": 2210
+        }
+      ]
+    },
+    {
+      "source": "note:load-test-before-freeze",
+      "target": "person:sam@example.com",
+      "relation": "assigned_to",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "note:dana-owns-settled-event",
+      "target": "issue:PAY-9031",
+      "relation": "annotates",
+      "tier": "INFERRED",
+      "origin": "reconstructed",
+      "evidence": [
+        {
+          "source": "zoom",
+          "ref": "zoom:sprint-14-planning",
+          "quote": "Dana takes the settled event end to end, publisher and the consumer contract.",
+          "at": 410
+        }
+      ],
+      "why": "Dana is the assignee of the only settled-event story in the sprint being planned",
+      "score": 0.72
+    },
+    {
+      "source": "note:dana-owns-settled-event",
+      "target": "person:dana@example.com",
+      "relation": "assigned_to",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "note:cache-over-constraint",
+      "target": "issue:PAY-9012",
+      "relation": "annotates",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": [
+        {
+          "source": "zoom",
+          "ref": "zoom:sprint-12-planning",
+          "quote": "A cache in front of it. A unique constraint means a migration on the hot table and we are not doing that before the freeze.",
+          "at": 1705
+        }
+      ]
+    },
+    {
+      "source": "note:provider-secret-blocks-reconciliation",
+      "target": "issue:PAY-9041",
+      "relation": "annotates",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": [
+        {
+          "source": "slack",
+          "ref": "slack:eng-payments-6",
+          "quote": "PAY-9041 is still blocked on the provider signing secret. I cannot test it until we have one."
+        }
+      ]
+    },
+    {
+      "source": "note:provider-secret-blocks-reconciliation",
+      "target": "person:dana@example.com",
+      "relation": "assigned_to",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    }
+  ]
+}

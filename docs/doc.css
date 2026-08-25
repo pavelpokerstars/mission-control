@@ -1,0 +1,475 @@
+/*
+ * The Mission Control document style — one palette, used by every generated page.
+ *
+ * The colours are not invented here. They are the app's own, read off
+ * apps/shell/src/theme.ts, so a document about Mission Control looks like
+ * Mission Control: brand #4c8dff, the dark scale behind the panes, and the
+ * per-surface hues the activity feed uses (jira blue, miro yellow, slack
+ * purple, vault pink...). Light-mode variants are darkened where the dark-mode
+ * value would fail on white — miro's yellow especially.
+ *
+ * DO NOT copy this block into a document. Every page under docs/ is generated
+ * by scripts/render-docs.mjs, which inlines this file, so there is exactly one
+ * place to change a colour. That is the whole reason it is a separate file:
+ * two copies of a palette drift, and this repo has spent real time on that
+ * lesson elsewhere.
+ *
+ * Three theme states, not two. Bare :root is the complete light palette; the
+ * prefers-color-scheme block covers the default 'system' setting, guarded so an
+ * explicit light choice still wins; [data-theme='dark'] covers an explicit
+ * toggle. Every colour is a token, so nothing is ever defined only inside a
+ * media query.
+ */
+
+/* ---- tokens: light is the base, both dark states redefine only these ---- */
+  :root {
+    --bg:        #f7f9fc;
+    --panel:     #ffffff;
+    --panel-2:   #eef2f8;
+    --line:      #dfe5ee;
+    --line-soft: #ebeff5;
+    --text:      #131922;
+    --muted:     #5d6b7d;
+    --accent:    #2463cd;
+    --accent-dim:#e8f0fe;
+
+    --jira:       #2463cd;
+    --miro:       #9a7000;
+    --confluence: #2563eb;
+    --zoom:       #0284c7;
+    --slack:      #7e22ce;
+    --vault:      #be3f7f;
+    --mc:         #15803d;
+    --warn:       #b45309;
+    --danger:     #c0392f;
+
+    --sans: ui-sans-serif, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg:        #0e1116;
+      --panel:     #151a21;
+      --panel-2:   #1b222b;
+      --line:      #262e3a;
+      --line-soft: #1e252f;
+      --text:      #e6edf3;
+      --muted:     #8b98a9;
+      --accent:    #4c8dff;
+      --accent-dim:#16233a;
+
+      --jira:       #4c8dff;
+      --miro:       #ffd02f;
+      --confluence: #60a5fa;
+      --zoom:       #38bdf8;
+      --slack:      #a855f7;
+      --vault:      #f472b6;
+      --mc:         #4ade80;
+      --warn:       #ffb454;
+      --danger:     #ff6b6b;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg:        #0e1116;
+    --panel:     #151a21;
+    --panel-2:   #1b222b;
+    --line:      #262e3a;
+    --line-soft: #1e252f;
+    --text:      #e6edf3;
+    --muted:     #8b98a9;
+    --accent:    #4c8dff;
+    --accent-dim:#16233a;
+
+    --jira:       #4c8dff;
+    --miro:       #ffd02f;
+    --confluence: #60a5fa;
+    --zoom:       #38bdf8;
+    --slack:      #a855f7;
+    --vault:      #f472b6;
+    --mc:         #4ade80;
+    --warn:       #ffb454;
+    --danger:     #ff6b6b;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.6;
+    margin: 0;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 940px;
+    margin: 0 auto;
+    padding: 0 24px 96px;
+  }
+
+  /* prose stays narrow; figures and tables break wider */
+  .prose { max-width: 68ch; }
+
+  /* ---------- masthead ---------- */
+  header.masthead {
+    padding: 72px 0 40px;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 8px;
+  }
+  .wordmark {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .wordmark::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--line);
+  }
+  h1 {
+    font-size: clamp(34px, 5.5vw, 52px);
+    line-height: 1.08;
+    letter-spacing: -0.022em;
+    font-weight: 650;
+    margin: 0 0 20px;
+    text-wrap: balance;
+    max-width: 16ch;
+  }
+  .standfirst {
+    font-size: 19px;
+    line-height: 1.55;
+    color: var(--muted);
+    margin: 0;
+    max-width: 60ch;
+  }
+
+  /* ---------- section nav ---------- */
+  nav.toc {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: color-mix(in srgb, var(--bg) 92%, transparent);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 56px;
+    overflow-x: auto;
+  }
+  nav.toc ul {
+    display: flex;
+    gap: 4px;
+    list-style: none;
+    margin: 0;
+    padding: 10px 0;
+    min-width: max-content;
+  }
+  nav.toc a {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.02em;
+    color: var(--muted);
+    text-decoration: none;
+    padding: 5px 10px;
+    border-radius: 6px;
+    display: block;
+    white-space: nowrap;
+  }
+  nav.toc a:hover { color: var(--text); background: var(--panel-2); }
+  nav.toc a:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+  /* ---------- sections ---------- */
+  section { margin-bottom: 72px; scroll-margin-top: 64px; }
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 0 0 10px;
+  }
+  h2 {
+    font-size: 27px;
+    line-height: 1.2;
+    letter-spacing: -0.015em;
+    font-weight: 640;
+    margin: 0 0 16px;
+    text-wrap: balance;
+  }
+  h3 {
+    font-size: 17px;
+    font-weight: 620;
+    letter-spacing: -0.005em;
+    margin: 32px 0 8px;
+    text-wrap: balance;
+  }
+  p { margin: 0 0 16px; }
+  a { color: var(--accent); }
+
+  code {
+    font-family: var(--mono);
+    font-size: 0.86em;
+    background: var(--panel-2);
+    border: 1px solid var(--line-soft);
+    border-radius: 4px;
+    padding: 1px 5px;
+    white-space: nowrap;
+  }
+
+  .lede {
+    font-size: 17px;
+    color: var(--muted);
+    max-width: 62ch;
+    margin-bottom: 24px;
+  }
+
+  /* ---------- figures ---------- */
+  figure {
+    margin: 32px 0;
+    padding: 24px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    overflow-x: auto;
+  }
+  figure svg { display: block; width: 100%; max-width: 100%; height: auto; min-width: 520px; }
+  figcaption {
+    font-size: 13.5px;
+    line-height: 1.5;
+    color: var(--muted);
+    margin-top: 18px;
+    padding-top: 14px;
+    border-top: 1px solid var(--line-soft);
+    max-width: 70ch;
+  }
+  .dg-box { fill: var(--panel-2); stroke: var(--line); stroke-width: 1.5; }
+  .dg-box-accent { fill: var(--accent-dim); stroke: var(--accent); stroke-width: 1.5; }
+  .dg-label { font-family: var(--sans); font-size: 12.5px; font-weight: 600; fill: var(--text); }
+  .dg-sub { font-family: var(--mono); font-size: 10.5px; fill: var(--muted); }
+  .dg-edge { font-family: var(--mono); font-size: 10.5px; fill: var(--muted); }
+  .dg-line { stroke: currentColor; stroke-width: 1.4; fill: none; opacity: 0.5; }
+  .dg-line-accent { stroke: var(--accent); stroke-width: 1.8; fill: none; }
+  .dg-line-danger { stroke: var(--danger); stroke-width: 1.6; fill: none; stroke-dasharray: 5 4; }
+
+  /* ---------- surface cards ---------- */
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(228px, 1fr));
+    gap: 12px;
+    margin: 24px 0;
+  }
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--c, var(--accent));
+    border-radius: 8px;
+    padding: 14px 16px;
+  }
+  .card h4 {
+    font-size: 15px;
+    font-weight: 640;
+    margin: 0 0 2px;
+    color: var(--c, var(--text));
+  }
+  .card .kind {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    display: block;
+    margin-bottom: 8px;
+  }
+  .card p { font-size: 13.5px; line-height: 1.5; color: var(--muted); margin: 0; }
+
+  /* ---------- tables ---------- */
+  .table-wrap { overflow-x: auto; margin: 24px 0; }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 14.5px;
+    min-width: 520px;
+  }
+  th, td {
+    text-align: left;
+    padding: 10px 14px 10px 0;
+    border-bottom: 1px solid var(--line-soft);
+    vertical-align: top;
+  }
+  th {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 500;
+    border-bottom: 1px solid var(--line);
+  }
+  td.mono, .tnum { font-family: var(--mono); font-size: 13px; font-variant-numeric: tabular-nums; }
+  td strong { font-weight: 620; }
+
+  /* ---------- rules ---------- */
+  .rules { display: flex; flex-direction: column; gap: 2px; margin: 24px 0; }
+  .rule {
+    display: grid;
+    grid-template-columns: 132px 1fr;
+    gap: 20px;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .rule:last-child { border-bottom: none; }
+  .rule-name {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--accent);
+    padding-top: 2px;
+    line-height: 1.5;
+  }
+  .rule p { margin: 0; font-size: 15px; }
+  .rule p + p { margin-top: 8px; color: var(--muted); font-size: 14px; }
+  @media (max-width: 620px) {
+    .rule { grid-template-columns: 1fr; gap: 6px; }
+  }
+
+  /* ---------- command block ---------- */
+  pre {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 16px 18px;
+    overflow-x: auto;
+    margin: 16px 0;
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.7;
+  }
+  pre .c { color: var(--muted); }
+  pre .g { color: var(--mc); }
+
+  /* ---------- callout ---------- */
+  .note {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--warn);
+    border-radius: 8px;
+    padding: 16px 18px;
+    margin: 24px 0;
+    font-size: 14.5px;
+  }
+  .note p { margin: 0; }
+  .note p + p { margin-top: 10px; }
+  .note strong { font-weight: 640; }
+
+  footer {
+    border-top: 1px solid var(--line);
+    padding-top: 24px;
+    color: var(--muted);
+    font-size: 14px;
+  }
+
+  /* ==========================================================================
+     Rendered markdown
+     --------------------------------------------------------------------------
+     Everything above dresses the hand-authored field guide. The rules below
+     cover what `marked` emits from the .md files — lists, blockquotes, rules,
+     nested headings — so both sets of pages read as one document family.
+     ========================================================================== */
+
+  /* The cross-document nav. Distinct from nav.toc, which jumps within a page:
+     this one moves between documents, so no page in the set is a dead end. */
+  nav.docnav {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: color-mix(in srgb, var(--bg) 92%, transparent);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 48px;
+    overflow-x: auto;
+  }
+  nav.docnav ul {
+    display: flex;
+    gap: 4px;
+    list-style: none;
+    margin: 0;
+    padding: 10px 0;
+    min-width: max-content;
+  }
+  nav.docnav a {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+    text-decoration: none;
+    padding: 5px 10px;
+    border-radius: 6px;
+    display: block;
+    white-space: nowrap;
+  }
+  nav.docnav a:hover { color: var(--text); background: var(--panel-2); }
+  nav.docnav a.here { color: var(--accent); background: var(--accent-dim); }
+  nav.docnav a:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+  /* Reference docs run long and lean on tables and code, so they get a wider
+     measure than the field guide's essay column — but paragraphs stay narrow
+     enough to read, which is what max-width on the text elements is for. */
+  .doc { max-width: 100%; }
+  .doc > p,
+  .doc > ul,
+  .doc > ol,
+  .doc > blockquote { max-width: 72ch; }
+
+  .doc h2 {
+    margin-top: 56px;
+    padding-top: 20px;
+    border-top: 1px solid var(--line-soft);
+  }
+  .doc h2:first-child { margin-top: 0; border-top: none; padding-top: 0; }
+  .doc h4 {
+    font-size: 15px;
+    font-weight: 620;
+    margin: 24px 0 6px;
+  }
+
+  .doc ul, .doc ol { padding-left: 22px; margin: 0 0 16px; }
+  .doc li { margin-bottom: 6px; }
+  .doc li > ul, .doc li > ol { margin-top: 6px; }
+
+  .doc blockquote {
+    margin: 20px 0;
+    padding: 2px 0 2px 18px;
+    border-left: 3px solid var(--line);
+    color: var(--muted);
+  }
+  .doc blockquote p:last-child { margin-bottom: 0; }
+
+  .doc hr {
+    border: none;
+    border-top: 1px solid var(--line);
+    margin: 40px 0;
+  }
+
+  /* Tables in the reference docs are wide and numerous; let them scroll rather
+     than forcing the page body sideways. */
+  .doc table { display: block; overflow-x: auto; white-space: normal; }
+  .doc td code { white-space: normal; }
+
+  .doc pre code {
+    background: none;
+    border: none;
+    padding: 0;
+    font-size: inherit;
+    white-space: pre;
+  }
+
+  .doc img, .doc svg { max-width: 100%; height: auto; }
+
+  .doc strong { font-weight: 640; color: var(--text); }

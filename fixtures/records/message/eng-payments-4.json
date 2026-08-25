@@ -1,0 +1,7 @@
+{
+  "id": "eng-payments-4",
+  "channel": "eng-payments",
+  "author": "riya",
+  "at": "2026-07-10T11:05:00Z",
+  "text": "Wrote up why we went with the cache: https://example.atlassian.net/wiki/spaces/PAY/pages/48210331/Cache+over+constraint"
+}

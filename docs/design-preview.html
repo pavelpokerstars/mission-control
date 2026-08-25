@@ -1,0 +1,2234 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!--
+  Mission Control — the interface reference.
+
+  COMMITTED ON PURPOSE, AND HAND-WRITTEN — this is not generated, so `npm run
+  docs` does not touch it and nothing overwrites it. Open it straight off disk;
+  it is self-contained apart from Google Fonts.
+
+  WHAT IT IS
+  A clickable preview of every page in the alert-first rebuild. It is the visual
+  reference for that work: `docs/DESIGN.md` specifies it in prose, and where the
+  two disagree the file you are reading is the one that was tested in a browser.
+
+  WHAT IT IS NOT
+  Product code. Every list here is fixture data held in the page — deleting a
+  note or a conversation mutates a JavaScript array and a reload puts it back,
+  and so does the "reset the data" control in the bar at the top. Nothing talks
+  to the gateway. See KNOWN-GAPS.md section 1.
+
+  The bar across the top (screen tabs, reset) is prototype scaffolding and is
+  not part of the product.
+-->
+<title>Mission Control Preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+
+</head>
+<body>
+<style>
+  :root {
+    /* chrome — deliberately greyscale. every colour on this page means something. */
+    --ground:#EEF0F3; --app:#FFFFFF; --sunk:#F4F6F8; --line:#E1E5EA; --line-2:#CBD2DA;
+    --ink:#14171C; --ink-2:#535B66; --ink-3:#69727E;
+    --btn:#14171C; --btn-ink:#FFFFFF;
+
+    /* semantic — severity */
+    --crit:#B3352B; --crit-bg:#FBEDEC;
+    --warn:#8A6209; --warn-bg:#FBF3E2;
+    --ok:#2C6650;   --ok-bg:#E9F2ED;
+
+    /* semantic — source of record */
+    --s-jira:#2C6BD9; --s-slack:#A0348C; --s-zoom:#167F8C;
+    --s-conf:#3E7A46; --s-miro:#9A7413; --s-vault:#535B66;
+
+    --sans:"Instrument Sans", ui-sans-serif, system-ui, -apple-system, sans-serif;
+    --mono:"IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+    --shadow:0 1px 2px rgba(20,23,28,.06), 0 12px 32px -16px rgba(20,23,28,.22);
+    --r:10px;
+    --gutter:30px;
+    color-scheme: light;
+    --ic-chev: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 9l7 7 7-7'/%3E%3C/svg%3E");
+    --ic-cal: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3.5' y='5.5' width='17' height='15' rx='2.5'/%3E%3Cpath d='M3.5 10.5h17M8.5 3.5v4M15.5 3.5v4'/%3E%3C/svg%3E");
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:#0B0E12; --app:#14181E; --sunk:#1A1F26; --line:#252B34; --line-2:#39414C;
+      --ink:#E9ECF1; --ink-2:#A5AEBA; --ink-3:#7A838F;
+      --btn:#E9ECF1; --btn-ink:#14181E;
+      --crit:#EF7B70; --crit-bg:#2C1A18;
+      --warn:#D6A73C; --warn-bg:#2A2317;
+      --ok:#6FB694;   --ok-bg:#16261F;
+      --s-jira:#6EA4F0; --s-slack:#DE8FCE; --s-zoom:#52BFCC;
+      --s-conf:#7BBF86; --s-miro:#DCB44E; --s-vault:#A5AEBA;
+      --shadow:0 1px 2px rgba(0,0,0,.5), 0 12px 32px -16px rgba(0,0,0,.8);
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground:#0B0E12; --app:#14181E; --sunk:#1A1F26; --line:#252B34; --line-2:#39414C;
+    --ink:#E9ECF1; --ink-2:#A5AEBA; --ink-3:#7A838F;
+    --btn:#E9ECF1; --btn-ink:#14181E;
+    --crit:#EF7B70; --crit-bg:#2C1A18;
+    --warn:#D6A73C; --warn-bg:#2A2317;
+    --ok:#6FB694;   --ok-bg:#16261F;
+    --s-jira:#6EA4F0; --s-slack:#DE8FCE; --s-zoom:#52BFCC;
+    --s-conf:#7BBF86; --s-miro:#DCB44E; --s-vault:#A5AEBA;
+    --shadow:0 1px 2px rgba(0,0,0,.5), 0 12px 32px -16px rgba(0,0,0,.8);
+    color-scheme: dark;
+  }
+
+  * { box-sizing:border-box; }
+  body {
+    margin:0; background:var(--ground); color:var(--ink);
+    font-family:var(--sans); font-size:16px; line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+  }
+  button { font:inherit; color:inherit; cursor:pointer; }
+  :focus-visible { outline:2px solid var(--s-jira); outline-offset:2px; border-radius:4px; }
+
+  /* ---------- prototype chrome (not part of the product) ---------- */
+  .proto {
+    position:sticky; top:0; z-index:20; background:var(--ground);
+    border-bottom:1px solid var(--line); padding:14px 20px 12px;
+  }
+  .proto-in { max-width:1000px; margin:0 auto; display:flex; flex-wrap:wrap; gap:14px 20px; align-items:center; }
+  .proto .tag {
+    font-family:var(--mono); font-size:10px; font-weight:600; letter-spacing:.12em;
+    text-transform:uppercase; color:var(--ink-3); white-space:nowrap;
+  }
+  .steps { display:flex; gap:6px; flex-wrap:wrap; }
+  .steps button {
+    font-family:var(--mono); font-size:11px; font-weight:500; letter-spacing:.04em;
+    background:transparent; border:1px solid var(--line-2); color:var(--ink-2);
+    padding:6px 12px; border-radius:99px;
+  }
+  .steps button[aria-selected="true"] { background:var(--btn); color:var(--btn-ink); border-color:var(--btn); }
+  .reset {
+    font-family:var(--mono); font-size:10.5px; letter-spacing:.05em; color:var(--ink-3);
+    background:transparent; border:1px solid var(--line-2); border-radius:99px; padding:6px 12px;
+  }
+  .reset:hover { border-color:var(--ink-3); color:var(--ink); }
+
+  main { max-width:1000px; margin:0 auto; padding:30px 20px 90px; }
+  .screen[hidden] { display:none; }
+  .caption {
+    font-family:var(--mono); font-size:11px; letter-spacing:.04em; color:var(--ink-3);
+    margin:0 0 14px; display:flex; align-items:center; gap:8px;
+  }
+  .caption::before { content:""; width:16px; height:1px; background:var(--line-2); }
+
+  /* ---------- shared bits ---------- */
+  .dot { width:8px; height:8px; border-radius:50%; display:inline-block; flex:none; }
+  .jira{background:var(--s-jira)} .slack{background:var(--s-slack)} .zoom{background:var(--s-zoom)}
+  .conf{background:var(--s-conf)} .miro{background:var(--s-miro)} .vault{background:var(--s-vault)}
+
+  .chip {
+    display:inline-flex; align-items:center; gap:6px; font-family:var(--mono);
+    font-size:10.5px; font-weight:600; letter-spacing:.08em; text-transform:uppercase;
+    padding:4px 9px; border-radius:99px; white-space:nowrap;
+  }
+  .chip.crit { color:var(--crit); background:var(--crit-bg); }
+  .chip.warn { color:var(--warn); background:var(--warn-bg); }
+  .chip.ok   { color:var(--ok);   background:var(--ok-bg); }
+  .chip.plain { color:var(--ink-3); background:var(--sunk); border:1px solid var(--line); }
+
+  /* ---------- 1 · slack ---------- */
+  .slackwin {
+    background:var(--app); border:1px solid var(--line); border-radius:var(--r);
+    box-shadow:var(--shadow); max-width:620px; overflow:hidden;
+  }
+  .slackwin .bar {
+    background:var(--sunk); border-bottom:1px solid var(--line); padding:10px 16px;
+    font-family:var(--mono); font-size:11px; color:var(--ink-3); letter-spacing:.04em;
+  }
+  .msg { padding:18px 18px 20px; display:grid; grid-template-columns:38px minmax(0,1fr); gap:0 12px; }
+  .avatar {
+    width:38px; height:38px; border-radius:8px; background:var(--btn); color:var(--btn-ink);
+    display:grid; place-items:center; font-family:var(--mono); font-size:13px; font-weight:600;
+  }
+  .msg .who { display:flex; align-items:baseline; gap:8px; margin-bottom:6px; flex-wrap:wrap; }
+  .msg .who b { font-weight:600; font-size:.98rem; }
+  .msg .who .app-tag {
+    font-family:var(--mono); font-size:9px; font-weight:600; letter-spacing:.1em;
+    background:var(--sunk); color:var(--ink-3); padding:2px 5px; border-radius:3px;
+  }
+  .msg .who time { font-family:var(--mono); font-size:11px; color:var(--ink-3); }
+  .msg p { margin:0 0 12px; color:var(--ink-2); }
+  .msg p strong { color:var(--ink); font-weight:600; }
+  .attach {
+    border-left:3px solid var(--crit); background:var(--sunk);
+    padding:12px 14px; border-radius:0 6px 6px 0; margin-bottom:14px;
+  }
+  .attach h4 { margin:0 0 5px; font-size:.95rem; font-weight:600; }
+  .attach p { margin:0; font-size:.9rem; }
+  .slackbtn {
+    background:var(--btn); color:var(--btn-ink); border:0; border-radius:6px;
+    padding:9px 16px; font-size:.9rem; font-weight:600;
+  }
+
+  /* ---------- 2 · the list ---------- */
+  .appwin {
+    background:var(--app); border:1px solid var(--line); border-radius:var(--r);
+    box-shadow:var(--shadow); overflow:hidden;
+  }
+  .topbar {
+    display:flex; align-items:center; justify-content:space-between; gap:20px; flex-wrap:wrap;
+    padding:13px 22px; border-bottom:1px solid var(--line); background:var(--app);
+  }
+  .brand { font-family:var(--mono); font-size:12px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; }
+
+  /* the optional toolbar — compare it against no toolbar with the switch above */
+  .appnav { display:flex; gap:2px; flex-wrap:wrap; margin-left:22px; margin-right:auto; }
+  .appnav button {
+    background:transparent; border:0; border-radius:7px; padding:6px 11px;
+    font-size:.89rem; color:var(--ink-2); display:inline-flex; align-items:center; gap:7px;
+  }
+  .appnav button:hover { background:var(--sunk); color:var(--ink); }
+  .appnav button[aria-current="page"] { background:var(--sunk); color:var(--ink); font-weight:600; }
+  .appnav .n {
+    font-family:var(--mono); font-size:10px; padding:1px 6px; border-radius:99px;
+    background:var(--line); color:var(--ink-2);
+  }
+  .appnav .n.hot { background:var(--crit-bg); color:var(--crit); }
+  .sources {
+    display:flex; gap:14px; flex-wrap:wrap; background:transparent; border:1px solid transparent;
+    border-radius:99px; padding:5px 10px; margin:-5px -10px;
+  }
+  button.sources:hover { border-color:var(--line-2); background:var(--sunk); }
+  .sources span {
+    display:inline-flex; align-items:center; gap:6px;
+    font-family:var(--mono); font-size:10px; letter-spacing:.06em; color:var(--ink-3);
+  }
+  .greet { padding:34px var(--gutter) 22px; border-bottom:1px solid var(--line); }
+  .greet h1 { margin:0 0 6px; font-size:1.6rem; font-weight:600; letter-spacing:-.02em; }
+  .greet p { margin:0; color:var(--ink-2); font-size:.98rem; }
+  .laterlink {
+    background:transparent; border:0; padding:0; font:inherit; color:var(--ink-2);
+    text-decoration:underline; text-underline-offset:3px;
+  }
+  .laterlink:hover { color:var(--ink); }
+
+  .rows { display:grid; }
+  .row {
+    display:grid; grid-template-columns:minmax(0,1fr) auto; gap:14px 20px; align-items:center;
+    width:100%; text-align:left; background:transparent; border:0; border-bottom:1px solid var(--line);
+    padding:18px var(--gutter) 18px calc(var(--gutter) - 3px);
+    border-left:3px solid transparent;
+  }
+  .row:hover { background:var(--sunk); border-left-color:var(--line-2); }
+  .row.crit { border-left-color:var(--crit); }
+  .row.warn { border-left-color:var(--warn); }
+  .row .meta { display:flex; align-items:center; gap:10px; margin-bottom:7px; flex-wrap:wrap; }
+  .row h3 { margin:0 0 5px; font-size:1.02rem; font-weight:600; letter-spacing:-.01em; }
+  .row .sub { margin:0; font-size:.9rem; color:var(--ink-2); }
+  .row .srcs { display:flex; gap:5px; align-items:center; }
+  .row .go { font-family:var(--mono); font-size:11px; color:var(--ink-3); white-space:nowrap; }
+  .quiet { padding:22px var(--gutter); color:var(--ink-3); font-size:.9rem; }
+  .quiet code { font-family:var(--mono); font-size:.85em; }
+
+  /* ---------- 3 · the alert page ---------- */
+  .switch { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:16px; }
+  .switch button {
+    font-family:var(--mono); font-size:11px; background:transparent;
+    border:1px solid var(--line-2); color:var(--ink-2); padding:6px 12px; border-radius:99px;
+  }
+  .switch button[aria-selected="true"] { background:var(--btn); color:var(--btn-ink); border-color:var(--btn); }
+
+  .page { padding:0; }
+  .appwin .back {
+    display:inline-flex; align-items:center; gap:8px; background:transparent; border:0;
+    font-family:var(--mono); font-size:11px; color:var(--ink-3); padding:16px var(--gutter) 14px;
+  }
+  .appwin .back:hover { color:var(--ink); }
+  /* The back link supplies the gap below itself, so whatever follows starts
+     flush. Without this each page needed its own ad-hoc top padding. */
+  .back + .head, .back + .greet { padding-top:0; }
+  .back + .stat-strip { margin-top:0; }
+  .head { padding:14px var(--gutter) 26px; border-bottom:1px solid var(--line); }
+  .head .meta { display:flex; align-items:center; gap:12px; margin-bottom:14px; flex-wrap:wrap; }
+  .head .when { font-family:var(--mono); font-size:11px; color:var(--ink-3); }
+  .claim {
+    margin:0 0 12px; font-size:clamp(1.35rem,3.4vw,1.85rem); font-weight:600;
+    letter-spacing:-.022em; line-height:1.22; max-width:24ch; text-wrap:balance;
+  }
+  .impact { margin:0; color:var(--ink-2); font-size:1rem; max-width:60ch; }
+  .impact b { color:var(--ink); font-weight:600; }
+
+  .block { padding:24px var(--gutter); border-bottom:1px solid var(--line); }
+  .block.flush { border-bottom:0; }
+  .block.topped { border-top:1px solid var(--line); }
+  .blocklead { margin:-6px 0 16px; font-size:.93rem; color:var(--ink-2); max-width:64ch; }
+  .failbox { border:1px solid var(--line); border-radius:8px; overflow:hidden; }
+  .failbox .conn-row:not(:last-child) { border-bottom:1px solid var(--line); }
+  .failbox .conn-row:last-child { border-bottom:0; }
+  .brand.muted { color:var(--ink-3); }
+  .block > h4 {
+    font-family:var(--mono); font-size:10.5px; font-weight:600; letter-spacing:.12em;
+    text-transform:uppercase; color:var(--ink-3); margin:0 0 16px;
+  }
+
+  /* checklist */
+  .check { display:grid; gap:0; }
+  .check li { list-style:none; display:grid; grid-template-columns:22px minmax(0,1fr) auto; gap:0 12px;
+    align-items:baseline; padding:10px 0; border-bottom:1px dashed var(--line); }
+  .check li:last-child { border-bottom:0; }
+  .check .mark { font-family:var(--mono); font-size:13px; font-weight:600; line-height:1.4; }
+  .check .done .mark { color:var(--ok); }
+  .check .miss .mark { color:var(--crit); }
+  .check .txt { font-size:.97rem; }
+  .check .miss .txt { font-weight:600; }
+  .check .done .txt { color:var(--ink-2); }
+  .check .ref { font-family:var(--mono); font-size:11px; color:var(--ink-3); white-space:nowrap; }
+  .check .miss .ref { color:var(--crit); }
+
+  /* evidence */
+  .ev { display:grid; gap:10px; }
+  .ev article, .ev .evrow {
+    display:grid; grid-template-columns:12px minmax(0,1fr); gap:0 12px;
+    padding:13px 15px; background:var(--sunk); border-radius:8px;
+    width:100%; text-align:left; font:inherit; color:inherit;
+    border:1px solid transparent;
+  }
+  .ev .evrow:hover { border-color:var(--line-2); }
+  .ev .evrow .open {
+    margin-left:auto; font-family:var(--mono); font-size:10px; letter-spacing:.06em;
+    color:var(--ink-3); opacity:0;
+  }
+  .ev .evrow:hover .open, .ev .evrow:focus-visible .open { opacity:1; }
+  .ev .dot { margin-top:7px; }
+  .ev .hd { display:flex; align-items:baseline; gap:9px; flex-wrap:wrap; margin-bottom:5px; }
+  .ev .hd b { font-size:.86rem; font-weight:600; }
+  .ev .hd time, .ev .hd .src {
+    font-family:var(--mono); font-size:10.5px; color:var(--ink-3); letter-spacing:.03em;
+  }
+  .ev q { display:block; font-size:.96rem; color:var(--ink); font-style:italic; }
+  .ev q::before { content:"“"; } .ev q::after { content:"”"; }
+  .ev .plain { font-size:.95rem; color:var(--ink); }
+
+  /* actions */
+  .acts { display:flex; gap:10px; flex-wrap:wrap; }
+  .acts button {
+    border-radius:7px; padding:11px 18px; font-size:.93rem; font-weight:600;
+    border:1px solid var(--line-2); background:transparent; color:var(--ink);
+  }
+  .acts button.primary { background:var(--btn); color:var(--btn-ink); border-color:var(--btn); }
+  .acts button.ghost { color:var(--ink-3); border-style:dashed; font-weight:500; }
+  .acts button:hover { border-color:var(--ink-3); }
+  .acts button.primary:hover { opacity:.88; }
+
+  .result {
+    display:grid; grid-template-columns:auto minmax(0,1fr); gap:0 12px; align-items:start;
+    background:var(--ok-bg); border-radius:8px; padding:15px 17px;
+  }
+  .result .tick { color:var(--ok); font-family:var(--mono); font-weight:600; }
+  .result p { margin:0 0 8px; font-size:.95rem; }
+  .result p:last-child { margin:0; }
+  .deferform { max-width:62ch; }
+  .deferlead { margin:-4px 0 12px; font-size:.96rem; color:var(--ink-2); }
+  .deferlead b { color:var(--ink); font-weight:600; }
+  .duepick { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:16px; }
+  .duepick .lab {
+    font-family:var(--mono); font-size:10px; font-weight:600; letter-spacing:.1em;
+    text-transform:uppercase; color:var(--ink-3);
+  }
+  /* Our own arrow, so it sits where we want and takes a themed colour — the
+     native one cannot be positioned and ignores the palette. */
+  .selwrap { position:relative; display:inline-flex; max-width:100%; }
+  .selwrap select {
+    appearance:none; -webkit-appearance:none;
+    font:inherit; font-size:.92rem; color:var(--ink); background:var(--app);
+    border:1px solid var(--line-2); border-radius:7px;
+    padding:8px 38px 8px 12px; min-width:0; max-width:100%;
+  }
+  .selwrap::after {
+    content:''; position:absolute; right:13px; top:50%; width:13px; height:13px;
+    transform:translateY(-50%); background:var(--ink-3); pointer-events:none;
+    -webkit-mask:var(--ic-chev) center/contain no-repeat;
+            mask:var(--ic-chev) center/contain no-repeat;
+  }
+  .selwrap:hover::after { background:var(--ink-2); }
+  .selwrap select:focus { outline:2px solid var(--s-jira); outline-offset:1px; }
+  .selwrap optgroup { color:var(--ink-3); font-style:normal; }
+  .selwrap option { color:var(--ink); background:var(--app); }
+
+  /* A calendar of our own. The native one is browser chrome: it cannot be
+     restyled, and it opens in the wrong theme however you ask. */
+  .datepick { position:relative; display:inline-flex; }
+  .datebtn {
+    font:inherit; font-size:.92rem; color:var(--ink); background:var(--app);
+    border:1px solid var(--line-2); border-radius:7px; padding:8px 12px;
+    display:inline-flex; align-items:center; gap:9px;
+  }
+  .datebtn:hover { border-color:var(--ink-3); }
+  .datebtn::before {
+    content:''; width:14px; height:14px; flex:none; background:var(--ink-3);
+    -webkit-mask:var(--ic-cal) center/contain no-repeat;
+            mask:var(--ic-cal) center/contain no-repeat;
+  }
+  .datebtn:hover::before { background:var(--ink-2); }
+  /* .appwin clips to its rounded corners, so a panel that runs past the bottom
+     is cut off. It opens upward instead when there is no room below. */
+  .calpop.up { top:auto; bottom:calc(100% + 8px); }
+  .calpop {
+    position:absolute; top:calc(100% + 8px); left:0; z-index:40; width:264px;
+    background:var(--app); border:1px solid var(--line-2); border-radius:10px;
+    box-shadow:var(--shadow); padding:14px;
+  }
+  .calhead { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+  .calhead .mon { font-weight:600; font-size:.92rem; }
+  .calhead button {
+    position:relative; width:28px; height:28px; border-radius:6px;
+    border:1px solid transparent; background:transparent; color:var(--ink-3);
+  }
+  .calhead button::before {
+    content:''; position:absolute; inset:0; margin:auto; width:13px; height:13px;
+    background:currentColor;
+    -webkit-mask:var(--ic-chev) center/contain no-repeat;
+            mask:var(--ic-chev) center/contain no-repeat;
+  }
+  .calhead button[data-calstep="-1"]::before { transform:rotate(90deg); }
+  .calhead button[data-calstep="1"]::before  { transform:rotate(-90deg); }
+  .calhead button:hover { border-color:var(--line-2); color:var(--ink); }
+  .calgrid { display:grid; grid-template-columns:repeat(7, 1fr); gap:3px; }
+  .cdow {
+    text-align:center; font-family:var(--mono); font-size:9.5px; letter-spacing:.06em;
+    color:var(--ink-3); padding-bottom:5px;
+  }
+  .cday {
+    height:31px; border-radius:6px; border:1px solid transparent; background:transparent;
+    color:var(--ink); font-size:.86rem; font-variant-numeric:tabular-nums;
+  }
+  .cday:hover:not(:disabled) { background:var(--sunk); border-color:var(--line-2); }
+  .cday.today { box-shadow:inset 0 0 0 1px var(--line-2); }
+  .cday[aria-pressed="true"] {
+    background:var(--btn); color:var(--btn-ink); font-weight:600; border-color:var(--btn);
+  }
+  .cday:disabled { color:var(--ink-3); opacity:.3; cursor:default; }
+  .cempty { height:31px; }
+  .result .undo {
+    background:transparent; border:0; padding:0; font-family:var(--mono);
+    font-size:11px; color:var(--ink-3); text-decoration:underline;
+  }
+
+  /* ask */
+  .ask { padding:22px var(--gutter) 26px; background:var(--sunk); }
+  .composer {
+    display:flex; gap:10px; align-items:center; background:var(--app);
+    border:1px solid var(--line-2); border-radius:9px; padding:11px 14px;
+  }
+  .composer input { flex:1; border:0; background:transparent; color:var(--ink); font:inherit; font-size:.95rem; min-width:0; }
+  .composer input::placeholder { color:var(--ink-3); }
+  .composer button {
+    border:0; background:var(--btn); color:var(--btn-ink); border-radius:6px;
+    padding:7px 13px; font-size:.85rem; font-weight:600;
+  }
+  .sugg { display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; }
+  .sugg button {
+    background:transparent; border:1px solid var(--line-2); border-radius:99px;
+    padding:6px 13px; font-size:.85rem; color:var(--ink-2);
+  }
+  .sugg button:hover { border-color:var(--ink-3); color:var(--ink); }
+
+  /* ---------- 0 · the map ---------- */
+  .band { margin-bottom:26px; }
+  .band > h3 {
+    font-family:var(--mono); font-size:10.5px; font-weight:600; letter-spacing:.12em;
+    text-transform:uppercase; color:var(--ink-3); margin:0 0 4px;
+  }
+  .band > p { margin:0 0 14px; font-size:.92rem; color:var(--ink-2); max-width:68ch; }
+  .cards { display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:12px; }
+  .card {
+    text-align:left; background:var(--app); border:1px solid var(--line); border-radius:9px;
+    padding:15px 16px; display:block; width:100%;
+  }
+  button.card:hover { border-color:var(--ink-3); }
+  .card .kind {
+    font-family:var(--mono); font-size:9.5px; font-weight:600; letter-spacing:.1em;
+    text-transform:uppercase; color:var(--ink-3); display:block; margin-bottom:7px;
+  }
+  .card h4 { margin:0 0 5px; font-size:1rem; font-weight:600; letter-spacing:-.01em; }
+  .card p { margin:0; font-size:.86rem; color:var(--ink-2); line-height:1.45; }
+  .card .from {
+    display:block; margin-top:9px; font-family:var(--mono); font-size:10px; color:var(--ink-3);
+  }
+  .band.gone .card { background:transparent; border-style:dashed; opacity:.75; }
+  .band.gone .card h4 { text-decoration:line-through; text-decoration-thickness:1px; color:var(--ink-2); }
+  .band.gone .card .kind { color:var(--crit); }
+
+  /* ---------- 4 · chat ---------- */
+  .thread { display:grid; gap:16px; padding:26px var(--gutter); }
+  .turn { display:grid; grid-template-columns:30px minmax(0,1fr); gap:0 13px; }
+  .turn .badge {
+    width:30px; height:30px; border-radius:7px; display:grid; place-items:center;
+    font-family:var(--mono); font-size:10px; font-weight:600;
+  }
+  .turn.you .badge { background:var(--sunk); color:var(--ink-2); }
+  .turn.mc  .badge { background:var(--btn); color:var(--btn-ink); }
+  .turn .body { padding-top:4px; }
+  .turn.you .body { font-weight:600; }
+  .turn .body p { margin:0 0 10px; }
+  .turn .body p:last-child { margin:0; }
+  .turn .body .cited {
+    display:inline-flex; align-items:center; gap:5px; font-family:var(--mono);
+    font-size:10px; color:var(--ink-3); background:var(--sunk);
+    padding:2px 7px; border-radius:99px; white-space:nowrap; margin:0 2px;
+  }
+  .turn .body ul { margin:6px 0 10px; padding-left:18px; }
+  .turn .body li { margin-bottom:6px; font-size:.96rem; }
+  .inline-graph {
+    margin:12px 0; padding:16px; background:var(--sunk); border-radius:8px; overflow-x:auto;
+  }
+  .inline-graph .cap {
+    font-family:var(--mono); font-size:10px; letter-spacing:.06em; color:var(--ink-3);
+    display:block; margin-bottom:12px;
+  }
+  .chain { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .node {
+    font-family:var(--mono); font-size:11.5px; font-weight:600; padding:7px 11px;
+    border-radius:6px; border:1px solid var(--line-2); background:var(--app); white-space:nowrap;
+  }
+  .node.missing { border-style:dashed; border-color:var(--crit); color:var(--crit); }
+  .node.at-risk { border-color:var(--warn); color:var(--warn); }
+  .arrow { font-family:var(--mono); font-size:12px; color:var(--ink-3); }
+  .turn .followups { display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; }
+  .turn .followups button {
+    background:var(--btn); color:var(--btn-ink); border:0; border-radius:6px;
+    padding:8px 14px; font-size:.86rem; font-weight:600;
+  }
+  .turn .followups button.sec { background:transparent; color:var(--ink); border:1px solid var(--line-2); }
+
+  .askhead {
+    display:flex; align-items:baseline; justify-content:space-between; gap:16px;
+    flex-wrap:wrap; margin:0 0 14px;
+  }
+  .askhead .lab {
+    font-family:var(--mono); font-size:10.5px; font-weight:600; letter-spacing:.12em;
+    text-transform:uppercase; color:var(--ink-3);
+  }
+  .openfull {
+    background:transparent; border:0; padding:0; font-family:var(--mono); font-size:10.5px;
+    letter-spacing:.04em; color:var(--ink-2); text-decoration:underline; text-underline-offset:3px;
+    white-space:nowrap;
+  }
+  .openfull:hover { color:var(--ink); }
+  .openfull b { font-weight:600; color:var(--ink); }
+  .thread.inline { padding:0 0 4px; }
+  .thread.inline:empty { display:none; }
+
+  /* ---------- 4 · the Ask page ---------- */
+  /* Starting a chat is the reason you open this page, so the affordance is a
+     composer — not a button parked in a corner. */
+  .askpagehead { padding:30px var(--gutter) 24px; border-bottom:1px solid var(--line); }
+  .askpagehead .composer input { cursor:text; }
+  .askpagehead h1 { margin:0 0 16px; font-size:1.6rem; font-weight:600; letter-spacing:-.02em; }
+  .askpagehead .composer { cursor:text; }
+  .askpagehead .composer:hover { border-color:var(--ink-3); }
+  .hint { margin:12px 0 0; font-size:.88rem; color:var(--ink-3); max-width:64ch; }
+
+  .convrow {
+    display:grid; grid-template-columns:minmax(0,1fr) auto auto; gap:8px 16px; align-items:center;
+    border-bottom:1px solid var(--line); border-left:3px solid transparent;
+    padding:16px var(--gutter) 16px calc(var(--gutter) - 3px);
+  }
+  .convrow:hover { background:var(--sunk); }
+
+  /* A row is a container now, because a delete button cannot live inside the
+     button that opens the row. The main area stays one big click target. */
+  .rowmain {
+    display:block; width:100%; min-width:0; text-align:left;
+    background:transparent; border:0; padding:0; font:inherit; color:inherit;
+  }
+  .rowdel {
+    width:28px; height:28px; border-radius:6px; border:1px solid transparent;
+    background:transparent; color:var(--ink-3); font-size:14px; line-height:1;
+    opacity:0; flex:none;
+  }
+  .convrow:hover .rowdel, .later-row:hover .rowdel,
+  .rowdel:focus-visible { opacity:1; }
+  .rowdel:hover { border-color:var(--stop); color:var(--stop); background:var(--crit-bg); }
+  /* Delete acts immediately and stays undoable. Asking "are you sure?" makes
+     the safe path cost two clicks and still loses the thing if you misread it. */
+  .undobar {
+    display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+    padding:17px var(--gutter) 17px calc(var(--gutter) - 3px);
+    background:var(--sunk); border-left:3px solid var(--line-2);
+    border-bottom:1px solid var(--line); font-size:.9rem; color:var(--ink-2);
+  }
+  .undobar .what {
+    min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--ink);
+  }
+  .undobar button {
+    margin-left:auto; background:transparent; border:1px solid var(--line-2); border-radius:99px;
+    padding:5px 15px; font-size:.85rem; font-weight:600; color:var(--ink); white-space:nowrap;
+  }
+  .undobar button:hover { border-color:var(--ink-3); background:var(--app); }
+  .convrow.tied    { border-left-color:var(--crit); }
+  .convrow.general { border-left-color:var(--line-2); }
+  .convrow .top { display:flex; align-items:center; gap:9px; flex-wrap:wrap; margin-bottom:6px; }
+  .convrow .m { display:flex; }
+  .convrow .t { font-size:1rem; font-weight:600; color:var(--ink); }
+  .convrow .m { display:flex; align-items:baseline; gap:9px; flex-wrap:wrap; font-size:.89rem; color:var(--ink-2); }
+  .convrow .q { font-style:italic; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .convrow .when { color:var(--ink-3); font-family:var(--mono); font-size:11px; }
+  .convrow .n { font-family:var(--mono); font-size:11px; color:var(--ink-3); white-space:nowrap; }
+
+  .ctxbar {
+    display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+    padding:13px var(--gutter); border-bottom:1px solid var(--line); background:var(--sunk);
+  }
+  .ctxbar .about {
+    font-size:.9rem; color:var(--ink-2); min-width:0; overflow:hidden;
+    text-overflow:ellipsis; white-space:nowrap;
+  }
+  .ctxbar .about b { color:var(--ink); font-weight:600; }
+  .ctxbar .backlink {
+    margin-left:auto; background:transparent; border:1px solid var(--line-2); border-radius:99px;
+    padding:6px 13px; font-size:.85rem; color:var(--ink); white-space:nowrap; font-weight:500;
+  }
+  .ctxbar .backlink:hover { border-color:var(--ink-3); background:var(--app); }
+  /* A note you parked yourself can be named — the field looks like text until
+     you reach for it, so an unnamed note carries no chrome. */
+  .titleinput {
+    flex:1; min-width:0; font:inherit; font-size:.95rem; font-weight:600; color:var(--ink);
+    background:transparent; border:1px solid transparent; border-radius:6px;
+    padding:5px 9px; margin-left:-9px;   /* cancel the padding so text lines up with .about */
+  }
+  .titleinput::placeholder { color:var(--ink-3); font-weight:400; font-style:italic; }
+  .titleinput:hover { border-color:var(--line-2); }
+  .titleinput:focus {
+    border-color:var(--line-2); background:var(--app);
+    outline:2px solid var(--s-jira); outline-offset:1px;
+  }
+  .emptychat { padding:40px var(--gutter); max-width:52ch; }
+  .emptychat h3 { font-family:var(--sans); font-size:1.15rem; font-weight:600; margin:0 0 8px; }
+  .emptychat p { margin:0 0 18px; color:var(--ink-2); font-size:.96rem; }
+
+  /* ---------- 5 · later ---------- */
+  .later-row {
+    display:grid; grid-template-columns:minmax(0,1fr) auto auto; gap:12px 16px;
+    padding:18px var(--gutter); border-bottom:1px solid var(--line); align-items:start;
+  }
+  .later-row:hover { background:var(--sunk); }
+  .later-row .rowdel { margin-top:2px; }
+  .later-row .notetext { margin:8px 0 0; font-size:.97rem; color:var(--ink); line-height:1.5; }
+  .later-row .m { display:flex; align-items:baseline; gap:9px; margin-top:8px; }
+  .later-row .when { font-family:var(--mono); font-size:11px; color:var(--ink-3); }
+  .noteedit { margin-top:8px; }
+  .noteedit textarea {
+    width:100%; min-height:88px; resize:vertical; font:inherit; font-size:.93rem;
+    color:var(--ink); background:var(--app); border:1px solid var(--line-2);
+    border-radius:7px; padding:11px 13px; line-height:1.5;
+  }
+  .noteedit textarea:focus { outline:2px solid var(--s-jira); outline-offset:1px; }
+  .editacts { display:flex; gap:8px; margin-top:16px; }
+  .editacts button {
+    border-radius:6px; padding:7px 14px; font-size:.87rem; font-weight:600;
+    border:1px solid var(--line-2); background:transparent; color:var(--ink);
+  }
+  .editacts button.primary { background:var(--btn); border-color:var(--btn); color:var(--btn-ink); }
+  .editacts button:hover { border-color:var(--ink-3); }
+  .noteedit textarea.tall { min-height:200px; font-size:.98rem; }
+  .editacts .ghostdel {
+    margin-left:auto; border-style:dashed; color:var(--ink-3); font-weight:500;
+  }
+  .editacts .ghostdel:hover { border-color:var(--stop); color:var(--stop); background:var(--crit-bg); }
+  .editnote-hint {
+    font-family:var(--mono); font-size:10px; letter-spacing:.06em; color:var(--ink-3);
+    opacity:0; margin-left:8px;
+  }
+  .later-row:hover .editnote-hint { opacity:1; }
+  .later-row h3 { margin:0 0 6px; font-size:1rem; font-weight:600; }
+  .later-row .yournote {
+    margin:8px 0 0; padding:11px 14px; background:var(--sunk); border-radius:7px;
+    font-size:.93rem; color:var(--ink); border-left:2px solid var(--s-vault);
+  }
+  .later-row .yournote b {
+    display:block; font-family:var(--mono); font-size:9.5px; font-weight:600;
+    letter-spacing:.1em; text-transform:uppercase; color:var(--ink-3); margin-bottom:4px;
+  }
+  .later-row .due { font-family:var(--mono); font-size:11px; color:var(--ink-3); white-space:nowrap; }
+
+  /* ---------- 6 · record ---------- */
+  .rec-head {
+    padding:16px var(--gutter); border-bottom:1px solid var(--line); display:flex;
+    gap:12px; align-items:center; flex-wrap:wrap; background:var(--sunk);
+  }
+  .rec-head .src {
+    display:inline-flex; align-items:center; gap:7px; font-family:var(--mono);
+    font-size:11px; color:var(--ink-2); letter-spacing:.04em;
+  }
+  .rec-head .why { font-family:var(--mono); font-size:10.5px; color:var(--ink-3); }
+  .transcript { padding:22px var(--gutter) 28px; display:grid; gap:2px; }
+  .line { display:grid; grid-template-columns:74px minmax(0,1fr); gap:0 16px; padding:8px 12px; border-radius:6px; margin:0 -12px; }
+  .line time { font-family:var(--mono); font-size:11px; color:var(--ink-3); padding-top:3px; }
+  .line .said b { font-weight:600; margin-right:8px; }
+  .line .said span { color:var(--ink-2); }
+  .line.hit { background:var(--warn-bg); }
+  .line.hit .said span { color:var(--ink); font-weight:500; }
+  .line.hit::after {
+    content:"cited by the Kafka alert"; grid-column:2; font-family:var(--mono);
+    font-size:9.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--warn); margin-top:6px;
+  }
+
+  /* ---------- 7 · sources ---------- */
+  .conn { display:grid; gap:0; }
+  .conn-row {
+    display:grid; grid-template-columns:16px minmax(0,1fr) auto auto; gap:0 14px;
+    align-items:center; padding:15px var(--gutter); border-bottom:1px solid var(--line);
+  }
+  .conn-row .nm { font-weight:600; font-size:.98rem; }
+  .conn-row .nm small { display:block; font-weight:400; font-size:.85rem; color:var(--ink-2); margin-top:2px; }
+  .conn-row .nm small.scope { font-family:var(--mono); font-size:.75rem; letter-spacing:.01em; color:var(--ink-3); }
+  .conn-row .nm small.scope b { color:var(--ink-2); font-weight:600; }
+  .conn-row .count {
+    font-family:var(--mono); font-size:11px; color:var(--ink-3);
+    font-variant-numeric:tabular-nums; text-align:right; white-space:nowrap;
+  }
+  .stat-strip {
+    display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:1px;
+    background:var(--line); border-bottom:1px solid var(--line);
+  }
+  .stat { background:var(--app); padding:20px var(--gutter); }
+  .stat .n {
+    font-size:1.9rem; font-weight:600; letter-spacing:-.03em; font-variant-numeric:tabular-nums;
+    display:block; line-height:1.1;
+  }
+  .stat .l {
+    font-family:var(--mono); font-size:10px; letter-spacing:.1em; text-transform:uppercase;
+    color:var(--ink-3); margin-top:5px; display:block;
+  }
+
+  .notes { max-width:66ch; margin:40px 0 0; padding:0 2px; }
+  .notes h3 { font-size:1rem; font-weight:600; margin:0 0 10px; }
+  .notes ul { padding-left:20px; margin:0; }
+  .notes li { font-size:.93rem; color:var(--ink-2); margin-bottom:8px; }
+  .notes li b { color:var(--ink); font-weight:600; }
+
+  @media (max-width:640px) {
+    :root { --gutter:18px; }
+    main { padding:22px 14px 70px; }
+    .row { grid-template-columns:minmax(0,1fr); }
+    .row .go { display:none; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { animation:none !important; transition:none !important; } }
+</style>
+
+<div class="proto">
+  <div class="proto-in">
+    <span class="tag">Preview · fixture data · not connected</span>
+    <div class="steps" role="tablist" aria-label="Prototype screens">
+      <button role="tab" aria-selected="true"  data-go="map">every page</button>
+      <button role="tab" aria-selected="false" data-go="slack">1 · arrives</button>
+      <button role="tab" aria-selected="false" data-go="list">2 · the list</button>
+      <button role="tab" aria-selected="false" data-go="alert">3 · an alert</button>
+      <button role="tab" aria-selected="false" data-go="ask">4 · a conversation</button>
+      <button role="tab" aria-selected="false" data-go="later">5 · later</button>
+      <button role="tab" aria-selected="false" data-go="record">6 · a record</button>
+      <button role="tab" aria-selected="false" data-go="sources">7 · sources</button>
+    </div>
+    <button type="button" class="reset" id="resetdemo"
+            title="Put the fixture data back">↺ reset the data</button>
+  </div>
+</div>
+
+<main>
+
+  <!-- ============ 0 · MAP ============ -->
+  <section class="screen" id="scr-map">
+    <p class="caption">Six page types. Every card here is clickable.</p>
+
+    <div class="band">
+      <h3>It arrives</h3>
+      <p>Not a page. The product's front door is a message you did not go looking for.</p>
+      <div class="cards">
+        <button class="card" data-go="slack">
+          <span class="kind">Slack · email later</span>
+          <h4>The notification</h4>
+          <p>One claim, one button. Sent when something fires, not on a schedule.</p>
+        </button>
+      </div>
+    </div>
+
+    <div class="band">
+      <h3>The application — four pages, and that is all</h3>
+      <p>Everything you can navigate to. If a page is not on this row, it does not exist as a destination.</p>
+      <div class="cards">
+        <button class="card" data-go="list">
+          <span class="kind">Home</span>
+          <h4>Mission Control</h4>
+          <p>What needs you, worst first. When nothing is wrong it says so and you close it.</p>
+          <span class="from">was: the focus lens · <code>/api/work</code></span>
+        </button>
+        <button class="card" data-go="alert">
+          <span class="kind">One per alert type</span>
+          <h4>The alert</h4>
+          <p>The claim, the evidence, three actions. Nothing inherited between types.</p>
+          <span class="from">new · built on <code>/api/issue/:key</code></span>
+        </button>
+        <button class="card" data-go="ask">
+          <span class="kind">Opened, never wandered into</span>
+          <h4>The conversation</h4>
+          <p>Asking happens on the alert itself. This is where a thread goes once it outgrows that — or the
+            global one, from the list.</p>
+          <span class="from">was: the chat panel</span>
+        </button>
+        <button class="card" data-go="later">
+          <span class="kind">Your own shelf</span>
+          <h4>Later</h4>
+          <p>What you deferred, the note you left yourself, and when it comes back.</p>
+          <span class="from">was: the Vault pane</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="band">
+      <h3>Reached only from a citation</h3>
+      <p>These are the far end of "riya said this, on the 8th of July". You cannot browse to them and there is
+        no menu entry — you arrive by clicking a piece of evidence, and the record opens on the exact line.</p>
+      <div class="cards">
+        <button class="card" data-go="record">
+          <span class="kind">Zoom</span><h4>A transcript segment</h4>
+          <p>Opens at the cited timestamp, with what was said either side of it.</p>
+        </button>
+        <button class="card" data-go="record">
+          <span class="kind">Slack</span><h4>A message in its thread</h4>
+          <p>The line, highlighted, in the channel it was written in.</p>
+        </button>
+        <button class="card" data-go="record">
+          <span class="kind">Jira</span><h4>An issue</h4>
+          <p>Status, history and everything said about it anywhere else.</p>
+        </button>
+        <button class="card" data-go="record">
+          <span class="kind">Confluence</span><h4>A page</h4>
+          <p>The document, scrolled to the paragraph that was cited.</p>
+        </button>
+        <button class="card" data-go="record">
+          <span class="kind">Miro · live embed</span><h4>A board frame</h4>
+          <p>The real board, framed on the stickies or arrows the alert is about.</p>
+        </button>
+      </div>
+    </div>
+
+    <div class="band">
+      <h3>Under the bonnet</h3>
+      <p>Not part of the daily loop. It exists for setup — and for the thirty seconds of the demo video that
+        show the machine is real.</p>
+      <div class="cards">
+        <button class="card" data-go="sources">
+          <span class="kind">Setup · demo</span>
+          <h4>Sources</h4>
+          <p>What is connected, what is in scope, and what failed to join. Coverage — never the records
+            themselves. The animated brain lives here.</p>
+          <span class="from">was: the storyline lens</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="band gone">
+      <h3>Deleted as destinations</h3>
+      <p>Your own words, on the 21st: <em>"it's gonna take you to Jira, and then what? I'm just gonna show you
+        the board that you already have… it's pretty redundant."</em> The vendor panes go. The records they held
+        do not — they moved to the citation row above.</p>
+      <div class="cards">
+        <div class="card"><span class="kind">removed</span><h4>Jira pane</h4><p>You have a Jira tab open already.</p></div>
+        <div class="card"><span class="kind">removed</span><h4>Slack pane</h4><p>Same. Reading channels is not this product's job.</p></div>
+        <div class="card"><span class="kind">removed</span><h4>Confluence pane</h4><p>Same.</p></div>
+        <div class="card"><span class="kind">removed</span><h4>Zoom pane</h4><p>Same.</p></div>
+        <div class="card"><span class="kind">removed</span><h4>Miro pane</h4><p>Survives only as an embed inside a citation.</p></div>
+        <div class="card"><span class="kind">demoted</span><h4>Storyline lens</h4><p>Evidence and demo footage, not somewhere you go.</p></div>
+      </div>
+    </div>
+
+    <div class="notes">
+      <h3>A toolbar of three, and everything else is contextual</h3>
+      <ul>
+        <li><b>The toolbar carries only what you might want from anywhere</b> — Alerts, Later, Ask. The counts
+          do real work: <i>Alerts 3 · Later 2</i> tells you the state of things without opening anything.</li>
+        <li><b>An alert, a conversation and a record are never nav items.</b> Each one is always <i>about</i>
+          something specific, so you reach it by clicking that thing. Three is the ceiling here; a fifth entry
+          and the launcher-for-tools look is back.</li>
+        <li><b>Sources is not in the toolbar</b> — the connector dots on the right of the top bar are already
+          the way there, and they double as its live status. A page you set up once does not need a permanent
+          seat next to the pages you work in.</li>
+        <li><b>So only two kinds of back link survive</b>, and both are contextual: <i>← back to the list</i>
+          from an alert, and <i>← all conversations</i> from a chat. Later and Sources have none, because the
+          toolbar already holds the way out.</li>
+      </ul>
+
+      <h3>Eight destinations became four</h3>
+      <ul>
+        <li><b>Nothing built is thrown away — it is re-pointed.</b> <code>/api/work</code> becomes the list,
+          <code>/api/issue/:key</code> feeds the alert's evidence, the summariser writes the claim, the graph
+          becomes the Sources page and the "show me the loop" action.</li>
+        <li><b>The vault survives as a mechanism everywhere and one small page.</b> Commitments are vault notes —
+          the checklist on the missing-ticket alert <i>is</i> the vault. What went away is browsing it.</li>
+        <li><b>The test for a new page:</b> can you name the moment somebody opens it, and what they do next?
+          The five vendor panes fail that. All four survivors pass it.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ============ 1 · SLACK ============ -->
+  <section class="screen" id="scr-slack" hidden>
+    <p class="caption">08:02 — before you have opened anything</p>
+    <div class="slackwin">
+      <div class="bar"># mission-control</div>
+      <div class="msg">
+        <div class="avatar">MC</div>
+        <div>
+          <div class="who"><b>Mission Control</b><span class="app-tag">APP</span><time>08:02</time></div>
+          <p>Good morning. <strong>3 things need you</strong> — one of them since 8 July.</p>
+          <div class="attach">
+            <h4>A commitment with no ticket behind it</h4>
+            <p>The platform team owns a Kafka topic, due 12 Aug. Nothing in Jira references it, and
+              Sprint 12 closed this morning.</p>
+          </div>
+          <button class="slackbtn" data-go="list">Open Mission Control</button>
+        </div>
+      </div>
+    </div>
+    <div class="notes">
+      <h3>Why it starts here</h3>
+      <ul>
+        <li><b>The product's front door is not a screen you visit.</b> It arrives. The app is where you go once you already know there is something to look at.</li>
+        <li>One line, one claim, one button. Everything that would make this a digest was left out on purpose.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ============ 2 · LIST ============ -->
+  <section class="screen" id="scr-list" hidden>
+    <p class="caption">The whole application, so far</p>
+    <div class="appwin">
+      <div class="topbar">
+        <span class="brand">Mission Control</span>
+        <button class="sources" data-go="sources" title="Sources — what is connected">
+          <span><i class="dot jira"></i>Jira</span>
+          <span><i class="dot slack"></i>Slack</span>
+          <span><i class="dot zoom"></i>Zoom</span>
+          <span><i class="dot conf"></i>Confluence</span>
+          <span><i class="dot miro"></i>Miro</span>
+        </button>
+      </div>
+
+      <div class="greet">
+        <h1>3 things need you</h1>
+        <p>Friday 21 August · read across 5 sources since you left yesterday
+          · <button type="button" class="laterlink" data-go="later">2 parked for later →</button></p>
+      </div>
+
+      <div class="rows">
+        <button class="row crit" data-alert="gap">
+          <div>
+            <div class="meta">
+              <span class="chip crit">Missing ticket</span>
+              <span class="row-srcs srcs"><i class="dot zoom"></i><i class="dot miro"></i><i class="dot jira"></i></span>
+            </div>
+            <h3>The platform team's Kafka topic was never filed</h3>
+            <p class="sub">Agreed 8 July, due 12 Aug. 3 tickets in <b>Payments reliability</b> wait on it.</p>
+          </div>
+          <span class="go">44 days →</span>
+        </button>
+
+        <button class="row crit" data-alert="cycle">
+          <div>
+            <div class="meta">
+              <span class="chip crit">Circular dependency</span>
+              <span class="srcs"><i class="dot miro"></i><i class="dot jira"></i></span>
+            </div>
+            <h3>Four tickets are waiting on each other</h3>
+            <p class="sub">MC-103 → MC-102 → MC-101 → MC-105 → MC-103. Nothing in the loop can start.</p>
+          </div>
+          <span class="go">new →</span>
+        </button>
+
+        <button class="row warn" data-alert="disagree">
+          <div>
+            <div class="meta">
+              <span class="chip warn">Sources disagree</span>
+              <span class="srcs"><i class="dot slack"></i><i class="dot jira"></i></span>
+            </div>
+            <h3>MC-102 was called done on Tuesday and blocked yesterday</h3>
+            <p class="sub">Two people, two records. We are not going to tell you which is right.</p>
+          </div>
+          <span class="go">1 day →</span>
+        </button>
+      </div>
+
+      <p class="quiet">Nothing else changed overnight. <code>Ask anything →</code></p>
+    </div>
+
+    <div class="notes">
+      <h3>What is deliberately not here</h3>
+      <ul>
+        <li><b>No sidebar, no panes, no lenses.</b> Five vendor tabs is the thing you already have five tabs for.</li>
+        <li><b>No counts, no charts, no velocity.</b> Nothing on this screen is here to be impressive; each row is a thing to do.</li>
+        <li><b>The graph is not on screen</b> — it is what produced these three rows. The connector strip at the top is the only nod to it.</li>
+        <li>When there is nothing wrong, this screen says so and you close it. That is a feature.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ============ 3 · ALERT ============ -->
+  <section class="screen" id="scr-alert" hidden>
+    <p class="caption">One page per alert type — nothing inherited between them</p>
+    <div class="switch" role="tablist" aria-label="Alert type">
+      <button role="tab" aria-selected="true"  data-alert="gap">missing ticket</button>
+      <button role="tab" aria-selected="false" data-alert="cycle">circular dependency</button>
+      <button role="tab" aria-selected="false" data-alert="disagree">sources disagree</button>
+    </div>
+
+    <div class="appwin">
+      <div class="topbar">
+        <span class="brand">Mission Control</span>
+        <button class="sources" data-go="sources" title="Sources — what is connected">
+          <span><i class="dot jira"></i>Jira</span>
+          <span><i class="dot slack"></i>Slack</span>
+          <span><i class="dot zoom"></i>Zoom</span>
+          <span><i class="dot conf"></i>Confluence</span>
+          <span><i class="dot miro"></i>Miro</span>
+        </button>
+      </div>
+      <button class="back" data-go="list">← back to the list</button>
+      <div class="page" id="page"></div>
+    </div>
+
+    <div class="notes" id="alert-notes">
+      <h3>The rules every alert page follows</h3>
+      <ul>
+        <li><b>The claim is one sentence, and it is the biggest thing on the page.</b></li>
+        <li><b>Every line of evidence names its source, its author and its date</b>, and is clickable back to the record. Nothing is asserted without a receipt.</li>
+        <li><b>Four actions, and two of them are "no" — because they are different answers.</b>
+          <i>Not now</i> parks it: you write the note you will thank yourself for, choose when it comes back,
+          and it lands in Later carrying this alert's own chip. <i>Not needed</i> dismisses it for good. Every
+          note in Later that is tied to an issue got there this way; there is no other route.</li>
+        <li><b>The chat is at the bottom, not the top.</b> You should not have to ask a question to find out what happened.</li>
+        <li><b>Asking is not a transition — try it.</b> Click one of the suggested questions at the foot of the
+          page. The answer appears where you are standing: no new page, no modal, no route change. The alert
+          simply keeps going downwards.</li>
+        <li><b>The inline thread is the tail, not the archive.</b> It shows the last couple of exchanges. Once
+          a conversation is long enough that it would push the evidence off screen, you stop reading it here —
+          which is what <i>open full conversation</i> in the header is for. It carries the count, so it stays
+          honest as the thread grows.</li>
+        <li><b>That link is the only route to the full view</b>, and it is why the full view can have a
+          "back to the alert" button without lying. You went somewhere on purpose, so there is somewhere to come
+          back from. Asking never moves you; <i>opening the conversation</i> does.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ============ 4 · ASKING ============ -->
+  <section class="screen" id="scr-ask" hidden>
+    <p class="caption">A page in its own right — every conversation, tied to an alert or not</p>
+    <div class="appwin">
+      <div class="topbar">
+        <span class="brand">Mission Control</span>
+        <button class="sources" data-go="sources" title="Sources — what is connected">
+          <span><i class="dot jira"></i>Jira</span><span><i class="dot slack"></i>Slack</span>
+          <span><i class="dot zoom"></i>Zoom</span><span><i class="dot conf"></i>Confluence</span>
+          <span><i class="dot miro"></i>Miro</span>
+        </button>
+      </div>
+
+      <div id="askbody"></div>
+    </div>
+
+    <div class="notes">
+      <h3>Four rules the chat follows</h3>
+      <ul>
+        <li><b>It already knows what you are looking at.</b> Opened from an alert it is scoped to that alert —
+          you never restate the context. Opened from the list it answers across everything.</li>
+        <li><b>It cites, exactly like the page does.</b> And when it is inferring rather than reading —
+          "marcus probably owns this now" — it says so in the sentence.</li>
+        <li><b>When the answer is a shape, it draws the shape.</b> Your own point from the 21st: chat is
+          one-dimensional, and a dependency chain read left-to-right as prose is worse than seeing it.</li>
+        <li><b>Every answer can end in an action.</b> The same three the page offers, reachable
+          conversationally, so the chat is never a dead end you have to scroll back out of.</li>
+      </ul>
+
+      <h3>Tied or untied — the same chat either way</h3>
+      <ul>
+        <li><b>A list, then a chat — the same shape as Later.</b> Ask opens on the conversations; clicking one
+          opens it. No sidebar: two of four pages already work this way, and a third page shape would be a
+          third thing to learn for no gain.</li>
+        <li><b>A conversation may be about an alert, or about nothing in particular.</b> Each row says which,
+          on its second line, and <i>+ New chat</i> starts an untied one. Both read the same five sources, hold
+          the same tools, cite the same way.</li>
+        <li><b>Being tied changes one thing: what it opened knowing.</b> A tied chat starts with the alert's
+          subject already loaded, so you never restate it. An untied chat starts cold and you say what you want.
+          Nothing else differs.</li>
+        <li><b>"Back to the alert" is navigation, not behaviour.</b> It appears only when there is an alert to
+          go back to, and it changes nothing about how the chat answers — it is a shortcut to the page this
+          conversation happens to be about.</li>
+        <li><b>Asking still never moves you.</b> Questions asked on an alert are answered on the alert. This
+          page is where a conversation lives once you open it deliberately, and where every past one is.</li>
+      </ul>
+
+      <h3>Retrieval, and one limit worth knowing</h3>
+      <ul>
+        <li><b>The subject is on the row, not in a heading.</b> Each conversation says what it was about —
+          "the Kafka thing" — because that is what you remember, not the date. The date is there, second.</li>
+        <li><b>A transcript is a poor record.</b> This product exists because decisions get lost inside
+          conversations, so it would be a strange thing to build and then bury its own conclusions in a chat
+          log. When an exchange reaches something worth keeping it should offer to save the <i>finding</i> to
+          Later: durable, cited, attached to the ticket rather than to a scroll position.</li>
+        <li><b>Already built:</b> conversations persist in the browser (<code>localStorage</code>, last 30,
+          auto-titled from your first message). They survive a reload, but they are per-browser — different
+          laptop, no history. Fine for the hackathon; a real gap the day two people share an account.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ============ 5 · LATER ============ -->
+  <section class="screen" id="scr-later" hidden>
+    <p class="caption">What "not now" does — and the honest answer to "I cannot deal with this today"</p>
+    <div class="appwin">
+      <div class="topbar">
+        <span class="brand">Mission Control</span>
+        <button class="sources" data-go="sources" title="Sources — what is connected">
+          <span><i class="dot jira"></i>Jira</span><span><i class="dot slack"></i>Slack</span>
+          <span><i class="dot zoom"></i>Zoom</span><span><i class="dot conf"></i>Confluence</span>
+          <span><i class="dot miro"></i>Miro</span>
+        </button>
+      </div>
+      <div id="laterbody"></div>
+
+      <p class="quiet">When one comes back it arrives the same way anything else does — as a notification,
+        carrying the note you left yourself.</p>
+    </div>
+
+    <div class="notes">
+      <h3>Why this page exists at all</h3>
+      <ul>
+        <li><b>You argued for it yourself, on the 21st:</b> <em>"you get a notification and you want to follow
+          up, but maybe not immediately — you write what you're thinking into the vault, and then you come back
+          to it later, or in case you forget you get another notification."</em> This is that, and nothing more.</li>
+        <li><b>Every alerting tool dies of the same disease</b> — things you cannot action right now, which you
+          therefore dismiss, which trains you to dismiss everything. A third answer between "do it" and
+          "make it go away" is what stops that.</li>
+        <li><b>It is the vault, wearing a word people use.</b> Underneath, each row is a note with your text and
+          a re-notify date. The note editor still exists for anyone who wants it; it is just not the way in.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ============ 6 · RECORD ============ -->
+  <section class="screen" id="scr-record" hidden>
+    <p class="caption">Where a citation lands — not a Zoom pane, one segment, opened on the line</p>
+    <div class="appwin">
+      <div class="topbar">
+        <span class="brand">Mission Control</span>
+        <button class="sources" data-go="sources" title="Sources — what is connected">
+          <span><i class="dot jira"></i>Jira</span><span><i class="dot slack"></i>Slack</span>
+          <span><i class="dot zoom"></i>Zoom</span><span><i class="dot conf"></i>Confluence</span>
+          <span><i class="dot miro"></i>Miro</span>
+        </button>
+      </div>
+      <button class="back" data-go="alert">← back to the alert</button>
+      <div class="rec-head">
+        <span class="src"><i class="dot zoom"></i>Zoom · Sprint 12 planning · 8 July</span>
+        <span class="why">opened at 14:12 — the line the Kafka alert cites</span>
+      </div>
+
+      <div class="transcript">
+        <div class="line"><time>14:11:38</time><p class="said"><b>dana</b><span>…so the replay only works if we can read the failed batch back off something durable.</span></p></div>
+        <div class="line"><time>14:11:52</time><p class="said"><b>you</b><span>Do we have a topic for that, or does it need creating?</span></p></div>
+        <div class="line hit"><time>14:12:04</time><p class="said"><b>riya</b><span>Platform can give us the topic. Sanjay's team owns it — they said the twelfth of August at the latest.</span></p></div>
+        <div class="line"><time>14:12:19</time><p class="said"><b>sanjay</b><span>Yeah, that is fine. I will put it on our board now so it does not get lost.</span></p></div>
+        <div class="line"><time>14:12:27</time><p class="said"><b>you</b><span>Great. Then MC-104 can go ahead on the assumption it exists.</span></p></div>
+        <div class="line"><time>14:12:41</time><p class="said"><b>riya</b><span>I will write the decision record up in Confluence this afternoon.</span></p></div>
+      </div>
+    </div>
+
+    <div class="notes">
+      <h3>Why this is not a Zoom pane</h3>
+      <ul>
+        <li><b>You cannot get here from a menu.</b> There is no transcript browser, no recording list, no search
+          across meetings. The only route in is a piece of evidence you clicked.</li>
+        <li><b>It opens on the line, with what was said either side.</b> A citation that drops you at the top of
+          a ninety-minute transcript has not really been followed.</li>
+        <li><b>Read the four lines around the highlight</b> — "I will put it on our board now so it does not get
+          lost" is the moment the whole alert is about, and it is the sentence that makes a judge wince.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ============ 7 · SOURCES ============ -->
+  <section class="screen" id="scr-sources" hidden>
+    <p class="caption">Setup — and the thirty seconds of the video that prove the machine is real</p>
+    <div class="appwin">
+      <div class="topbar">
+        <span class="brand">Mission Control</span>
+        <span class="brand muted">Sources</span>
+      </div>
+      <div class="stat-strip">
+        <div class="stat"><span class="n">1,284</span><span class="l">records read</span></div>
+        <div class="stat"><span class="n">312</span><span class="l">things</span></div>
+        <div class="stat"><span class="n">1,097</span><span class="l">connections</span></div>
+        <div class="stat"><span class="n">3</span><span class="l">alerts open</span></div>
+      </div>
+
+      <div class="conn">
+        <div class="conn-row"><i class="dot jira"></i>
+          <span class="nm">Jira<small class="scope">project <b>PAY</b> · issue types epic, story, bug · last 4 sprints</small></span>
+          <span class="count">214 issues</span><span class="chip ok">Connected</span></div>
+        <div class="conn-row"><i class="dot slack"></i>
+          <span class="nm">Slack<small class="scope">#eng-platform · #standup · #payments · #incidents · +3</small></span>
+          <span class="count">786 messages</span><span class="chip ok">Connected</span></div>
+        <div class="conn-row"><i class="dot zoom"></i>
+          <span class="nm">Zoom<small class="scope">recurring: planning, retro, refinement · since 1 May</small></span>
+          <span class="count">19 transcripts</span><span class="chip ok">Connected</span></div>
+        <div class="conn-row"><i class="dot conf"></i>
+          <span class="nm">Confluence<small class="scope">space <b>PAYENG</b> · decision records and runbooks</small></span>
+          <span class="count">41 pages</span><span class="chip ok">Connected</span></div>
+        <div class="conn-row"><i class="dot miro"></i>
+          <span class="nm">Miro<small class="scope">board <b>Payments reliability</b> · 6 frames</small></span>
+          <span class="count">63 items · 12 arrows</span><span class="chip ok">Connected</span></div>
+        <div class="conn-row"><i class="dot vault"></i>
+          <span class="nm">GitHub<small class="scope">pull request state against each ticket</small></span>
+          <span class="count">—</span><span class="chip warn">Not yet</span></div>
+      </div>
+
+      <p class="quiet">Read every 15 minutes. Last pass 6 minutes ago, 3 new records, 1 new connection.</p>
+
+      <div class="block topped flush">
+        <h4>What we could not read</h4>
+        <p class="blocklead">
+          The only place in the product where you look at individual records — and you only ever see the ones
+          that did not join. Nothing here is browsing; each row is a thing to repair.</p>
+        <div class="conn failbox">
+          <div class="conn-row"><i class="dot miro"></i>
+            <span class="nm">3 arrows point at something we cannot resolve<small class="scope">drawn from a sticky to a card — a dependency somebody thinks they expressed</small></span>
+            <span class="count">Miro</span><span class="chip warn">Look</span></div>
+          <div class="conn-row"><i class="dot conf"></i>
+            <span class="nm">4 pages name no ticket<small class="scope">they may be about work we are tracking, and we cannot tell</small></span>
+            <span class="count">Confluence</span><span class="chip warn">Look</span></div>
+          <div class="conn-row"><i class="dot zoom"></i>
+            <span class="nm">1 recording had no transcript<small class="scope">Sprint 13 retro, 14 Aug — recorded, never transcribed</small></span>
+            <span class="count">Zoom</span><span class="chip warn">Look</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="notes">
+      <h3>You cannot read records here — and that is the point</h3>
+      <ul>
+        <li><b>It answers "what does it know?", never "what did they say?"</b> Coverage and scope, not content.
+          Click a row and you get what is <i>in scope</i> — which channels, which project, which board — not a
+          list of messages. The moment you can click through to a message, you have rebuilt the Slack pane with
+          an extra step in front of it.</li>
+        <li><b>The one exception is the failures</b>, and it is an exception because it is repair, not browsing.
+          You only ever see the records that did <i>not</i> join — never the 98% that did.</li>
+        <li><b>That block is nearly free to build.</b> The connectors already drop these: an arrow whose ends do
+          not both resolve to a ticket, a card with no key, a sticky that is empty after stripping. Today they
+          are dropped silently. Counting them instead of discarding them is the whole change.</li>
+        <li><b>And it is the most honest thing in the product.</b> "Three arrows point at something we cannot
+          resolve" is a dependency somebody believes they expressed and the system will never see. A
+          cross-origin iframe can never tell you that.</li>
+        <li><b>Nobody visits this twice.</b> You set it up, and after that it is a place you point at rather
+          than work in — which is exactly why it is safe to make it the impressive one, and where the animated
+          brain belongs.</li>
+      </ul>
+    </div>
+  </section>
+
+</main>
+
+<script>
+(function () {
+  var ALERTS = {
+    gap: {
+      chip: 'crit', chipText: 'Missing ticket',
+      when: 'Fired 08:02 today, when Sprint 12 closed',
+      claim: 'The platform team’s Kafka topic was never filed',
+      impact: 'Agreed in Sprint 12 planning on <b>8 July</b>, due <b>12 August</b>. Nine days past due, no Jira issue references it, and <b>3 tickets in Payments reliability</b> are waiting on it.',
+      checklist: {
+        title: 'What Sprint 12 planning said would happen',
+        items: [
+          { s:'done', t:'Add an idempotency key to the charge endpoint', r:'MC-104 · done' },
+          { s:'done', t:'Dedupe cache in front of the charge endpoint',  r:'MC-105 · in review' },
+          { s:'done', t:'Decision record in Confluence',                 r:'published 11 Jul' },
+          { s:'done', t:'Replay tooling for the failed batch',           r:'MC-107 · done' },
+          { s:'miss', t:'Kafka topic from the platform team',            r:'no ticket' },
+          { s:'done', t:'Load test before the freeze',                   r:'MC-111 · done' }
+        ]
+      },
+      evidence: {
+        title: 'Why we think this was promised',
+        items: [
+          { src:'zoom', cls:'zoom', who:'riya', label:'Sprint 12 planning · 14:12', date:'8 Jul',
+            quote:'Platform can give us the topic. Sanjay’s team owns it — they said the twelfth of August at the latest.' },
+          { src:'miro', cls:'miro', who:'sanjay', label:'Payments reliability — Actions frame', date:'8 Jul',
+            quote:'Kafka topic — PLATFORM own — due 12 Aug' },
+          { src:'jira', cls:'jira', who:'', label:'Searched 19 issues in Payments reliability', date:'now',
+            plain:'No issue references a Kafka topic, and none is assigned to the platform team.' },
+          { src:'slack', cls:'slack', who:'', label:'#eng-platform', date:'since 8 Jul',
+            plain:'Nobody has mentioned it since the day it was agreed.' }
+        ]
+      },
+      actions: [
+        { label:'Create the ticket', primary:true,
+          result:'<p><b>MC-112 created</b> — <i>Kafka topic for payments replay</i>, assigned to the platform team, due 12 Aug, linked as a blocker of MC-104, MC-107 and MC-111.</p><p>The ticket carries a comment naming the meeting, the rationale, and both citations above. The commitment in the vault now points at it, so this alert will not fire again.</p>' },
+        { label:'Ask the platform team',
+          result:'<p><b>Drafted for #eng-platform</b>, addressed to Sanjay — who agreed it on 8 July and is still the owner after the reorg.</p><p>Nothing has been sent. Read it before it goes.</p>' },
+        { label:'Not now', defer:true },
+        { label:'Not needed — dismiss', ghost:true,
+          result:'<p><b>Dismissed.</b> Recorded against the commitment with today’s date, so it will not come back and there is a record of who decided it was fine.</p>' }
+      ],
+      suggestions: ['Who else was in that meeting?', 'What happens to MC-104 if this slips again?', 'Has this team missed a date before?'],
+      answers: [
+        'Four people were on Sprint 12 planning: <b>riya</b> raised it, <b>sanjay</b> accepted it for the platform team, <b>dana</b> owns MC-105 which waits on it, and you. Worth knowing — <b>sanjay moved off the platform team on 31 July</b>, so the person who picks this up now is marcus.',
+        'MC-104 is already done, so it is not at risk itself — but it cannot be released without the topic. <b>MC-107</b> and <b>MC-111</b> sit behind it, and MC-111 is in Sprint 14, which closes on 4 September.',
+        'Twice in the last four sprints — and both times on work that was agreed out loud and never became a ticket. That is the shape this alert exists to catch, rather than the team being slow.'
+      ]
+    },
+
+    cycle: {
+      chip: 'crit', chipText: 'Circular dependency',
+      when: 'Fired 07:41 today, when the fourth arrow was drawn',
+      claim: 'Four tickets are waiting on each other',
+      impact: '<b>MC-103 → MC-102 → MC-101 → MC-105 → MC-103.</b> Nothing in this loop can start, which makes every estimate underneath it meaningless. Sprint 14 has all four.',
+      evidence: {
+        title: 'The four arrows, and who drew them',
+        items: [
+          { src:'miro', cls:'miro', who:'dana', label:'Payments reliability board', date:'6 Aug',
+            plain:'MC-103 → MC-102 — “cannot finish the endpoint until the topic lands”' },
+          { src:'miro', cls:'miro', who:'riya', label:'Payments reliability board', date:'12 Aug',
+            plain:'MC-102 → MC-101 — drawn during refinement' },
+          { src:'jira', cls:'jira', who:'sam', label:'Blocks link', date:'19 Aug',
+            plain:'MC-101 → MC-105 — added in Jira, not on the board' },
+          { src:'miro', cls:'miro', who:'dana', label:'Payments reliability board', date:'07:41 today',
+            plain:'MC-105 → MC-103 — the arrow that closed the loop' }
+        ]
+      },
+      actions: [
+        { label:'Show me the loop', primary:true,
+          result:'<p>Framed on the four tickets, with everything else dimmed. The arrow drawn this morning is the one to remove or re-point.</p>' },
+        { label:'Ask dana about this morning’s arrow',
+          result:'<p><b>Drafted to dana</b>, quoting the arrow drawn at 07:41 and the three it closes against. Nothing has been sent.</p>' },
+        { label:'Not now', defer:true },
+        { label:'It is not really circular — dismiss', ghost:true,
+          result:'<p><b>Dismissed,</b> with a note that the loop is intentional. It will not fire again unless a fifth arrow changes the shape.</p>' }
+      ],
+      suggestions: ['Which of the four is cheapest to break?', 'Who owns each ticket in the loop?', 'Was this loop here last sprint?'],
+      answers: [
+        '<b>MC-105 → MC-103</b>, the one drawn at 07:41 today. It is the only arrow of the four with no supporting conversation anywhere — nothing in Slack, Zoom or Confluence explains why it exists.',
+        '<b>dana</b> holds MC-103 and MC-105, <b>riya</b> holds MC-102, <b>sam</b> holds MC-101. Three people — which is why none of them can see the loop from their own board.',
+        'No. Three of the four arrows are older than a fortnight and coexisted fine; the loop only closed when the fourth was drawn <b>this morning</b>.'
+      ]
+    },
+
+    disagree: {
+      chip: 'warn', chipText: 'Sources disagree',
+      when: 'Fired 16:20 yesterday, on the second record',
+      claim: 'MC-102 was called done on Tuesday and blocked yesterday',
+      impact: 'Two people, two records, one day apart. <b>We are not going to tell you which is right</b> — both are below, with their dates, in front of the person who can tell.',
+      evidence: {
+        title: 'Both records, newest first',
+        items: [
+          { src:'slack', cls:'slack', who:'dana', label:'#eng-platform', date:'yesterday 16:20',
+            quote:'MC-102 is still blocked on the provider secret. I cannot test it until we have one.' },
+          { src:'slack', cls:'slack', who:'sam', label:'#standup', date:'Tuesday 09:14',
+            quote:'MC-102 is done, moving on to the replay work.' },
+          { src:'jira', cls:'jira', who:'', label:'MC-102 status', date:'now',
+            plain:'In review since Tuesday 09:31. Nobody has moved it since.' }
+        ]
+      },
+      actions: [
+        { label:'Ask both, in one thread', primary:true,
+          result:'<p><b>Drafted to sam and dana</b> in #eng-platform, quoting both messages with their timestamps and asking only which is current. Nothing has been sent.</p>' },
+        { label:'Open MC-102',
+          result:'<p>Opened, with both records pinned beside the ticket so whoever picks it up sees the disagreement first.</p>' },
+        { label:'Not now', defer:true },
+        { label:'Already resolved — dismiss', ghost:true,
+          result:'<p><b>Dismissed.</b> If a third record contradicts either of these, the alert comes back.</p>' }
+      ],
+      suggestions: ['What is the provider secret blocking?', 'When did MC-102 actually move?', 'Show me everything said about MC-102'],
+      answers: [
+        '<b>MC-102 and MC-105.</b> It was first raised on 6 August and has come up in #eng-platform four times since, most recently yesterday afternoon.',
+        'To <b>in review on Tuesday at 09:31</b> — twelve minutes after sam said it was done in #standup. Nothing has moved it since, which is the whole of the disagreement.',
+        '<b>23 records</b> across Slack, Zoom and Confluence. The three that contradict each other are above; the rest agree with one another and add nothing.'
+      ]
+    }
+  };
+
+  var SCREENS = ['map', 'slack', 'list', 'alert', 'ask', 'later', 'record', 'sources'];
+  var page = document.getElementById('page');
+  var current = 'gap';
+
+  function esc(s) { return String(s).replace(/[&<>]/g, function (c) { return { '&':'&amp;','<':'&lt;','>':'&gt;' }[c]; }); }
+
+  function render(key) {
+    var a = ALERTS[key];
+    if (!a) return;
+    current = key;
+    var html = '';
+
+    html += '<div class="head">'
+          +   '<div class="meta"><span class="chip ' + a.chip + '">' + esc(a.chipText) + '</span>'
+          +   '<span class="when">' + esc(a.when) + '</span></div>'
+          +   '<h1 class="claim">' + esc(a.claim) + '</h1>'
+          +   '<p class="impact">' + a.impact + '</p>'
+          + '</div>';
+
+    if (a.checklist) {
+      html += '<div class="block"><h4>' + esc(a.checklist.title) + '</h4><ul class="check">';
+      a.checklist.items.forEach(function (i) {
+        html += '<li class="' + i.s + '">'
+              +   '<span class="mark" aria-hidden="true">' + (i.s === 'done' ? '✓' : '✕') + '</span>'
+              +   '<span class="txt">' + esc(i.t) + '</span>'
+              +   '<span class="ref">' + esc(i.r) + '</span>'
+              + '</li>';
+      });
+      html += '</ul></div>';
+    }
+
+    html += '<div class="block"><h4>' + esc(a.evidence.title) + '</h4><div class="ev">';
+    a.evidence.items.forEach(function (e) {
+      // A quote is a citation and opens the record it came from. A line without
+      // one is our own observation ("no issue references a Kafka topic") — there
+      // is nothing to open, so it is deliberately not a link.
+      var tag = e.quote ? 'button' : 'article';
+      var attrs = e.quote ? ' type="button" class="evrow" data-go="record"' : '';
+      html += '<' + tag + attrs + '><i class="dot ' + e.cls + '" aria-hidden="true"></i><div>'
+            +   '<div class="hd">'
+            +     '<span class="src">' + esc(e.src) + '</span>'
+            +     (e.who ? '<b>' + esc(e.who) + '</b>' : '')
+            +     '<span class="src">' + esc(e.label) + '</span>'
+            +     '<time>' + esc(e.date) + '</time>'
+            +     (e.quote ? '<span class="open">open →</span>' : '')
+            +   '</div>'
+            +   (e.quote ? '<q>' + esc(e.quote) + '</q>' : '<p class="plain">' + esc(e.plain) + '</p>')
+            + '</div></' + tag + '>';
+    });
+    html += '</div></div>';
+
+    html += '<div class="block" id="actblock"><h4>What now</h4><div class="acts">';
+    a.actions.forEach(function (act, i) {
+      html += '<button data-act="' + i + '" class="' + (act.primary ? 'primary' : act.ghost ? 'ghost' : '') + '">'
+            + esc(act.label) + '</button>';
+    });
+    html += '</div></div>';
+
+    html += '<div class="ask">'
+          + '<div class="askhead"><span class="lab">Ask about this</span>'
+          + '<button type="button" class="openfull" id="openfull" data-openconv="' + key + '">'
+          + openfullLabel(key) + '</button></div>'
+          + '<div class="thread inline" id="inline-thread"></div>'
+          + '<div class="composer"><input type="text" id="ask-input" aria-label="Ask about this alert" '
+          + 'placeholder="Ask anything about this alert…"><button type="button" id="ask-send">Ask</button></div>'
+          + '<div class="sugg" id="sugg">';
+    a.suggestions.forEach(function (s, i) {
+      html += '<button type="button" data-q="' + i + '">' + esc(s) + '</button>';
+    });
+    html += '</div></div>';
+
+    page.innerHTML = html;
+  }
+
+  // --- the Ask page ---------------------------------------------------------
+  // A conversation may be tied to an alert or not. Being tied changes exactly
+  // one thing: what it opened knowing, and a link back. Same engine, same
+  // sources, same tools either way.
+  var CONVERSATIONS = [
+    {
+      id: 'c1', when: 'Today, 08:31', title: 'Who else was in that meeting?',
+      alert: 'The platform team’s Kafka topic was never filed', alertKey: 'gap',
+      turns: [
+        { who: 'you', text: 'Who else was in that meeting?' },
+        { who: 'mc', html:
+          '<p>Four people were on Sprint 12 planning on 8 July:</p><ul>'
+          + '<li><b>riya</b> — raised it, and took the Confluence decision record</li>'
+          + '<li><b>sanjay</b> — accepted the work for the platform team and wrote the sticky</li>'
+          + '<li><b>dana</b> — owns MC-105, which waits on it</li><li><b>you</b></li></ul>'
+          + '<p>One thing worth knowing: <b>sanjay moved off the platform team on 31 July.</b> The person who '
+          + 'picks this up now is <b>marcus</b> — he has answered the last four things asked in '
+          + '<span class="cited"><i class="dot slack"></i>#eng-platform</span> and is named on their two most '
+          + 'recent tickets. I am inferring that, not reading it from an org chart.</p>'
+          + '<div class="followups"><button type="button" data-go="alert">Draft a message to marcus</button>'
+          + '<button type="button" class="sec" data-go="record">Show me where sanjay agreed it</button></div>' },
+        { who: 'you', text: 'What happens to MC-104 if this slips again?' },
+        { who: 'mc', html:
+          '<p>MC-104 is done, so it is not at risk itself — but it cannot be released without the topic, and '
+          + 'two things behind it are waiting:</p>'
+          + '<div class="inline-graph"><span class="cap">what the topic is holding up</span><div class="chain">'
+          + '<span class="node missing">Kafka topic · no ticket</span><span class="arrow">→</span>'
+          + '<span class="node">MC-104 · done</span><span class="arrow">→</span>'
+          + '<span class="node at-risk">MC-107 · in review</span><span class="arrow">→</span>'
+          + '<span class="node at-risk">MC-111 · to do</span></div></div>'
+          + '<p>MC-111 is in <b>Sprint 14</b>, which closes on 4 September. If the topic is not filed this week '
+          + 'it will not land, and Payments reliability slips a sprint.</p>'
+          + '<p>I am showing you the chain rather than describing it because the shape is the answer.</p>'
+          + '<div class="followups"><button type="button" data-go="alert">Create the ticket</button>'
+          + '<button type="button" class="sec" data-go="later">Not now — remind me Monday</button></div>' },
+      ],
+    },
+    {
+      id: 'c2', when: '19 Aug', title: 'Is the platform team blocked on something?',
+      alert: 'The platform team’s Kafka topic was never filed', alertKey: 'gap',
+      turns: [
+        { who: 'you', text: 'Is the platform team blocked on something?' },
+        { who: 'mc', html:
+          '<p>Not visibly. They closed six tickets in Sprint 13 and none of them mention the topic. '
+          + 'The last time anyone from that team wrote about it anywhere was '
+          + '<span class="cited"><i class="dot zoom"></i>8 Jul</span>, in the meeting where they agreed to it.</p>'
+          + '<p>So the more likely reading is not that they are blocked — it is that nobody told them it was '
+          + 'still expected.</p>' },
+      ],
+    },
+    {
+      id: 'c3', when: '14 Aug', title: 'What did Sprint 12 actually commit to?',
+      alert: 'The platform team’s Kafka topic was never filed', alertKey: 'gap',
+      turns: [
+        { who: 'you', text: 'What did Sprint 12 actually commit to?' },
+        { who: 'mc', html:
+          '<p>Six things were agreed out loud. Five became tickets — MC-104, MC-105, MC-107, MC-111 and the '
+          + 'Confluence decision record. The sixth was the Kafka topic, and nothing in Jira references it.</p>' },
+      ],
+    },
+    {
+      id: 'c6', when: 'Yesterday, 17:02', title: 'Who moved it to in review?',
+      alert: 'MC-102 was called done on Tuesday and blocked yesterday', alertKey: 'disagree',
+      turns: [
+        { who: 'you', text: 'Who moved it to in review?' },
+        { who: 'mc', html:
+          '<p><b>sam</b>, on Tuesday at 09:31 — twelve minutes after saying it was done in '
+          + '<span class="cited"><i class="dot slack"></i>#standup</span>. Nobody has touched the status since.</p>'
+          + '<p>So the disagreement is not about what the ticket says. It is that dana found the provider '
+          + 'secret still missing <b>three days later</b>, and nothing was moved back.</p>' },
+      ],
+    },
+    {
+      id: 'c4', when: 'Yesterday, 16:40', title: 'Who should I ask about the payments provider?',
+      alert: null,
+      turns: [
+        { who: 'you', text: 'Who should I ask about the payments provider?' },
+        { who: 'mc', html:
+          '<p>Three people have spoken about the provider in the last month:</p><ul>'
+          + '<li><b>dana</b> — raised the sandbox secret four times in '
+          + '<span class="cited"><i class="dot slack"></i>#eng-platform</span>, most recently yesterday</li>'
+          + '<li><b>riya</b> — wrote the integration runbook in '
+          + '<span class="cited"><i class="dot conf"></i>Confluence</span> in June</li>'
+          + '<li><b>marcus</b> — owns the provider relationship since the reorg</li></ul>'
+          + '<p>For a credential, dana. For how it works, riya’s runbook. For anything contractual, marcus.</p>' },
+      ],
+    },
+    {
+      id: 'c5', when: '18 Aug', title: 'Which tickets did we carry into Sprint 14?',
+      alert: null,
+      turns: [
+        { who: 'you', text: 'Which tickets did we carry into Sprint 14?' },
+        { who: 'mc', html:
+          '<p>Four: MC-94, MC-102, MC-105 and MC-111. MC-94 has now been carried twice, which is the only one '
+          + 'of the four worth a conversation at the retro.</p>' },
+      ],
+    },
+  ];
+
+  // --- Later ---------------------------------------------------------------
+  // A note is either about an alert, or one you parked yourself.
+  var NOTES = [
+    { id: 'n1', alertKey: 'gap', title: 'The platform team’s Kafka topic was never filed',
+      when: 'Thursday 09:12', due: 'back Mon 24 Aug',
+      text: 'Need to check with marcus whether platform already has this on their own board before I file a duplicate. Ask at Monday stand-up.' },
+    { id: 'n2', alertKey: 'disagree', title: 'MC-102 was called done on Tuesday and blocked yesterday',
+      when: 'Wednesday 17:40', due: 'back Thu 27 Aug',
+      text: 'sam is on leave until the 27th. Not worth chasing dana until he can confirm which is right.' },
+    { id: 'n3', alertKey: null, title: null,
+      when: 'Tuesday 11:05', due: 'back if it changes',
+      text: 'Ask Tim whether the Sprint 13 retro was ever recorded — the transcript is missing and we cite that meeting twice.' },
+  ];
+  var laterView = null;     // null = the list of notes; an id = that note open
+  var undone = null;        // { kind, index, item, label } — the last delete, still recoverable
+  var noteSeq = 0;
+
+  function undoBarHtml() {
+    if (!undone) return '';
+    return '<div class="undobar"><span class="what">Deleted “' + esc(undone.label) + '”</span>'
+      + '<button type="button" data-undo="1">Undo</button></div>';
+  }
+
+  /**
+   * Put the undo strip back where the row was, rather than at the top of the
+   * list — the gap it leaves is the clearest label for what it will restore.
+   */
+  function withUndoAt(rows, at) {
+    if (at === null || at === undefined) return rows.join('');
+    var copy = rows.slice();
+    copy.splice(Math.max(0, Math.min(at, copy.length)), 0, undoBarHtml());
+    return copy.join('');
+  }
+
+  function laterListHtml() {
+    var undoAt = undone && undone.kind === 'note' ? undone.index : null;
+    var head = '<div class="askpagehead"><h1>Later</h1>'
+      + '<div class="composer">'
+      + '<input type="text" id="newnote" aria-label="Park a note for later" '
+      + 'placeholder="Park a note for later…"><button type="button" id="addnote">Add</button></div>'
+      + '<p class="hint">' + (NOTES.length
+          ? NOTES.length + (NOTES.length === 1 ? ' thing' : ' things')
+            + ' you parked · nothing is lost, and each one comes back'
+          : 'Nothing parked right now.') + '</p></div>';
+
+    if (!NOTES.length) {
+      return head + (undoAt !== null ? undoBarHtml() : '')
+        + '<p class="quiet">Anything you defer from an alert lands here, and so does anything you add above.</p>';
+    }
+    return head + withUndoAt(NOTES.map(function (n) {
+      var a = n.alertKey ? ALERTS[n.alertKey] : null;
+      var chip = a ? '<span class="chip ' + a.chip + '">' + esc(a.chipText) + '</span>'
+                   : '<span class="chip plain">Note</span>';
+      return '<div class="later-row">'
+        + '<button type="button" class="rowmain" data-note="' + n.id + '">'
+        + '<span class="top">' + chip
+        + (n.title ? '<span class="t">' + esc(n.title) + '</span>' : '')
+        + '<span class="editnote-hint">open</span></span>'
+        + (a ? '<p class="yournote"><b>Your note · ' + esc(n.when) + '</b>' + esc(n.text) + '</p>'
+             : '<p class="notetext">' + esc(n.text) + '</p>'
+               + '<span class="m"><span class="when">' + esc(n.when) + '</span></span>')
+        + '</button>'
+        + '<span class="due">' + esc(n.due) + '</span>'
+        + '<button type="button" class="rowdel" data-del="note:' + n.id + '" '
+        + 'aria-label="Delete this note">✕</button></div>';
+    }), undoAt);
+  }
+
+  /** One note, with room to write and its own way back to the issue. */
+  function laterNoteHtml(n) {
+    if (!n) return laterListHtml();
+    startPicker();
+    var a = n.alertKey ? ALERTS[n.alertKey] : null;
+    var ctx = a
+      ? '<div class="ctxbar"><span class="chip ' + a.chip + '">' + esc(a.chipText) + '</span>'
+        + '<span class="about">About <b>' + esc(n.title) + '</b></span>'
+        + '<button type="button" class="backlink" data-go="alert" data-alert="' + n.alertKey + '">'
+        + 'Open the alert</button></div>'
+      : '<div class="ctxbar"><span class="chip plain">Note</span>'
+        + '<input type="text" class="titleinput" id="notetitle" aria-label="Name this note"'
+        + ' placeholder="Name this note…" value="' + esc(n.title || '') + '"></div>';
+    return '<button class="back" data-note="">← all notes</button>' + ctx
+      + '<div class="block flush">'
+      + '<h4>Your note</h4>'
+      + '<div class="noteedit"><textarea id="noteedit-' + n.id + '" class="tall" '
+      + 'aria-label="Your note">' + esc(n.text) + '</textarea></div>'
+      + '<div class="duepick"><label class="lab" for="notewhen">Bring it back</label>'
+      + '<span class="selwrap"><select id="notewhen">' + deferOptionsHtml(n.due) + '</select></span>'
+      + datePickerHtml() + '</div>'
+      + '<div class="editacts"><button type="button" class="primary" data-savenote="' + n.id + '">Save</button>'
+      + '<button type="button" data-note="">Cancel</button>'
+      + '<button type="button" class="ghostdel" data-del="note:' + n.id + '">Delete this note</button>'
+      + '</div>'
+      + '<p class="hint">Written ' + esc(n.when) + ' · comes back ' + esc(n.due.replace(/^back /, '')) + '</p>'
+      + '</div>';
+  }
+
+  function renderLater() {
+    var body = document.getElementById('laterbody');
+    if (!body) return;
+    body.innerHTML = laterView === null ? laterListHtml()
+      : laterNoteHtml(NOTES.find(function (n) { return n.id === laterView; }));
+  }
+
+  function addNote(text) {
+    if (!text.trim()) return;
+    noteSeq += 1;
+    NOTES.unshift({ id: 'new' + noteSeq, alertKey: null, title: null,
+                    when: 'just now', due: 'back ' + fmtDay(plusDays(1)), text: text.trim() });
+    undone = null;
+    renderLater();
+    applyNav(currentScreen);
+  }
+
+  // askView : null = the list · 'new' = a fresh untied chat
+  //           'new:<alertKey>' = a fresh chat about an alert · otherwise a conversation id
+  // askFilter: null = every conversation · an alertKey = only that issue's
+  var askView = null;
+  var askFilter = null;
+
+  function conversationsFor(key) {
+    return CONVERSATIONS.filter(function (c) { return c.alertKey === key; });
+  }
+
+  /** The alert's link says what it will do, so clicking it holds no surprise. */
+  function openfullLabel(key) {
+    var n = conversationsFor(key).length;
+    if (n === 0) return 'no conversations yet · <b>start one</b> →';
+    if (n === 1) return '<b>1</b> earlier conversation · open it →';
+    return '<b>' + n + '</b> earlier conversations · see them →';
+  }
+
+  /** A conversation is labelled by the issue it is about; its question is the subtitle. */
+  function convRowHtml(c) {
+    var a = c.alertKey ? ALERTS[c.alertKey] : null;
+    var msgs = c.turns.length;
+    var chip = a
+      ? '<span class="chip ' + a.chip + '">' + esc(a.chipText) + '</span>'
+      : '<span class="chip plain">General</span>';
+    var label = a ? c.alert : c.title;
+    var sub = a ? '<span class="q">“' + esc(c.title) + '”</span>' : '';
+    return '<div class="convrow ' + (a ? 'tied' : 'general') + '">'
+      + '<button type="button" class="rowmain" data-conv="' + c.id + '">'
+      + '<span class="top">' + chip + '<span class="t">' + esc(label) + '</span></span>'
+      + '<span class="m">' + sub + '<span class="when">' + esc(c.when) + '</span></span>'
+      + '</button>'
+      + '<span class="n">' + msgs + ' message' + (msgs === 1 ? '' : 's') + '</span>'
+      + '<button type="button" class="rowdel" data-del="conv:' + c.id + '" '
+      + 'aria-label="Delete this conversation">✕</button></div>';
+  }
+
+  function askIndexHtml() {
+    if (askFilter) {
+      // No summary bar: every row below already carries the chip and the issue,
+      // so naming it once more at the top says it a fourth time.
+      var at = null;
+      if (undone && undone.kind === 'conv' && undone.item.alertKey === askFilter) {
+        // undone.index is a position in the whole list, so count only the
+        // conversations before it that this filter also shows.
+        at = CONVERSATIONS.slice(0, undone.index)
+               .filter(function (c) { return c.alertKey === askFilter; }).length;
+      }
+      return '<button class="back" data-filter="">← all conversations</button>'
+        + '<div class="rows">'
+        + withUndoAt(conversationsFor(askFilter).map(convRowHtml), at) + '</div>';
+    }
+    return '<div class="askpagehead"><h1>Conversations</h1>'
+      + '<div class="composer" data-conv="new">'
+      + '<input type="text" aria-label="Start a new chat" placeholder="Ask anything…">'
+      + '<button type="button">Ask</button></div>'
+      + '<p class="hint">A chat started here is not about anything in particular. '
+      + 'One started on an alert already knows its subject.</p></div>'
+      + '<div class="rows">'
+      + withUndoAt(CONVERSATIONS.map(convRowHtml),
+                   undone && undone.kind === 'conv' ? undone.index : null)
+      + '</div>';
+  }
+
+  function askChatHtml(c, newAlertKey) {
+    // Every conversation sits inside the list, so every one goes back to it —
+    // the same "← back to …" link the other pages use, in the same place.
+    // A conversation about an issue ALSO gets a link to that issue, which is a
+    // link forward to a related page rather than a second way back.
+    var back = '<button class="back" data-conv="">← all conversations</button>';
+    var toAlert = '<button type="button" class="backlink" data-go="alert">Open the alert</button>';
+
+    if (!c) {
+      var na = newAlertKey ? ALERTS[newAlertKey] : null;
+      var head = na
+        ? '<div class="ctxbar"><span class="chip ' + na.chip + '">' + esc(na.chipText) + '</span>'
+          + '<span class="about">New chat about <b>' + esc(na.claim) + '</b></span>' + toAlert + '</div>'
+        : '<div class="ctxbar"><span class="chip plain">General</span></div>';
+      return back + head
+        + '<div class="emptychat"><h3>Ask anything</h3>'
+        + '<p>' + (na
+            ? 'This one already knows the alert it came from, so you can go straight to the question.'
+            : 'This one starts with no subject, and reads the same five sources everything else does. '
+              + 'Nothing about the answers changes — only what it began knowing.') + '</p>'
+        + '<div class="sugg">' + (na
+            ? '<button type="button">Who owns this now?</button>'
+              + '<button type="button">What is waiting on it?</button>'
+              + '<button type="button">Has this happened before?</button>'
+            : '<button type="button">What changed in Payments reliability this week?</button>'
+              + '<button type="button">Who has been waiting on me longest?</button>'
+              + '<button type="button">What did we decide about the dedupe cache?</button>')
+        + '</div></div>'
+        + '<div class="ask"><div class="composer">'
+        + '<input type="text" aria-label="Ask anything" placeholder="Ask anything…">'
+        + '<button type="button">Ask</button></div></div>';
+    }
+
+    var a = c.alertKey ? ALERTS[c.alertKey] : null;
+    var ctx = a
+      ? '<div class="ctxbar"><span class="chip ' + a.chip + '">' + esc(a.chipText) + '</span>'
+        + '<span class="about">About <b>' + esc(c.alert) + '</b></span>' + toAlert + '</div>'
+      : '<div class="ctxbar"><span class="chip plain">General</span></div>';
+    var body = c.turns.map(function (t) {
+      return turn(t.who === 'you' ? 'you' : 'mc', t.who === 'you' ? 'PP' : 'MC',
+                  t.html || '<p>' + esc(t.text) + '</p>');
+    }).join('');
+    return back + ctx + '<div class="thread">' + body + '</div>'
+      + '<div class="ask"><div class="composer">'
+      + '<input type="text" aria-label="Continue the conversation" placeholder="Ask anything else…">'
+      + '<button type="button">Ask</button></div></div>';
+  }
+
+  function renderAsk() {
+    var body = document.getElementById('askbody');
+    if (!body) return;
+    if (askView === null) { body.innerHTML = askIndexHtml(); return; }
+    if (askView === 'new') { body.innerHTML = askChatHtml(null, null); return; }
+    if (askView.indexOf('new:') === 0) { body.innerHTML = askChatHtml(null, askView.slice(4)); return; }
+    body.innerHTML = askChatHtml(CONVERSATIONS.find(function (c) { return c.id === askView; }), null);
+  }
+
+  // Anything on this page can be deleted or edited, so keep a pristine copy to
+  // put back — a prototype people click around in before a demo needs a way home.
+  var PRISTINE = JSON.parse(JSON.stringify({ convs: CONVERSATIONS, notes: NOTES }));
+
+  document.getElementById('resetdemo').addEventListener('click', function () {
+    // splice in place: other closures hold references to these same arrays
+    CONVERSATIONS.length = 0;
+    JSON.parse(JSON.stringify(PRISTINE.convs)).forEach(function (c) { CONVERSATIONS.push(c); });
+    NOTES.length = 0;
+    JSON.parse(JSON.stringify(PRISTINE.notes)).forEach(function (n) { NOTES.push(n); });
+    askView = null; askFilter = null; laterView = null; undone = null; noteSeq = 0;
+    render(current); renderAsk(); renderLater(); applyNav(currentScreen);
+  });
+
+  // --- the optional toolbar -------------------------------------------------
+  // Only the pages you might want from anywhere. The alert, the conversation and
+  // a record are always *about* something, so they are never nav items.
+  // Only the pages you might want from anywhere. Sources is not among them:
+  // the connector strip in the top bar is already the way there.
+  var NAV = [
+    { to: 'list',  label: 'Alerts', count: '3', hot: true },
+    { to: 'later', label: 'Later',  count: null },
+    { to: 'ask',   label: 'Ask' },
+  ];
+
+  function navHtml(screen) {
+    return '<nav class="appnav" aria-label="Sections">' + NAV.map(function (i) {
+      // an alert and a record are both "in" Alerts — you got there from the list
+      var on = i.to === screen || (i.to === 'list' && (screen === 'alert' || screen === 'record'));
+      var n = i.to === 'later' ? String(NOTES.length) : i.count;
+      return '<button type="button" data-go="' + i.to + '"' + (on ? ' aria-current="page"' : '') + '>'
+           + i.label
+           + (n ? '<span class="n' + (i.hot ? ' hot' : '') + '">' + n + '</span>' : '')
+           + '</button>';
+    }).join('') + '</nav>';
+  }
+
+  function applyNav(screen) {
+    document.querySelectorAll('.topbar').forEach(function (bar) {
+      var old = bar.querySelector('.appnav');
+      if (old) old.remove();
+      var brand = bar.querySelector('.brand');
+      if (brand) brand.insertAdjacentHTML('afterend', navHtml(screen));
+    });
+  }
+
+  var currentScreen = 'map';
+
+  function go(screen) {
+    currentScreen = screen;
+    SCREENS.forEach(function (s) {
+      document.getElementById('scr-' + s).hidden = (s !== screen);
+    });
+    document.querySelectorAll('.steps button').forEach(function (b) {
+      b.setAttribute('aria-selected', String(b.dataset.go === screen));
+    });
+    // An undo offer belongs to the page its row was on, and lives until you
+    // leave that page — no timer, so it never vanishes while you decide.
+    if (undone && ((undone.kind === 'note' && screen !== 'later') ||
+                   (undone.kind === 'conv' && screen !== 'ask'))) undone = null;
+    if (screen === 'ask') renderAsk();
+    if (screen === 'later') renderLater();
+    applyNav(screen);
+    window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
+  }
+
+  document.addEventListener('click', function (ev) {
+    // A conversation target may also carry data-go — opening one from an alert
+    // both selects it and navigates — so it is handled before plain navigation.
+    // Delete happens straight away and stays recoverable — no "are you sure?".
+    var del = ev.target.closest('[data-del]');
+    if (del) {
+      var parts = del.dataset.del.split(':');
+      if (parts[0] === 'conv') {
+        var ci = CONVERSATIONS.findIndex(function (c) { return c.id === parts[1]; });
+        if (ci > -1) {
+          undone = { kind: 'conv', index: ci, item: CONVERSATIONS[ci],
+                     label: CONVERSATIONS[ci].alert || CONVERSATIONS[ci].title };
+          CONVERSATIONS.splice(ci, 1);
+        }
+        if (askView === parts[1]) askView = null;
+      } else {
+        var ni = NOTES.findIndex(function (n) { return n.id === parts[1]; });
+        if (ni > -1) {
+          undone = { kind: 'note', index: ni, item: NOTES[ni],
+                     label: NOTES[ni].title || NOTES[ni].text };
+          NOTES.splice(ni, 1);
+        }
+        if (laterView === parts[1]) laterView = null;
+      }
+      renderAsk(); renderLater(); applyNav(currentScreen);
+      return;
+    }
+
+    if (ev.target.closest('[data-undo]')) {
+      if (undone) {
+        var list = undone.kind === 'conv' ? CONVERSATIONS : NOTES;
+        list.splice(Math.min(undone.index, list.length), 0, undone.item);
+        undone = null;
+        renderAsk(); renderLater(); applyNav(currentScreen);
+      }
+      return;
+    }
+
+    if (ev.target.id === 'addnote') {
+      var input = document.getElementById('newnote');
+      addNote(input.value); input.value = '';
+      return;
+    }
+
+    // Open a note on its own page, where there is room to write.
+    var openNote = ev.target.closest('[data-note]');
+    if (openNote) {
+      laterView = openNote.dataset.note === '' ? null : openNote.dataset.note;
+      undone = null;
+      renderLater();
+      if (laterView) {
+        var ta = document.getElementById('noteedit-' + laterView);
+        if (ta) { ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); }
+      }
+      return;
+    }
+
+    var save = ev.target.closest('[data-savenote]');
+    if (save) {
+      var note = NOTES.find(function (n) { return n.id === save.dataset.savenote; });
+      var box = document.getElementById('noteedit-' + save.dataset.savenote);
+      var when = document.getElementById('notewhen');
+      var titleBox = document.getElementById('notetitle');
+      if (note && box) {
+        note.text = box.value.trim();
+        if (titleBox) note.title = titleBox.value.trim() || null;
+        note.when = 'edited just now';
+        if (when && when.value !== 'keep') note.due = deferDueFor(when.value, pickDate);
+      }
+      laterView = null;
+      renderLater();
+      applyNav(currentScreen);
+      return;
+    }
+
+    // Opening the conversations for an alert. One goes straight there; several
+    // go to the list filtered to that issue; none starts a chat already tied.
+    var oc = ev.target.closest('[data-openconv]');
+    if (oc) {
+      var key = oc.dataset.openconv;
+      var list = conversationsFor(key);
+      if (list.length === 1) { askView = list[0].id; askFilter = null; }
+      else if (list.length > 1) { askView = null; askFilter = key; }
+      else { askView = 'new:' + key; askFilter = null; }
+      renderAsk();
+      go('ask');
+      return;
+    }
+
+    var filt = ev.target.closest('[data-filter]');
+    if (filt) { askFilter = filt.dataset.filter || null; askView = null; renderAsk(); return; }
+
+    var conv = ev.target.closest('[data-conv]');
+    if (conv) {
+      askView = conv.dataset.conv === '' ? null : conv.dataset.conv;
+      renderAsk();
+      if (conv.dataset.go) go(conv.dataset.go);
+      return;
+    }
+
+    var t = ev.target.closest('[data-go]');
+    if (t) {
+      // Navigating to Ask means "show me my conversations". Only opening a
+      // specific one (which carries data-conv, handled above) goes into a chat.
+      if (t.dataset.go === 'ask') { askView = null; askFilter = null; }
+      if (t.dataset.go === 'later') laterView = null;
+      // a note's "Open the alert" names which alert to show
+      if (t.dataset.go === 'alert' && t.dataset.alert) {
+        render(t.dataset.alert);
+        document.querySelectorAll('.switch button').forEach(function (b) {
+          b.setAttribute('aria-selected', String(b.dataset.alert === t.dataset.alert));
+        });
+      }
+      go(t.dataset.go);
+      return;
+    }
+
+    var al = ev.target.closest('[data-alert]');
+    if (al) {
+      render(al.dataset.alert);
+      document.querySelectorAll('.switch button').forEach(function (b) {
+        b.setAttribute('aria-selected', String(b.dataset.alert === al.dataset.alert));
+      });
+      go('alert');
+      return;
+    }
+
+    var act = ev.target.closest('[data-act]');
+    if (act) {
+      var a = ALERTS[current];
+      var chosen = a.actions[Number(act.dataset.act)];
+      var block = document.getElementById('actblock');
+      if (chosen.defer) { block.innerHTML = deferFormHtml(); 
+        var t = document.getElementById('defernote'); if (t) t.focus();
+        return; }
+      block.innerHTML = '<h4>What now</h4><div class="result">'
+        + '<span class="tick" aria-hidden="true">✓</span><div>' + chosen.result
+        + '<p><button type="button" class="undo">choose something else</button></p></div></div>';
+      return;
+    }
+
+    if (ev.target.classList.contains('undo')) { render(current); return; }
+
+    // A question answers IN PLACE, on the alert page. There is no navigation
+    // here on purpose — the whole point is that asking is not a destination.
+    var openCal = ev.target.closest('[data-opencal]');
+    if (openCal) {
+      var pop = document.querySelector('#datepick .calpop');
+      pop.hidden = !pop.hidden;
+      if (!pop.hidden) {
+        pop.innerHTML = calendarHtml();
+        pop.classList.remove('up');
+        var win = openCal.closest('.appwin');
+        if (win && pop.getBoundingClientRect().bottom > win.getBoundingClientRect().bottom) {
+          pop.classList.add('up');
+        }
+      }
+      return;
+    }
+    var step = ev.target.closest('[data-calstep]');
+    if (step) {
+      calCursor = new Date(calCursor.getFullYear(), calCursor.getMonth() + Number(step.dataset.calstep), 1);
+      document.querySelector('#datepick .calpop').innerHTML = calendarHtml();
+      return;
+    }
+    var day = ev.target.closest('[data-day]');
+    if (day) {
+      pickDate = day.dataset.day;
+      var wrap = document.getElementById('datepick');
+      wrap.querySelector('.datebtn').textContent = fmtDay(new Date(pickDate + 'T00:00:00'));
+      wrap.querySelector('.calpop').hidden = true;
+      return;
+    }
+    // anywhere else closes it
+    if (!ev.target.closest('.datepick')) {
+      var open = document.querySelector('#datepick .calpop');
+      if (open && !open.hidden) open.hidden = true;
+    }
+
+    if (ev.target.closest('[data-parkit]')) { parkCurrentAlert(); return; }
+    if (ev.target.closest('[data-parkcancel]')) { render(current); return; }
+
+    var q = ev.target.closest('[data-q]');
+    if (q) { askInline(Number(q.dataset.q)); return; }
+    if (ev.target.id === 'ask-send') { askTyped(); return; }
+
+  });
+
+  document.addEventListener('change', function (ev) {
+    if (ev.target.id !== 'notewhen' && ev.target.id !== 'deferwhen') return;
+    var dp = document.getElementById('datepick');
+    if (dp) {
+      dp.hidden = ev.target.value !== 'custom';
+      if (!dp.hidden) dp.querySelector('.calpop').hidden = true;
+    }
+  });
+
+  document.addEventListener('keydown', function (ev) {
+    if (ev.key === 'Enter' && ev.target.id === 'ask-input') { ev.preventDefault(); askTyped(); }
+    if (ev.key === 'Enter' && ev.target.id === 'newnote') {
+      ev.preventDefault(); addNote(ev.target.value); ev.target.value = '';
+    }
+  });
+
+  function turn(who, badge, bodyHtml) {
+    return '<div class="turn ' + who + '"><div class="badge">' + badge + '</div>'
+         + '<div class="body">' + bodyHtml + '</div></div>';
+  }
+
+  function appendTurns(questionHtml, answerHtml) {
+    var box = document.getElementById('inline-thread');
+    if (!box) return;
+    box.insertAdjacentHTML(
+      'beforeend',
+      turn('you', 'PP', '<p>' + questionHtml + '</p>') +
+      turn('mc', 'MC', '<p>' + answerHtml + '</p>'),
+    );
+    // The header link is the one route to the full view, and it carries the
+    // count — so it stays honest as the thread grows.
+    var link = document.getElementById('openfull');
+    if (link) {
+      var msgs = box.querySelectorAll('.turn').length;
+      link.innerHTML = '<b>' + msgs + '</b> message' + (msgs === 1 ? '' : 's')
+                     + ' here · see all conversations →';
+    }
+    box.lastElementChild.scrollIntoView({ block: 'nearest' });
+  }
+
+  // The fixture's today. Every relative option resolves against it, so the list
+  // can show the actual date rather than making you work it out.
+  var TODAY = new Date(2026, 7, 21);
+  function plusDays(n) { var d = new Date(TODAY); d.setDate(d.getDate() + n); return d; }
+  /** The next real Monday, rather than an offset that happens to be wrong. */
+  function nextWeekday(dow) {
+    var d = new Date(TODAY), delta = (dow - d.getDay() + 7) % 7;
+    d.setDate(d.getDate() + (delta === 0 ? 7 : delta));
+    return d;
+  }
+  function isoDay(d) {
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0')
+         + '-' + String(d.getDate()).padStart(2, '0');
+  }
+  // One picker shared by both forms: whichever is on screen owns it.
+  var pickDate = null;   // ISO day currently chosen
+  var calCursor = null;  // first of the month being displayed
+
+  function startPicker() {
+    pickDate = isoDay(plusDays(7));
+    calCursor = new Date(TODAY.getFullYear(), TODAY.getMonth(), 1);
+  }
+
+  function calendarHtml() {
+    var y = calCursor.getFullYear(), m = calCursor.getMonth();
+    var first = new Date(y, m, 1);
+    var lead = (first.getDay() + 6) % 7;              // weeks start on Monday
+    var days = new Date(y, m + 1, 0).getDate();
+    var minIso = isoDay(plusDays(1));
+    var cells = '';
+    for (var i = 0; i < lead; i++) cells += '<span class="cempty"></span>';
+    for (var d = 1; d <= days; d++) {
+      var iso = isoDay(new Date(y, m, d));
+      var cls = 'cday' + (iso === isoDay(TODAY) ? ' today' : '');
+      cells += '<button type="button" class="' + cls + '" data-day="' + iso + '"'
+             + (iso < minIso ? ' disabled' : '')
+             + (iso === pickDate ? ' aria-pressed="true"' : '') + '>' + d + '</button>';
+    }
+    return '<div class="calhead">'
+      + '<button type="button" data-calstep="-1" aria-label="Previous month"></button>'
+      + '<span class="mon">' + first.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' }) + '</span>'
+      + '<button type="button" data-calstep="1" aria-label="Next month"></button></div>'
+      + '<div class="calgrid">'
+      + ['M','T','W','T','F','S','S'].map(function (x) { return '<span class="cdow">' + x + '</span>'; }).join('')
+      + cells + '</div>';
+  }
+
+  function datePickerHtml() {
+    return '<span class="datepick" id="datepick" hidden>'
+      + '<button type="button" class="datebtn" data-opencal="1">'
+      + fmtDay(new Date(pickDate + 'T00:00:00')) + '</button>'
+      + '<div class="calpop" hidden>' + calendarHtml() + '</div></span>';
+  }
+
+  function fmtDay(d) {
+    return d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
+  }
+
+  // A delivery tool can do better than a generic snooze: half of these bring the
+  // thing back when something happens, which is the only kind this app can watch.
+  var DEFER = [
+    { group: 'On a date', items: [
+      { v: 'd1',   label: 'Tomorrow morning', days: 1 },
+      { v: 'mon',  label: 'Monday morning',   date: function () { return nextWeekday(1); } },
+      { v: 'd7',   label: 'In a week',        days: 7 },
+      { v: 'd14',  label: 'In two weeks',     days: 14 },
+      { v: 'custom', label: 'Pick a date…' },
+    ]},
+    { group: 'When something happens', items: [
+      { v: 'sprint',  label: 'When Sprint 14 ends', days: 14 },
+      { v: 'change',  label: 'If anything changes on it', due: 'back if it changes' },
+      { v: 'unblock', label: 'When the thing it waits on moves', due: 'back when unblocked' },
+      { v: 'quiet',   label: 'If nobody has touched it in a week', due: 'back if it goes quiet' },
+    ]},
+  ];
+
+  function deferOptionsHtml(currentDue) {
+    var keep = currentDue
+      ? '<option value="keep" selected>Leave it — ' + esc(currentDue.replace(/^back /, '')) + '</option>'
+      : '';
+    return keep + DEFER.map(function (g) {
+      return '<optgroup label="' + esc(g.group) + '">' + g.items.map(function (o) {
+        var when = o.date ? o.date() : (o.days ? plusDays(o.days) : null);
+        var tail = when ? ' · ' + fmtDay(when) : '';
+        return '<option value="' + o.v + '"'
+             + (!currentDue && o.v === 'mon' ? ' selected' : '') + '>'
+             + esc(o.label + tail) + '</option>';
+      }).join('') + '</optgroup>';
+    }).join('');
+  }
+
+  function deferDueFor(value, customDate) {
+    if (value === 'custom') {
+      return customDate ? 'back ' + fmtDay(new Date(customDate + 'T00:00:00')) : 'back — no date set';
+    }
+    for (var i = 0; i < DEFER.length; i++) {
+      for (var j = 0; j < DEFER[i].items.length; j++) {
+        var o = DEFER[i].items[j];
+        if (o.v !== value) continue;
+        if (o.due) return o.due;
+        return 'back ' + fmtDay(o.date ? o.date() : plusDays(o.days));
+      }
+    }
+    return 'back ' + fmtDay(nextWeekday(1));
+  }
+
+  /** Parking an alert is what creates a note in Later that is tied to an issue. */
+  function deferFormHtml() {
+    var a = ALERTS[current];
+    startPicker();
+    return '<h4>What now</h4><div class="deferform">'
+      + '<p class="deferlead">Park <b>' + esc(a.claim) + '</b> and let it come back.</p>'
+      + '<div class="noteedit"><textarea id="defernote" aria-label="Why you are leaving it"'
+      + ' placeholder="Why you are leaving it — the note you will thank yourself for…"></textarea></div>'
+      + '<div class="duepick"><label class="lab" for="deferwhen">Bring it back</label>'
+      + '<span class="selwrap"><select id="deferwhen">' + deferOptionsHtml() + '</select></span>'
+      + datePickerHtml() + '</div>'
+      + '<div class="editacts"><button type="button" class="primary" data-parkit="1">Park it</button>'
+      + '<button type="button" data-parkcancel="1">Cancel</button></div></div>';
+  }
+
+  function parkCurrentAlert() {
+    var a = ALERTS[current];
+    var box = document.getElementById('defernote');
+    var sel = document.getElementById('deferwhen');
+    var due = deferDueFor(sel ? sel.value : 'mon', pickDate);
+    noteSeq += 1;
+    NOTES.unshift({
+      id: 'parked' + noteSeq, alertKey: current, title: a.claim, when: 'just now',
+      due: due,
+      text: (box && box.value.trim()) || 'No note — parked without one.',
+    });
+    undone = null;
+    renderLater();
+    applyNav(currentScreen);
+    document.getElementById('actblock').innerHTML =
+      '<h4>What now</h4><div class="result"><span class="tick">✓</span><div>'
+      + '<p><b>Parked.</b> It comes back ' + esc(due.replace(/^back /, ''))
+      + ', carrying your note — as a notification, like anything else.</p>'
+      + '<p><button type="button" class="undo" data-go="later">see it in Later</button></p></div></div>';
+  }
+
+  function askInline(i) {
+    var a = ALERTS[current];
+    appendTurns(esc(a.suggestions[i]), a.answers[i]);
+    // Retire only the one you asked. The others are still good questions —
+    // in the real thing `suggest.ts` re-ranks and would offer fresh ones.
+    var btn = document.querySelector('#sugg [data-q="' + i + '"]');
+    if (btn) btn.remove();
+    var sugg = document.getElementById('sugg');
+    if (sugg && !sugg.children.length) sugg.remove();
+  }
+
+  function askTyped() {
+    var input = document.getElementById('ask-input');
+    if (!input || !input.value.trim()) return;
+    var text = input.value.trim();
+    input.value = '';
+    appendTurns(
+      esc(text),
+      'This is a preview, so only the three suggested questions have written answers. '
+      + 'In the real thing this reaches the same tools the page was built from — and cites what it finds.',
+    );
+  }
+
+  render('gap');
+  go('map');
+})();
+</script>
+
+</body>
+</html>

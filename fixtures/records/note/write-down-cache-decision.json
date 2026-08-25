@@ -1,0 +1,17 @@
+{
+  "id": "write-down-cache-decision",
+  "kind": "commitment",
+  "title": "Somebody should write down why we chose a cache over a constraint",
+  "container": "sprint:PAY Sprint 12",
+  "status": "open",
+  "joins": [],
+  "at": "2026-07-06T13:31:00Z",
+  "evidence": [
+    {
+      "record": "zoom:sprint-12-planning",
+      "at": 1940,
+      "quote": "We should write down why we went with the cache rather than a database constraint."
+    }
+  ],
+  "body": "Said aloud, nobody took it, no date. Real, and deliberately not alertable."
+}

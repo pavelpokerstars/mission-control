@@ -1,0 +1,27 @@
+{
+  "name": "@mc/shell",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@mc/domain": "*"
+  },
+  "nx": {
+    "targets": {
+      "typecheck": {
+        "command": "tsc -p apps/shell/tsconfig.json",
+        "cache": true
+      },
+      "build": {
+        "command": "vite build --config apps/shell/vite.config.mts",
+        "cache": true,
+        "outputs": [
+          "{projectRoot}/dist"
+        ]
+      },
+      "serve": {
+        "command": "vite --config apps/shell/vite.config.mts"
+      }
+    }
+  }
+}

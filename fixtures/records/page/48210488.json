@@ -1,0 +1,10 @@
+{
+  "id": "48210488",
+  "title": "Replay runbook",
+  "at": "2026-08-13T16:00:00Z",
+  "author": "riya",
+  "keys": [
+    "PAY-9021"
+  ],
+  "body": "How to replay a failed batch from the audit log, keyed on settlement id."
+}

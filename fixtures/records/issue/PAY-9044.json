@@ -1,0 +1,5 @@
+{
+  "key": "PAY-9044",
+  "title": "Freeze the ledger schema",
+  "description": "Blocked by PAY-9041 — we cannot freeze until reconciliation proves out."
+}

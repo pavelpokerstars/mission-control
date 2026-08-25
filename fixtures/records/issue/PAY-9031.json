@@ -1,0 +1,5 @@
+{
+  "key": "PAY-9031",
+  "title": "Emit a payment-settled event on the topic",
+  "description": "Publish a settled event once the charge clears. Blocked by PLT-4412 — we cannot publish until the topic exists and the platform team owns that."
+}

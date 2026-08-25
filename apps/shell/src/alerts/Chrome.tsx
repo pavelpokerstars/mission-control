@@ -1,0 +1,144 @@
+/**
+ * The frame every page sits in: the app window, the top bar, the toolbar.
+ *
+ * `DESIGN.md` §3 — one `.appwin`, content in bands separated by hairlines, no
+ * grid and no sidebar anywhere. Every band's horizontal padding is
+ * `var(--gutter)`, so every content edge on every screen resolves to a single x.
+ */
+
+import type { JSX, ReactNode } from 'react';
+import { go, hrefFor, type Route } from './router';
+
+const SOURCES = [
+  { key: 'jira', label: 'Jira' },
+  { key: 'slack', label: 'Slack' },
+  { key: 'zoom', label: 'Zoom' },
+  { key: 'conf', label: 'Confluence' },
+  { key: 'miro', label: 'Miro' },
+];
+
+/**
+ * The connector dots are Sources' status AND its door.
+ *
+ * `DESIGN.md` §4: Sources is deliberately not in the toolbar. A page you set up
+ * once does not need a permanent seat beside the pages you work in, and the
+ * toolbar's ceiling is three — a fourth entry and it drifts back toward the
+ * launcher-for-tools look the vendor panes were deleted to escape.
+ */
+/**
+ * The toolbar: only the pages you might want from ANYWHERE.
+ *
+ * `DESIGN.md` §4 — three is the ceiling. An alert, a conversation and a record
+ * are always *about* something, so they are never nav items; you reached them
+ * from a list or a citation and the way back is the thing you came from. A
+ * fourth entry and this drifts back toward the launcher-for-tools look the
+ * vendor panes were deleted to escape.
+ *
+ * Sources is deliberately absent — the connector dots to the right are already
+ * its status and its door.
+ *
+ * **The counts are read from the collections, never written down.** Both were
+ * literals in the preview and deleting a note left them lying, twice, on one
+ * page (`DESIGN.md` §8).
+ */
+function Nav({ route, counts }: { route: Route; counts: Counts }): JSX.Element {
+  // An alert is "in" Alerts — you got there from the list, and the section you
+  // are in is the one you would go back to.
+  const on = (name: Route['name']): boolean =>
+    route.name === name || (name === 'alerts' && route.name === 'alert');
+
+  const items: { to: Route; label: string; n?: number; hot?: boolean }[] = [
+    { to: { name: 'alerts' }, label: 'Alerts', n: counts.alerts, hot: counts.hot },
+    { to: { name: 'later' }, label: 'Later', n: counts.later },
+    { to: { name: 'ask' }, label: 'Ask' },
+  ];
+
+  return (
+    <nav className="appnav" aria-label="Sections">
+      {items.map((i) => (
+        <button
+          key={i.label}
+          type="button"
+          {...(on(i.to.name) ? { 'aria-current': 'page' as const } : {})}
+          onClick={() => go(i.to)}
+        >
+          {i.label}
+          {!!i.n && <span className={`n${i.hot ? ' hot' : ''}`}>{i.n}</span>}
+        </button>
+      ))}
+    </nav>
+  );
+}
+
+export interface Counts {
+  alerts: number;
+  later: number;
+  /** Anything above `ok` — the badge is red only when something needs a person. */
+  hot: boolean;
+}
+
+export function TopBar({ route, counts }: { route: Route; counts: Counts }): JSX.Element {
+  /**
+   * On Sources, the dots are replaced by the page's own name.
+   *
+   * The dots ARE the door to Sources, so drawing them here offers a way into
+   * the room you are standing in — and it leaves the page as the only one in
+   * the app whose top bar never says where you are. The preview settles it:
+   * `#scr-sources` is the one screen whose bar reads
+   * `Mission Control · Sources` with the second in `--ink-3`, and it carries no
+   * connector strip. `.brand.muted` was in the stylesheet all along with
+   * nothing using it — see ROADMAP.md G6, which is what found this.
+   */
+  const here = route.name === 'sources';
+  return (
+    <div className="topbar">
+      <span className="brand">Mission Control</span>
+      <Nav route={route} counts={counts} />
+      {here ? (
+        <span className="brand muted">Sources</span>
+      ) : (
+        <button className="sources" onClick={() => go({ name: 'sources' })} title="Sources — what is connected">
+          {SOURCES.map((s) => (
+            <span key={s.key}>
+              <i className={`dot ${s.key}`} />
+              {s.label}
+            </span>
+          ))}
+        </button>
+      )}
+    </div>
+  );
+}
+
+export function AppWindow({
+  route,
+  counts,
+  children,
+}: {
+  route: Route;
+  counts: Counts;
+  children: ReactNode;
+}): JSX.Element {
+  return (
+    <div className="appwin">
+      <TopBar route={route} counts={counts} />
+      {children}
+    </div>
+  );
+}
+
+/**
+ * Up one level, from a thing to the list that holds it. Always top-left.
+ *
+ * Distinct from the "open the alert" link on the right of a context bar, which
+ * goes ACROSS to a related page and is not a back — you may never have been
+ * there. `DESIGN.md` §4 keeps the two apart because conflating them produces a
+ * back button that lies.
+ */
+export function BackLink({ to, label }: { to: Route; label: string }): JSX.Element {
+  return (
+    <a className="back" href={hrefFor(to)}>
+      ← {label}
+    </a>
+  );
+}

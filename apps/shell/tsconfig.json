@@ -1,0 +1,14 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "types": ["vite/client"]
+  },
+  // vite.config.mts is deliberately NOT included. It imports node:url, while
+  // this project sets `types: ["vite/client"]` precisely so a node global in
+  // browser code fails loudly — pulling the config in would force node types
+  // back and lose that. This entry used to read "vite.config.ts", a file that
+  // has never existed here: it matched nothing and only looked like coverage.
+  // The config is transpiled by vite, not typechecked. See docs/KNOWN-GAPS.md.
+  "include": ["src/**/*"]
+}

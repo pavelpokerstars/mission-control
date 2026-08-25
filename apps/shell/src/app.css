@@ -1,0 +1,762 @@
+/*
+ * The interface, lifted verbatim from `docs/design-preview.html`.
+ *
+ * WHY VERBATIM. `DESIGN.md` says the preview wins where the two disagree —
+ * it is the version that was tested in a browser — so this file is a copy
+ * rather than a re-typing, and a change to the design belongs in the preview
+ * first and here second.
+ *
+ * WHY THE PREVIEW-ONLY RULES ARE STILL HERE. `.screen`, `.caption`, `.notes`
+ * and `.switch` are the preview's own chrome and match nothing in the app.
+ * Stripping them looked worth doing and is exactly the trap `DESIGN.md` §8
+ * records: a regex that removes a selector and leaves its declaration block
+ * keeps the brace count even and silently swallows the NEXT rule. Dead CSS is
+ * harmless; a stylesheet that lost a rule is not, and the failure is invisible
+ * until somebody notices one screen rendering with browser defaults.
+ *
+ * THE RULES THAT MATTER, all of which were bought with a bug:
+ *   - every band uses `var(--gutter)`; a hard-coded 30px breaks the phone layout
+ *   - a row with a left stripe pulls its padding back by the stripe width
+ *   - `color-scheme` must be declared or native controls render inverted
+ *   - icons are masks, not glyphs, so they follow the theme
+ *   - a class name is a namespace; `.askhead` meant two things once
+ */
+
+  :root {
+    /* chrome — deliberately greyscale. every colour on this page means something. */
+    --ground:#EEF0F3; --app:#FFFFFF; --sunk:#F4F6F8; --line:#E1E5EA; --line-2:#CBD2DA;
+    --ink:#14171C; --ink-2:#535B66; --ink-3:#69727E;
+    --btn:#14171C; --btn-ink:#FFFFFF;
+
+    /* semantic — severity */
+    --crit:#B3352B; --crit-bg:#FBEDEC;
+    --warn:#8A6209; --warn-bg:#FBF3E2;
+    --ok:#2C6650;   --ok-bg:#E9F2ED;
+
+    /* semantic — source of record */
+    --s-jira:#2C6BD9; --s-slack:#A0348C; --s-zoom:#167F8C;
+    --s-conf:#3E7A46; --s-miro:#9A7413; --s-vault:#535B66;
+
+    --sans:"Instrument Sans", ui-sans-serif, system-ui, -apple-system, sans-serif;
+    --mono:"IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+    --shadow:0 1px 2px rgba(20,23,28,.06), 0 12px 32px -16px rgba(20,23,28,.22);
+    --r:10px;
+    --gutter:30px;
+    color-scheme: light;
+    --ic-chev: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 9l7 7 7-7'/%3E%3C/svg%3E");
+    --ic-cal: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3.5' y='5.5' width='17' height='15' rx='2.5'/%3E%3Cpath d='M3.5 10.5h17M8.5 3.5v4M15.5 3.5v4'/%3E%3C/svg%3E");
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:#0B0E12; --app:#14181E; --sunk:#1A1F26; --line:#252B34; --line-2:#39414C;
+      --ink:#E9ECF1; --ink-2:#A5AEBA; --ink-3:#7A838F;
+      --btn:#E9ECF1; --btn-ink:#14181E;
+      --crit:#EF7B70; --crit-bg:#2C1A18;
+      --warn:#D6A73C; --warn-bg:#2A2317;
+      --ok:#6FB694;   --ok-bg:#16261F;
+      --s-jira:#6EA4F0; --s-slack:#DE8FCE; --s-zoom:#52BFCC;
+      --s-conf:#7BBF86; --s-miro:#DCB44E; --s-vault:#A5AEBA;
+      --shadow:0 1px 2px rgba(0,0,0,.5), 0 12px 32px -16px rgba(0,0,0,.8);
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground:#0B0E12; --app:#14181E; --sunk:#1A1F26; --line:#252B34; --line-2:#39414C;
+    --ink:#E9ECF1; --ink-2:#A5AEBA; --ink-3:#7A838F;
+    --btn:#E9ECF1; --btn-ink:#14181E;
+    --crit:#EF7B70; --crit-bg:#2C1A18;
+    --warn:#D6A73C; --warn-bg:#2A2317;
+    --ok:#6FB694;   --ok-bg:#16261F;
+    --s-jira:#6EA4F0; --s-slack:#DE8FCE; --s-zoom:#52BFCC;
+    --s-conf:#7BBF86; --s-miro:#DCB44E; --s-vault:#A5AEBA;
+    --shadow:0 1px 2px rgba(0,0,0,.5), 0 12px 32px -16px rgba(0,0,0,.8);
+    color-scheme: dark;
+  }
+
+  * { box-sizing:border-box; }
+  body {
+    margin:0; background:var(--ground); color:var(--ink);
+    font-family:var(--sans); font-size:16px; line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+  }
+  button { font:inherit; color:inherit; cursor:pointer; }
+  :focus-visible { outline:2px solid var(--s-jira); outline-offset:2px; border-radius:4px; }
+
+  /* ---------- prototype chrome (not part of the product) ---------- */
+  .proto {
+    position:sticky; top:0; z-index:20; background:var(--ground);
+    border-bottom:1px solid var(--line); padding:14px 20px 12px;
+  }
+  .proto-in { max-width:1000px; margin:0 auto; display:flex; flex-wrap:wrap; gap:14px 20px; align-items:center; }
+  .proto .tag {
+    font-family:var(--mono); font-size:10px; font-weight:600; letter-spacing:.12em;
+    text-transform:uppercase; color:var(--ink-3); white-space:nowrap;
+  }
+  .steps { display:flex; gap:6px; flex-wrap:wrap; }
+  .steps button {
+    font-family:var(--mono); font-size:11px; font-weight:500; letter-spacing:.04em;
+    background:transparent; border:1px solid var(--line-2); color:var(--ink-2);
+    padding:6px 12px; border-radius:99px;
+  }
+  .steps button[aria-selected="true"] { background:var(--btn); color:var(--btn-ink); border-color:var(--btn); }
+  .reset {
+    font-family:var(--mono); font-size:10.5px; letter-spacing:.05em; color:var(--ink-3);
+    background:transparent; border:1px solid var(--line-2); border-radius:99px; padding:6px 12px;
+  }
+  .reset:hover { border-color:var(--ink-3); color:var(--ink); }
+
+  main { max-width:1000px; margin:0 auto; padding:30px 20px 90px; }
+  .screen[hidden] { display:none; }
+  .caption {
+    font-family:var(--mono); font-size:11px; letter-spacing:.04em; color:var(--ink-3);
+    margin:0 0 14px; display:flex; align-items:center; gap:8px;
+  }
+  .caption::before { content:""; width:16px; height:1px; background:var(--line-2); }
+
+  /* ---------- shared bits ---------- */
+  .dot { width:8px; height:8px; border-radius:50%; display:inline-block; flex:none; }
+  .jira{background:var(--s-jira)} .slack{background:var(--s-slack)} .zoom{background:var(--s-zoom)}
+  .conf{background:var(--s-conf)} .miro{background:var(--s-miro)} .vault{background:var(--s-vault)}
+
+  .chip {
+    display:inline-flex; align-items:center; gap:6px; font-family:var(--mono);
+    font-size:10.5px; font-weight:600; letter-spacing:.08em; text-transform:uppercase;
+    padding:4px 9px; border-radius:99px; white-space:nowrap;
+  }
+  .chip.crit { color:var(--crit); background:var(--crit-bg); }
+  .chip.warn { color:var(--warn); background:var(--warn-bg); }
+  .chip.ok   { color:var(--ok);   background:var(--ok-bg); }
+  .chip.plain { color:var(--ink-3); background:var(--sunk); border:1px solid var(--line); }
+
+  /* ---------- 1 · slack ---------- */
+  .slackwin {
+    background:var(--app); border:1px solid var(--line); border-radius:var(--r);
+    box-shadow:var(--shadow); max-width:620px; overflow:hidden;
+  }
+  .slackwin .bar {
+    background:var(--sunk); border-bottom:1px solid var(--line); padding:10px 16px;
+    font-family:var(--mono); font-size:11px; color:var(--ink-3); letter-spacing:.04em;
+  }
+  .msg { padding:18px 18px 20px; display:grid; grid-template-columns:38px minmax(0,1fr); gap:0 12px; }
+  .avatar {
+    width:38px; height:38px; border-radius:8px; background:var(--btn); color:var(--btn-ink);
+    display:grid; place-items:center; font-family:var(--mono); font-size:13px; font-weight:600;
+  }
+  .msg .who { display:flex; align-items:baseline; gap:8px; margin-bottom:6px; flex-wrap:wrap; }
+  .msg .who b { font-weight:600; font-size:.98rem; }
+  .msg .who .app-tag {
+    font-family:var(--mono); font-size:9px; font-weight:600; letter-spacing:.1em;
+    background:var(--sunk); color:var(--ink-3); padding:2px 5px; border-radius:3px;
+  }
+  .msg .who time { font-family:var(--mono); font-size:11px; color:var(--ink-3); }
+  .msg p { margin:0 0 12px; color:var(--ink-2); }
+  .msg p strong { color:var(--ink); font-weight:600; }
+  .attach {
+    border-left:3px solid var(--crit); background:var(--sunk);
+    padding:12px 14px; border-radius:0 6px 6px 0; margin-bottom:14px;
+  }
+  .attach h4 { margin:0 0 5px; font-size:.95rem; font-weight:600; }
+  .attach p { margin:0; font-size:.9rem; }
+  .slackbtn {
+    background:var(--btn); color:var(--btn-ink); border:0; border-radius:6px;
+    padding:9px 16px; font-size:.9rem; font-weight:600;
+  }
+
+  /* ---------- 2 · the list ---------- */
+  .appwin {
+    background:var(--app); border:1px solid var(--line); border-radius:var(--r);
+    box-shadow:var(--shadow); overflow:hidden;
+  }
+  .topbar {
+    display:flex; align-items:center; justify-content:space-between; gap:20px; flex-wrap:wrap;
+    padding:13px 22px; border-bottom:1px solid var(--line); background:var(--app);
+  }
+  .brand { font-family:var(--mono); font-size:12px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; }
+
+  /* the optional toolbar — compare it against no toolbar with the switch above */
+  .appnav { display:flex; gap:2px; flex-wrap:wrap; margin-left:22px; margin-right:auto; }
+  .appnav button {
+    background:transparent; border:0; border-radius:7px; padding:6px 11px;
+    font-size:.89rem; color:var(--ink-2); display:inline-flex; align-items:center; gap:7px;
+  }
+  .appnav button:hover { background:var(--sunk); color:var(--ink); }
+  .appnav button[aria-current="page"] { background:var(--sunk); color:var(--ink); font-weight:600; }
+  .appnav .n {
+    font-family:var(--mono); font-size:10px; padding:1px 6px; border-radius:99px;
+    background:var(--line); color:var(--ink-2);
+  }
+  .appnav .n.hot { background:var(--crit-bg); color:var(--crit); }
+  .sources {
+    display:flex; gap:14px; flex-wrap:wrap; background:transparent; border:1px solid transparent;
+    border-radius:99px; padding:5px 10px; margin:-5px -10px;
+  }
+  button.sources:hover { border-color:var(--line-2); background:var(--sunk); }
+  .sources span {
+    display:inline-flex; align-items:center; gap:6px;
+    font-family:var(--mono); font-size:10px; letter-spacing:.06em; color:var(--ink-3);
+  }
+  .greet { padding:34px var(--gutter) 22px; border-bottom:1px solid var(--line); }
+  .greet h1 { margin:0 0 6px; font-size:1.6rem; font-weight:600; letter-spacing:-.02em; }
+  .greet p { margin:0; color:var(--ink-2); font-size:.98rem; }
+  .laterlink {
+    background:transparent; border:0; padding:0; font:inherit; color:var(--ink-2);
+    text-decoration:underline; text-underline-offset:3px;
+  }
+  .laterlink:hover { color:var(--ink); }
+
+  .rows { display:grid; }
+  .row {
+    display:grid; grid-template-columns:minmax(0,1fr) auto; gap:14px 20px; align-items:center;
+    width:100%; text-align:left; background:transparent; border:0; border-bottom:1px solid var(--line);
+    padding:18px var(--gutter) 18px calc(var(--gutter) - 3px);
+    border-left:3px solid transparent;
+  }
+  .row:hover { background:var(--sunk); border-left-color:var(--line-2); }
+  .row.crit { border-left-color:var(--crit); }
+  .row.warn { border-left-color:var(--warn); }
+  .row .meta { display:flex; align-items:center; gap:10px; margin-bottom:7px; flex-wrap:wrap; }
+  .row h3 { margin:0 0 5px; font-size:1.02rem; font-weight:600; letter-spacing:-.01em; }
+  .row .sub { margin:0; font-size:.9rem; color:var(--ink-2); }
+  .row .srcs { display:flex; gap:5px; align-items:center; }
+  .row .go { font-family:var(--mono); font-size:11px; color:var(--ink-3); white-space:nowrap; }
+  .quiet { padding:22px var(--gutter); color:var(--ink-3); font-size:.9rem; }
+  .quiet code { font-family:var(--mono); font-size:.85em; }
+
+  /* ---------- 3 · the alert page ---------- */
+  .switch { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:16px; }
+  .switch button {
+    font-family:var(--mono); font-size:11px; background:transparent;
+    border:1px solid var(--line-2); color:var(--ink-2); padding:6px 12px; border-radius:99px;
+  }
+  .switch button[aria-selected="true"] { background:var(--btn); color:var(--btn-ink); border-color:var(--btn); }
+
+  .page { padding:0; }
+  .appwin .back {
+    display:inline-flex; align-items:center; gap:8px; background:transparent; border:0;
+    font-family:var(--mono); font-size:11px; color:var(--ink-3); padding:16px var(--gutter) 14px;
+  }
+  .appwin .back:hover { color:var(--ink); }
+  /* The back link supplies the gap below itself, so whatever follows starts
+     flush. Without this each page needed its own ad-hoc top padding. */
+  .back + .head, .back + .greet { padding-top:0; }
+  .back + .stat-strip { margin-top:0; }
+  .head { padding:14px var(--gutter) 26px; border-bottom:1px solid var(--line); }
+  .head .meta { display:flex; align-items:center; gap:12px; margin-bottom:14px; flex-wrap:wrap; }
+  .head .when { font-family:var(--mono); font-size:11px; color:var(--ink-3); }
+  .claim {
+    margin:0 0 12px; font-size:clamp(1.35rem,3.4vw,1.85rem); font-weight:600;
+    letter-spacing:-.022em; line-height:1.22; max-width:24ch; text-wrap:balance;
+  }
+  .impact { margin:0; color:var(--ink-2); font-size:1rem; max-width:60ch; }
+  .impact b { color:var(--ink); font-weight:600; }
+
+  .block { padding:24px var(--gutter); border-bottom:1px solid var(--line); }
+  .block.flush { border-bottom:0; }
+  .block.topped { border-top:1px solid var(--line); }
+  .blocklead { margin:-6px 0 16px; font-size:.93rem; color:var(--ink-2); max-width:64ch; }
+  .failbox { border:1px solid var(--line); border-radius:8px; overflow:hidden; }
+  .failbox .conn-row:not(:last-child) { border-bottom:1px solid var(--line); }
+  .failbox .conn-row:last-child { border-bottom:0; }
+  .brand.muted { color:var(--ink-3); }
+  .block > h4 {
+    font-family:var(--mono); font-size:10.5px; font-weight:600; letter-spacing:.12em;
+    text-transform:uppercase; color:var(--ink-3); margin:0 0 16px;
+  }
+
+  /* checklist */
+  .check { display:grid; gap:0; }
+  .check li { list-style:none; display:grid; grid-template-columns:22px minmax(0,1fr) auto; gap:0 12px;
+    align-items:baseline; padding:10px 0; border-bottom:1px dashed var(--line); }
+  .check li:last-child { border-bottom:0; }
+  .check .mark { font-family:var(--mono); font-size:13px; font-weight:600; line-height:1.4; }
+  .check .done .mark { color:var(--ok); }
+  .check .miss .mark { color:var(--crit); }
+  .check .txt { font-size:.97rem; }
+  .check .miss .txt { font-weight:600; }
+  .check .done .txt { color:var(--ink-2); }
+  .check .ref { font-family:var(--mono); font-size:11px; color:var(--ink-3); white-space:nowrap; }
+  .check .miss .ref { color:var(--crit); }
+
+  /* evidence */
+  .ev { display:grid; gap:10px; }
+  .ev article, .ev .evrow {
+    display:grid; grid-template-columns:12px minmax(0,1fr); gap:0 12px;
+    padding:13px 15px; background:var(--sunk); border-radius:8px;
+    width:100%; text-align:left; font:inherit; color:inherit;
+    border:1px solid transparent;
+  }
+  .ev .evrow:hover { border-color:var(--line-2); }
+  .ev .evrow .open {
+    margin-left:auto; font-family:var(--mono); font-size:10px; letter-spacing:.06em;
+    color:var(--ink-3); opacity:0;
+  }
+  .ev .evrow:hover .open, .ev .evrow:focus-visible .open { opacity:1; }
+  .ev .dot { margin-top:7px; }
+  .ev .hd { display:flex; align-items:baseline; gap:9px; flex-wrap:wrap; margin-bottom:5px; }
+  .ev .hd b { font-size:.86rem; font-weight:600; }
+  .ev .hd time, .ev .hd .src {
+    font-family:var(--mono); font-size:10.5px; color:var(--ink-3); letter-spacing:.03em;
+  }
+  .ev q { display:block; font-size:.96rem; color:var(--ink); font-style:italic; }
+  .ev q::before { content:"“"; } .ev q::after { content:"”"; }
+  .ev .plain { font-size:.95rem; color:var(--ink); }
+
+  /* actions */
+  .acts { display:flex; gap:10px; flex-wrap:wrap; }
+  .acts button {
+    border-radius:7px; padding:11px 18px; font-size:.93rem; font-weight:600;
+    border:1px solid var(--line-2); background:transparent; color:var(--ink);
+  }
+  .acts button.primary { background:var(--btn); color:var(--btn-ink); border-color:var(--btn); }
+  .acts button.ghost { color:var(--ink-3); border-style:dashed; font-weight:500; }
+  .acts button:hover { border-color:var(--ink-3); }
+  .acts button.primary:hover { opacity:.88; }
+
+  .result {
+    display:grid; grid-template-columns:auto minmax(0,1fr); gap:0 12px; align-items:start;
+    background:var(--ok-bg); border-radius:8px; padding:15px 17px;
+  }
+  .result .tick { color:var(--ok); font-family:var(--mono); font-weight:600; }
+  .result p { margin:0 0 8px; font-size:.95rem; }
+  .result p:last-child { margin:0; }
+  .deferform { max-width:62ch; }
+  .deferlead { margin:-4px 0 12px; font-size:.96rem; color:var(--ink-2); }
+  .deferlead b { color:var(--ink); font-weight:600; }
+  .duepick { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:16px; }
+  .duepick .lab {
+    font-family:var(--mono); font-size:10px; font-weight:600; letter-spacing:.1em;
+    text-transform:uppercase; color:var(--ink-3);
+  }
+  /* Our own arrow, so it sits where we want and takes a themed colour — the
+     native one cannot be positioned and ignores the palette. */
+  .selwrap { position:relative; display:inline-flex; max-width:100%; }
+  .selwrap select {
+    appearance:none; -webkit-appearance:none;
+    font:inherit; font-size:.92rem; color:var(--ink); background:var(--app);
+    border:1px solid var(--line-2); border-radius:7px;
+    padding:8px 38px 8px 12px; min-width:0; max-width:100%;
+  }
+  .selwrap::after {
+    content:''; position:absolute; right:13px; top:50%; width:13px; height:13px;
+    transform:translateY(-50%); background:var(--ink-3); pointer-events:none;
+    -webkit-mask:var(--ic-chev) center/contain no-repeat;
+            mask:var(--ic-chev) center/contain no-repeat;
+  }
+  .selwrap:hover::after { background:var(--ink-2); }
+  .selwrap select:focus { outline:2px solid var(--s-jira); outline-offset:1px; }
+  .selwrap optgroup { color:var(--ink-3); font-style:normal; }
+  .selwrap option { color:var(--ink); background:var(--app); }
+
+  /* A calendar of our own. The native one is browser chrome: it cannot be
+     restyled, and it opens in the wrong theme however you ask. */
+  .datepick { position:relative; display:inline-flex; }
+  .datebtn {
+    font:inherit; font-size:.92rem; color:var(--ink); background:var(--app);
+    border:1px solid var(--line-2); border-radius:7px; padding:8px 12px;
+    display:inline-flex; align-items:center; gap:9px;
+  }
+  .datebtn:hover { border-color:var(--ink-3); }
+  .datebtn::before {
+    content:''; width:14px; height:14px; flex:none; background:var(--ink-3);
+    -webkit-mask:var(--ic-cal) center/contain no-repeat;
+            mask:var(--ic-cal) center/contain no-repeat;
+  }
+  .datebtn:hover::before { background:var(--ink-2); }
+  /* .appwin clips to its rounded corners, so a panel that runs past the bottom
+     is cut off. It opens upward instead when there is no room below. */
+  .calpop.up { top:auto; bottom:calc(100% + 8px); }
+  .calpop {
+    position:absolute; top:calc(100% + 8px); left:0; z-index:40; width:264px;
+    background:var(--app); border:1px solid var(--line-2); border-radius:10px;
+    box-shadow:var(--shadow); padding:14px;
+  }
+  .calhead { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+  .calhead .mon { font-weight:600; font-size:.92rem; }
+  .calhead button {
+    position:relative; width:28px; height:28px; border-radius:6px;
+    border:1px solid transparent; background:transparent; color:var(--ink-3);
+  }
+  .calhead button::before {
+    content:''; position:absolute; inset:0; margin:auto; width:13px; height:13px;
+    background:currentColor;
+    -webkit-mask:var(--ic-chev) center/contain no-repeat;
+            mask:var(--ic-chev) center/contain no-repeat;
+  }
+  .calhead button[data-calstep="-1"]::before { transform:rotate(90deg); }
+  .calhead button[data-calstep="1"]::before  { transform:rotate(-90deg); }
+  .calhead button:hover { border-color:var(--line-2); color:var(--ink); }
+  .calgrid { display:grid; grid-template-columns:repeat(7, 1fr); gap:3px; }
+  .cdow {
+    text-align:center; font-family:var(--mono); font-size:9.5px; letter-spacing:.06em;
+    color:var(--ink-3); padding-bottom:5px;
+  }
+  .cday {
+    height:31px; border-radius:6px; border:1px solid transparent; background:transparent;
+    color:var(--ink); font-size:.86rem; font-variant-numeric:tabular-nums;
+  }
+  .cday:hover:not(:disabled) { background:var(--sunk); border-color:var(--line-2); }
+  .cday.today { box-shadow:inset 0 0 0 1px var(--line-2); }
+  .cday[aria-pressed="true"] {
+    background:var(--btn); color:var(--btn-ink); font-weight:600; border-color:var(--btn);
+  }
+  .cday:disabled { color:var(--ink-3); opacity:.3; cursor:default; }
+  .cempty { height:31px; }
+  .result .undo {
+    background:transparent; border:0; padding:0; font-family:var(--mono);
+    font-size:11px; color:var(--ink-3); text-decoration:underline;
+  }
+
+  /* ask */
+  .ask { padding:22px var(--gutter) 26px; background:var(--sunk); }
+  .composer {
+    display:flex; gap:10px; align-items:center; background:var(--app);
+    border:1px solid var(--line-2); border-radius:9px; padding:11px 14px;
+  }
+  .composer input { flex:1; border:0; background:transparent; color:var(--ink); font:inherit; font-size:.95rem; min-width:0; }
+  .composer input::placeholder { color:var(--ink-3); }
+  .composer button {
+    border:0; background:var(--btn); color:var(--btn-ink); border-radius:6px;
+    padding:7px 13px; font-size:.85rem; font-weight:600;
+  }
+  .sugg { display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; }
+  .sugg button {
+    background:transparent; border:1px solid var(--line-2); border-radius:99px;
+    padding:6px 13px; font-size:.85rem; color:var(--ink-2);
+  }
+  .sugg button:hover { border-color:var(--ink-3); color:var(--ink); }
+
+  /* ---------- 0 · the map ---------- */
+  .band { margin-bottom:26px; }
+  .band > h3 {
+    font-family:var(--mono); font-size:10.5px; font-weight:600; letter-spacing:.12em;
+    text-transform:uppercase; color:var(--ink-3); margin:0 0 4px;
+  }
+  .band > p { margin:0 0 14px; font-size:.92rem; color:var(--ink-2); max-width:68ch; }
+  .cards { display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:12px; }
+  .card {
+    text-align:left; background:var(--app); border:1px solid var(--line); border-radius:9px;
+    padding:15px 16px; display:block; width:100%;
+  }
+  button.card:hover { border-color:var(--ink-3); }
+  .card .kind {
+    font-family:var(--mono); font-size:9.5px; font-weight:600; letter-spacing:.1em;
+    text-transform:uppercase; color:var(--ink-3); display:block; margin-bottom:7px;
+  }
+  .card h4 { margin:0 0 5px; font-size:1rem; font-weight:600; letter-spacing:-.01em; }
+  .card p { margin:0; font-size:.86rem; color:var(--ink-2); line-height:1.45; }
+  .card .from {
+    display:block; margin-top:9px; font-family:var(--mono); font-size:10px; color:var(--ink-3);
+  }
+  .band.gone .card { background:transparent; border-style:dashed; opacity:.75; }
+  .band.gone .card h4 { text-decoration:line-through; text-decoration-thickness:1px; color:var(--ink-2); }
+  .band.gone .card .kind { color:var(--crit); }
+
+  /* ---------- 4 · chat ---------- */
+  .thread { display:grid; gap:16px; padding:26px var(--gutter); }
+  .turn { display:grid; grid-template-columns:30px minmax(0,1fr); gap:0 13px; }
+  .turn .badge {
+    width:30px; height:30px; border-radius:7px; display:grid; place-items:center;
+    font-family:var(--mono); font-size:10px; font-weight:600;
+  }
+  .turn.you .badge { background:var(--sunk); color:var(--ink-2); }
+  .turn.mc  .badge { background:var(--btn); color:var(--btn-ink); }
+  .turn .body { padding-top:4px; }
+  .turn.you .body { font-weight:600; }
+  .turn .body p { margin:0 0 10px; }
+  .turn .body p:last-child { margin:0; }
+  .turn .body .cited {
+    display:inline-flex; align-items:center; gap:5px; font-family:var(--mono);
+    font-size:10px; color:var(--ink-3); background:var(--sunk);
+    padding:2px 7px; border-radius:99px; white-space:nowrap; margin:0 2px;
+  }
+  .turn .body ul { margin:6px 0 10px; padding-left:18px; }
+  .turn .body li { margin-bottom:6px; font-size:.96rem; }
+  .inline-graph {
+    margin:12px 0; padding:16px; background:var(--sunk); border-radius:8px; overflow-x:auto;
+  }
+  .inline-graph .cap {
+    font-family:var(--mono); font-size:10px; letter-spacing:.06em; color:var(--ink-3);
+    display:block; margin-bottom:12px;
+  }
+  .chain { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .node {
+    font-family:var(--mono); font-size:11.5px; font-weight:600; padding:7px 11px;
+    border-radius:6px; border:1px solid var(--line-2); background:var(--app); white-space:nowrap;
+  }
+  .node.missing { border-style:dashed; border-color:var(--crit); color:var(--crit); }
+  .node.at-risk { border-color:var(--warn); color:var(--warn); }
+  .arrow { font-family:var(--mono); font-size:12px; color:var(--ink-3); }
+  .turn .followups { display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; }
+  .turn .followups button {
+    background:var(--btn); color:var(--btn-ink); border:0; border-radius:6px;
+    padding:8px 14px; font-size:.86rem; font-weight:600;
+  }
+  .turn .followups button.sec { background:transparent; color:var(--ink); border:1px solid var(--line-2); }
+
+  .askhead {
+    display:flex; align-items:baseline; justify-content:space-between; gap:16px;
+    flex-wrap:wrap; margin:0 0 14px;
+  }
+  .askhead .lab {
+    font-family:var(--mono); font-size:10.5px; font-weight:600; letter-spacing:.12em;
+    text-transform:uppercase; color:var(--ink-3);
+  }
+  .openfull {
+    background:transparent; border:0; padding:0; font-family:var(--mono); font-size:10.5px;
+    letter-spacing:.04em; color:var(--ink-2); text-decoration:underline; text-underline-offset:3px;
+    white-space:nowrap;
+  }
+  .openfull:hover { color:var(--ink); }
+  .openfull b { font-weight:600; color:var(--ink); }
+  .thread.inline { padding:0 0 4px; }
+  .thread.inline:empty { display:none; }
+
+  /* ---------- 4 · the Ask page ---------- */
+  /* Starting a chat is the reason you open this page, so the affordance is a
+     composer — not a button parked in a corner. */
+  .askpagehead { padding:30px var(--gutter) 24px; border-bottom:1px solid var(--line); }
+  .askpagehead .composer input { cursor:text; }
+  .askpagehead h1 { margin:0 0 16px; font-size:1.6rem; font-weight:600; letter-spacing:-.02em; }
+  .askpagehead .composer { cursor:text; }
+  .askpagehead .composer:hover { border-color:var(--ink-3); }
+  .hint { margin:12px 0 0; font-size:.88rem; color:var(--ink-3); max-width:64ch; }
+
+  .convrow {
+    display:grid; grid-template-columns:minmax(0,1fr) auto auto; gap:8px 16px; align-items:center;
+    border-bottom:1px solid var(--line); border-left:3px solid transparent;
+    padding:16px var(--gutter) 16px calc(var(--gutter) - 3px);
+  }
+  .convrow:hover { background:var(--sunk); }
+
+  /* A row is a container now, because a delete button cannot live inside the
+     button that opens the row. The main area stays one big click target. */
+  .rowmain {
+    display:block; width:100%; min-width:0; text-align:left;
+    background:transparent; border:0; padding:0; font:inherit; color:inherit;
+  }
+  .rowdel {
+    width:28px; height:28px; border-radius:6px; border:1px solid transparent;
+    background:transparent; color:var(--ink-3); font-size:14px; line-height:1;
+    opacity:0; flex:none;
+  }
+  .convrow:hover .rowdel, .later-row:hover .rowdel,
+  .rowdel:focus-visible { opacity:1; }
+  .rowdel:hover { border-color:var(--stop); color:var(--stop); background:var(--crit-bg); }
+  /* Delete acts immediately and stays undoable. Asking "are you sure?" makes
+     the safe path cost two clicks and still loses the thing if you misread it. */
+  .undobar {
+    display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+    padding:17px var(--gutter) 17px calc(var(--gutter) - 3px);
+    background:var(--sunk); border-left:3px solid var(--line-2);
+    border-bottom:1px solid var(--line); font-size:.9rem; color:var(--ink-2);
+  }
+  .undobar .what {
+    min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--ink);
+  }
+  .undobar button {
+    margin-left:auto; background:transparent; border:1px solid var(--line-2); border-radius:99px;
+    padding:5px 15px; font-size:.85rem; font-weight:600; color:var(--ink); white-space:nowrap;
+  }
+  .undobar button:hover { border-color:var(--ink-3); background:var(--app); }
+  .convrow.tied    { border-left-color:var(--crit); }
+  .convrow.general { border-left-color:var(--line-2); }
+  .convrow .top { display:flex; align-items:center; gap:9px; flex-wrap:wrap; margin-bottom:6px; }
+  .convrow .m { display:flex; }
+  .convrow .t { font-size:1rem; font-weight:600; color:var(--ink); }
+  .convrow .m { display:flex; align-items:baseline; gap:9px; flex-wrap:wrap; font-size:.89rem; color:var(--ink-2); }
+  .convrow .q { font-style:italic; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .convrow .when { color:var(--ink-3); font-family:var(--mono); font-size:11px; }
+  .convrow .n { font-family:var(--mono); font-size:11px; color:var(--ink-3); white-space:nowrap; }
+
+  .ctxbar {
+    display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+    padding:13px var(--gutter); border-bottom:1px solid var(--line); background:var(--sunk);
+  }
+  .ctxbar .about {
+    font-size:.9rem; color:var(--ink-2); min-width:0; overflow:hidden;
+    text-overflow:ellipsis; white-space:nowrap;
+  }
+  .ctxbar .about b { color:var(--ink); font-weight:600; }
+  .ctxbar .backlink {
+    margin-left:auto; background:transparent; border:1px solid var(--line-2); border-radius:99px;
+    padding:6px 13px; font-size:.85rem; color:var(--ink); white-space:nowrap; font-weight:500;
+  }
+  .ctxbar .backlink:hover { border-color:var(--ink-3); background:var(--app); }
+  /* A note you parked yourself can be named — the field looks like text until
+     you reach for it, so an unnamed note carries no chrome. */
+  .titleinput {
+    flex:1; min-width:0; font:inherit; font-size:.95rem; font-weight:600; color:var(--ink);
+    background:transparent; border:1px solid transparent; border-radius:6px;
+    padding:5px 9px; margin-left:-9px;   /* cancel the padding so text lines up with .about */
+  }
+  .titleinput::placeholder { color:var(--ink-3); font-weight:400; font-style:italic; }
+  .titleinput:hover { border-color:var(--line-2); }
+  .titleinput:focus {
+    border-color:var(--line-2); background:var(--app);
+    outline:2px solid var(--s-jira); outline-offset:1px;
+  }
+  .emptychat { padding:40px var(--gutter); max-width:52ch; }
+  .emptychat h3 { font-family:var(--sans); font-size:1.15rem; font-weight:600; margin:0 0 8px; }
+  .emptychat p { margin:0 0 18px; color:var(--ink-2); font-size:.96rem; }
+
+  /* ---------- 5 · later ---------- */
+  .later-row {
+    display:grid; grid-template-columns:minmax(0,1fr) auto auto; gap:12px 16px;
+    padding:18px var(--gutter); border-bottom:1px solid var(--line); align-items:start;
+  }
+  .later-row:hover { background:var(--sunk); }
+  .later-row .rowdel { margin-top:2px; }
+  .later-row .notetext { margin:8px 0 0; font-size:.97rem; color:var(--ink); line-height:1.5; }
+  .later-row .m { display:flex; align-items:baseline; gap:9px; margin-top:8px; }
+  .later-row .when { font-family:var(--mono); font-size:11px; color:var(--ink-3); }
+  .noteedit { margin-top:8px; }
+  .noteedit textarea {
+    width:100%; min-height:88px; resize:vertical; font:inherit; font-size:.93rem;
+    color:var(--ink); background:var(--app); border:1px solid var(--line-2);
+    border-radius:7px; padding:11px 13px; line-height:1.5;
+  }
+  .noteedit textarea:focus { outline:2px solid var(--s-jira); outline-offset:1px; }
+  .editacts { display:flex; gap:8px; margin-top:16px; }
+  .editacts button {
+    border-radius:6px; padding:7px 14px; font-size:.87rem; font-weight:600;
+    border:1px solid var(--line-2); background:transparent; color:var(--ink);
+  }
+  .editacts button.primary { background:var(--btn); border-color:var(--btn); color:var(--btn-ink); }
+  .editacts button:hover { border-color:var(--ink-3); }
+  .noteedit textarea.tall { min-height:200px; font-size:.98rem; }
+  .editacts .ghostdel {
+    margin-left:auto; border-style:dashed; color:var(--ink-3); font-weight:500;
+  }
+  .editacts .ghostdel:hover { border-color:var(--stop); color:var(--stop); background:var(--crit-bg); }
+  .editnote-hint {
+    font-family:var(--mono); font-size:10px; letter-spacing:.06em; color:var(--ink-3);
+    opacity:0; margin-left:8px;
+  }
+  .later-row:hover .editnote-hint { opacity:1; }
+  .later-row h3 { margin:0 0 6px; font-size:1rem; font-weight:600; }
+  .later-row .yournote {
+    margin:8px 0 0; padding:11px 14px; background:var(--sunk); border-radius:7px;
+    font-size:.93rem; color:var(--ink); border-left:2px solid var(--s-vault);
+  }
+  .later-row .yournote b {
+    display:block; font-family:var(--mono); font-size:9.5px; font-weight:600;
+    letter-spacing:.1em; text-transform:uppercase; color:var(--ink-3); margin-bottom:4px;
+  }
+  .later-row .due { font-family:var(--mono); font-size:11px; color:var(--ink-3); white-space:nowrap; }
+
+  /* ---------- 6 · record ---------- */
+  .rec-head {
+    padding:16px var(--gutter); border-bottom:1px solid var(--line); display:flex;
+    gap:12px; align-items:center; flex-wrap:wrap; background:var(--sunk);
+  }
+  .rec-head .src {
+    display:inline-flex; align-items:center; gap:7px; font-family:var(--mono);
+    font-size:11px; color:var(--ink-2); letter-spacing:.04em;
+  }
+  .rec-head .why { font-family:var(--mono); font-size:10.5px; color:var(--ink-3); }
+  .transcript { padding:22px var(--gutter) 28px; display:grid; gap:2px; }
+  .line { display:grid; grid-template-columns:74px minmax(0,1fr); gap:0 16px; padding:8px 12px; border-radius:6px; margin:0 -12px; }
+  .line time { font-family:var(--mono); font-size:11px; color:var(--ink-3); padding-top:3px; }
+  .line .said b { font-weight:600; margin-right:8px; }
+  .line .said span { color:var(--ink-2); }
+  .line.hit { background:var(--warn-bg); }
+  .line.hit .said span { color:var(--ink); font-weight:500; }
+  .line.hit::after {
+    /* The caption comes from the ELEMENT, not from this rule.
+     *
+     * The preview hard-codes "cited by the Kafka alert" here, which is right for
+     * a mockup with one example and wrong for an app: every record opened from
+     * a different alert claimed to be cited by the same one. `content` reads a
+     * data attribute the view sets, so the sentence is a fact about the page
+     * rather than a fact about the stylesheet. */
+    content:attr(data-cited-by); grid-column:2; font-family:var(--mono);
+    font-size:9.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--warn); margin-top:6px;
+  }
+
+  /* ---------- 7 · sources ---------- */
+  .conn { display:grid; gap:0; }
+  .conn-row {
+    display:grid; grid-template-columns:16px minmax(0,1fr) auto auto; gap:0 14px;
+    align-items:center; padding:15px var(--gutter); border-bottom:1px solid var(--line);
+  }
+  .conn-row .nm { font-weight:600; font-size:.98rem; }
+  .conn-row .nm small { display:block; font-weight:400; font-size:.85rem; color:var(--ink-2); margin-top:2px; }
+  .conn-row .nm small.scope { font-family:var(--mono); font-size:.75rem; letter-spacing:.01em; color:var(--ink-3); }
+  .conn-row .nm small.scope b { color:var(--ink-2); font-weight:600; }
+  .conn-row .count {
+    font-family:var(--mono); font-size:11px; color:var(--ink-3);
+    font-variant-numeric:tabular-nums; text-align:right; white-space:nowrap;
+  }
+  .stat-strip {
+    display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:1px;
+    background:var(--line); border-bottom:1px solid var(--line);
+  }
+  .stat { background:var(--app); padding:20px var(--gutter); }
+  .stat .n {
+    font-size:1.9rem; font-weight:600; letter-spacing:-.03em; font-variant-numeric:tabular-nums;
+    display:block; line-height:1.1;
+  }
+  .stat .l {
+    font-family:var(--mono); font-size:10px; letter-spacing:.1em; text-transform:uppercase;
+    color:var(--ink-3); margin-top:5px; display:block;
+  }
+
+  .notes { max-width:66ch; margin:40px 0 0; padding:0 2px; }
+  .notes h3 { font-size:1rem; font-weight:600; margin:0 0 10px; }
+  .notes ul { padding-left:20px; margin:0; }
+  .notes li { font-size:.93rem; color:var(--ink-2); margin-bottom:8px; }
+  .notes li b { color:var(--ink); font-weight:600; }
+
+  @media (max-width:640px) {
+    :root { --gutter:18px; }
+    main { padding:22px 14px 70px; }
+    .row { grid-template-columns:minmax(0,1fr); }
+    .row .go { display:none; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { animation:none !important; transition:none !important; } }
+
+/* ---------------------------------------------------------------------------
+ * The app shell.
+ *
+ * The preview is a documentation page: it stacks screens down a scrolling body
+ * with captions between them, inside `main`. The app renders one screen at a
+ * time and has no `main` — so this reproduces that element's box and nothing
+ * else, because every measurement in the preview was taken inside it.
+ *
+ * It is a COPY of the preview's `main` rule, deliberately, down to the padding.
+ * The first version invented its own — a flex centring with `max-width: 860px`
+ * — and it looked fine and was 100px narrower than the design at every width
+ * above 1000. Nothing about that is visible without measuring two pages side by
+ * side, which is exactly why the rule is copied rather than re-derived.
+ * ------------------------------------------------------------------------- */
+.app-shell {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 30px 20px 90px;
+  min-height: 100vh;
+  background: var(--ground);
+}
+@media (max-width: 640px) {
+  .app-shell { padding: 0; }
+}
+
+/* A row is an `<a>` rather than a `<button>`: the whole row navigates, and an
+ * anchor gets middle-click, copy-link and the browser's own affordances for
+ * free. Only the two declarations an anchor needs are restated — `display` is
+ * NOT among them. The preview's `.row` is a two-column grid
+ * (`minmax(0,1fr) auto`), and overriding it to flex kept the layout looking
+ * right while moving the right-hand meta 12px down its row. */
+/* Two rows are anchors rather than buttons, and both need the same two
+ * declarations: the whole row navigates, and an anchor gets middle-click,
+ * copy-link and the browser's own affordances for free. `display` is
+ * deliberately NOT restated — the preview's `.row` is a two-column grid and
+ * overriding it to flex moved the right-hand meta twelve pixels down its row. */
+a.row,
+a.rowmain,
+a.evrow { text-decoration: none; color: inherit; }
+a.row:hover h3,
+a.rowmain:hover .t { text-decoration: none; }
+/* NOT `display`. `.ev .evrow` is a `12px minmax(0,1fr)` grid in the preview,
+ * and the last time an anchor override forced flex it moved the row's right-hand
+ * meta twelve pixels down. An anchor needs the two declarations above and
+ * nothing else. */

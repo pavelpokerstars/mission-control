@@ -1,0 +1,38 @@
+{
+  "id": "sprint-14-planning",
+  "topic": "PAY Sprint 14 planning",
+  "startedAt": "2026-08-17T13:00:00Z",
+  "participants": [
+    "riya",
+    "dana",
+    "sam",
+    "priya"
+  ],
+  "segments": [
+    {
+      "at": 90,
+      "speaker": "riya",
+      "text": "Reconciliation is the big one. Four tickets and they are tangled."
+    },
+    {
+      "at": 410,
+      "speaker": "dana",
+      "text": "Dana takes the settled event end to end, publisher and the consumer contract."
+    },
+    {
+      "at": 780,
+      "speaker": "sam",
+      "text": "I cannot start the consumer until the publisher exists, so PAY-9032 waits on PAY-9031."
+    },
+    {
+      "at": 1150,
+      "speaker": "priya",
+      "text": "Settlement lag alerting is mine. I do not know what it depends on yet."
+    },
+    {
+      "at": 1520,
+      "speaker": "riya",
+      "text": "The spike closed. We replay from the audit log and we key on the settlement id."
+    }
+  ]
+}

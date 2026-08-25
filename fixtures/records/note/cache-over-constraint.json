@@ -1,0 +1,22 @@
+{
+  "id": "cache-over-constraint",
+  "kind": "decision",
+  "title": "A dedupe cache, not a database constraint",
+  "status": "resolved",
+  "container": "sprint:PAY Sprint 12",
+  "joins": [
+    {
+      "key": "PAY-9012",
+      "tier": "EXTRACTED"
+    }
+  ],
+  "at": "2026-07-06T13:28:00Z",
+  "evidence": [
+    {
+      "record": "zoom:sprint-12-planning",
+      "at": 1705,
+      "quote": "A cache in front of it. A unique constraint means a migration on the hot table and we are not doing that before the freeze."
+    }
+  ],
+  "body": "Recorded in Confluence four days later. See [[adr-011-cache-over-constraint]]."
+}

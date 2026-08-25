@@ -1,0 +1,26 @@
+{
+  "id": "dana-owns-settled-event",
+  "kind": "commitment",
+  "title": "Dana takes the settled event end to end",
+  "owner": "dana@example.com",
+  "dueAt": "2026-08-29",
+  "container": "sprint:PAY Sprint 14",
+  "status": "open",
+  "joins": [
+    {
+      "key": "PAY-9031",
+      "tier": "INFERRED",
+      "why": "Dana is the assignee of the only settled-event story in the sprint being planned",
+      "confidence": 0.72
+    }
+  ],
+  "at": "2026-08-17T13:09:00Z",
+  "evidence": [
+    {
+      "record": "zoom:sprint-14-planning",
+      "at": 410,
+      "quote": "Dana takes the settled event end to end, publisher and the consumer contract."
+    }
+  ],
+  "body": "No ticket named in the room. The join is reconstructed, and says so."
+}

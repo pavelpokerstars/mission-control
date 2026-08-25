@@ -1,0 +1,28 @@
+{
+  "id": "load-test-before-freeze",
+  "kind": "commitment",
+  "title": "Load test the charge path before the freeze",
+  "owner": "sam@example.com",
+  "dueAt": "2026-07-30",
+  "container": "sprint:PAY Sprint 12",
+  "status": "resolved",
+  "joins": [
+    {
+      "key": "PAY-9013",
+      "tier": "EXTRACTED"
+    }
+  ],
+  "at": "2026-07-06T13:36:00Z",
+  "evidence": [
+    {
+      "record": "miro:sticky-actions-2",
+      "quote": "Load test before the freeze — PAY-9013"
+    },
+    {
+      "record": "zoom:sprint-12-planning",
+      "at": 2210,
+      "quote": "I will load test the charge path before the freeze. That is PAY-9013."
+    }
+  ],
+  "body": "Said and written — the strong case, two records minutes apart."
+}

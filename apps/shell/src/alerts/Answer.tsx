@@ -1,0 +1,265 @@
+/**
+ * An agent's answer, rendered.
+ *
+ * NOT the pane app's `Markdown.tsx`, which was 326 lines and imported Mantine
+ * and the context bus — bringing it back would restore the second component
+ * library this app does without, which is most of why the build is ~231 kB.
+ * What survives from it is the one lesson worth keeping:
+ *
+ * **THE ORDER OF THE INLINE RULES IS THE WHOLE DESIGN, and getting it wrong is
+ * silent.** Flat left-to-right passes look fine and are broken: run the
+ * ticket-key rule before emphasis and `**PAY-9031 → PAY-9032**` is split into
+ * three fragments, after which the `**` pair is in two different strings and
+ * can never match. Emphasis wraps and recurses, so emphasis goes first; a code
+ * span owns its content and does not.
+ *
+ * A ticket key becomes a link to its record, because `DIRECTION.md` §9's second
+ * rule is that the chat "cites like the page does" — an answer naming PAY-9031
+ * as inert text is an answer you cannot check.
+ *
+ * A `[[wikilink]]` is rendered as plain text on purpose. Wikilinks are internal
+ * to vault storage and appear nowhere else in this interface; the agent is told
+ * to cite notes that way, and the right thing to show a reader is the name, not
+ * a link to a page that does not exist.
+ */
+
+import { Fragment, type JSX, type ReactNode } from 'react';
+
+const KEY = /\b([A-Z][A-Z0-9]+-\d+)\b/;
+
+/**
+ * Inline rules, in the only order that works. Each returns the matched node and
+ * whether the remaining rules should recurse into its content.
+ */
+const INLINE: { re: RegExp; render: (m: RegExpMatchArray, key: number) => JSX.Element; wraps: boolean }[] = [
+  {
+    re: /\*\*([^*]+)\*\*/,
+    render: (m, k) => <b key={k}>{inline(m[1]!)}</b>,
+    wraps: true,
+  },
+  /**
+   * Single-asterisk emphasis, and it has to sit HERE — second, straight after
+   * bold and before every atom.
+   *
+   * The agent quotes people as `*"PAY-9031 is done"*` all the time and the
+   * asterisks were rendering literally. Moving this rule after the ticket-key
+   * rule looks harmless and is not: `KEY` would match inside the quotation
+   * first, split the string, and leave the opening and closing `*` in two
+   * different fragments that can never pair — the same failure the header
+   * describes for code spans. Bold still wins because it needs two asterisks
+   * and runs first.
+   */
+  {
+    re: /\*([^*\n]+)\*/,
+    render: (m, k) => <i key={k}>{inline(m[1]!)}</i>,
+    wraps: true,
+  },
+  {
+    re: /`([^`]+)`/,
+    render: (m, k) => <code key={k}>{m[1]}</code>,
+    wraps: false,
+  },
+  {
+    re: /\[\[([a-z0-9-]+)\]\]/i,
+    render: (m, k) => <i key={k}>{m[1]}</i>,
+    wraps: false,
+  },
+  {
+    re: KEY,
+    render: (m, k) => (
+      <a key={k} href={`#/record/jira/${encodeURIComponent(m[1]!)}`}>
+        {m[1]}
+      </a>
+    ),
+    wraps: false,
+  },
+  /**
+   * A Slack channel becomes a citation chip, exactly as the preview draws it:
+   * the surface dot and the channel, in mono, on a pill.
+   *
+   * `DIRECTION.md` §9's second rule is that the chat "cites like the page
+   * does". An answer saying a thing was discussed in #eng-payments as flat prose
+   * makes the same claim as an evidence row and looks like an opinion, which is
+   * the difference this product exists to hold.
+   *
+   * NOT a link, and deliberately: the alert page's own rule is that a citation
+   * with a quote opens its record and an observation does not, and a channel
+   * name in prose is not a record reference — there is no line to land on.
+   *
+   * The name must start with a letter or digit, so a markdown heading (`# `,
+   * with the space) cannot match.
+   */
+  {
+    re: /#([a-z0-9][a-z0-9._-]*)/i,
+    render: (m, k) => (
+      <span className="cited" key={k}>
+        <i className="dot slack" aria-hidden="true" />#{m[1]}
+      </span>
+    ),
+    wraps: false,
+  },
+];
+
+/**
+ * `->` separated nodes, each optionally tagged, drawn as the preview's chain.
+ *
+ * `DIRECTION.md` §9's third rule: "When the answer is a shape, it draws the
+ * shape. A dependency chain read as prose is worse than seeing it." The preview
+ * agrees in the answer's own words — *"I am showing you the chain rather than
+ * describing it because the shape is the answer."*
+ *
+ * A FENCE RATHER THAN STRUCTURED OUTPUT, because the turn streams. Asking for
+ * typed JSON would mean waiting for a whole answer before showing any of it,
+ * and the SSE loop is the reason an answer appears to be typed. The model
+ * decides *when* the answer is a shape; this decides how it looks.
+ *
+ * ```chain
+ * what the topic is holding up          ← optional caption, when 2+ lines
+ * Kafka topic · no ticket [missing] -> PAY-9031 · done -> PAY-9035 [at-risk]
+ * ```
+ */
+const NODE_TAG = /\s*\[(missing|at-risk)\]\s*$/;
+
+function Chain({ lines }: { lines: string[] }): JSX.Element {
+  const caption = lines.length > 1 ? lines[0]! : undefined;
+  const chain = (lines.length > 1 ? lines.slice(1) : lines).join(' ');
+  const nodes = chain
+    .split(/->|→/)
+    .map((n) => n.trim())
+    .filter(Boolean);
+
+  return (
+    <div className="inline-graph">
+      {caption ? <span className="cap">{caption}</span> : null}
+      <div className="chain">
+        {nodes.map((raw, i) => {
+          const tag = NODE_TAG.exec(raw);
+          const label = raw.replace(NODE_TAG, '').trim();
+          return (
+            <Fragment key={i}>
+              {i > 0 ? (
+                <span className="arrow" aria-hidden="true">
+                  →
+                </span>
+              ) : null}
+              <span className={tag ? `node ${tag[1]}` : 'node'}>{label}</span>
+            </Fragment>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function inline(text: string, depth = 0): ReactNode[] {
+  // Emphasis recurses; a runaway would be a bug rather than deep markup.
+  if (depth > 4) return [text];
+  for (const [i, rule] of INLINE.entries()) {
+    const m = rule.re.exec(text);
+    if (!m || m.index === undefined) continue;
+    const before = text.slice(0, m.index);
+    const after = text.slice(m.index + m[0].length);
+    return [
+      // Rules BEFORE this one cannot match what it skipped past — they already
+      // ran on the whole string and did not fire.
+      ...(before ? inlineFrom(before, i, depth + 1) : []),
+      rule.render(m, m.index),
+      ...(after ? inline(after, depth) : []),
+    ];
+  }
+  return [text];
+}
+
+/** Continue from a given rule, so a partial match cannot be re-scanned forever. */
+function inlineFrom(text: string, from: number, depth: number): ReactNode[] {
+  for (let i = from; i < INLINE.length; i++) {
+    const rule = INLINE[i]!;
+    const m = rule.re.exec(text);
+    if (!m || m.index === undefined) continue;
+    return [
+      ...(m.index ? [text.slice(0, m.index)] : []),
+      rule.render(m, m.index),
+      ...inlineFrom(text.slice(m.index + m[0].length), i, depth + 1),
+    ];
+  }
+  return [text];
+}
+
+/**
+ * Blocks: paragraphs and lists, and nothing else.
+ *
+ * Anything unsupported falls through as a paragraph, which is what the panel
+ * did before — this is never worse than plain text.
+ */
+export function Answer({ text }: { text: string }): JSX.Element {
+  const blocks: JSX.Element[] = [];
+  const lines = text.split('\n');
+  let para: string[] = [];
+  let list: string[] = [];
+
+  const flushPara = (): void => {
+    if (!para.length) return;
+    blocks.push(<p key={blocks.length}>{inline(para.join(' '))}</p>);
+    para = [];
+  };
+  const flushList = (): void => {
+    if (!list.length) return;
+    blocks.push(
+      <ul key={blocks.length}>
+        {list.map((li, i) => (
+          <li key={i}>{inline(li)}</li>
+        ))}
+      </ul>,
+    );
+    list = [];
+  };
+
+  /**
+   * Fence state. An UNCLOSED fence still renders what has arrived — the answer
+   * is streaming, so every intermediate frame has one, and holding the block
+   * back until the closing ``` would make a chain appear only at the very end.
+   */
+  let fence: string[] | undefined;
+
+  for (const raw of lines) {
+    const line = raw.trimEnd();
+
+    if (/^\s*```/.test(line)) {
+      if (fence) {
+        blocks.push(<Chain key={blocks.length} lines={fence} />);
+        fence = undefined;
+      } else if (/^\s*```\s*chain\b/i.test(line)) {
+        flushPara();
+        flushList();
+        fence = [];
+      }
+      // A fence of any other language is not ours; it opens nothing and the
+      // lines inside it fall through as prose, which is what happened before.
+      continue;
+    }
+    if (fence) {
+      if (line.trim()) fence.push(line.trim());
+      continue;
+    }
+
+    const bullet = /^\s*[-*]\s+(.*)$/.exec(line);
+    if (bullet) {
+      flushPara();
+      list.push(bullet[1]!);
+      continue;
+    }
+    if (!line.trim()) {
+      flushPara();
+      flushList();
+      continue;
+    }
+    flushList();
+    para.push(line);
+  }
+  flushPara();
+  flushList();
+  // Truncated mid-chain, or still streaming: draw what arrived.
+  if (fence?.length) blocks.push(<Chain key={blocks.length} lines={fence} />);
+
+  return <Fragment>{blocks}</Fragment>;
+}

@@ -1,0 +1,13 @@
+{
+  "files": [],
+  "include": [
+    "apps/shell/src/**/*",
+    "apps/gateway/src/**/*",
+    "libs/**/src/**/*"
+  ],
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "types": ["node", "vite/client"]
+  }
+}

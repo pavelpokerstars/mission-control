@@ -1,0 +1,60 @@
+<svg viewBox="0 0 880 320" width="880" height="320" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="rtTitle rtDesc" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="rtTitle">The four movements, and why only one of them compounds</title>
+  <desc id="rtDesc">Four stages run in order. First, a continuous unattended substrate of webhooks and capture keeps the event log and vault current. Second, before the meeting, skills assemble a pack from that substrate. Third, the meeting happens and the workshop skill reconciles the recording with the board. Fourth, what was decided is written back into the vault. An arrow returns from the fourth stage to the second, because the next ceremony assembles from what the last one learned. Only that return arrow makes the system improve over time.</desc>
+  <defs>
+    <marker id="rah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#6b6a65"/></marker>
+    <marker id="rahA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#c15f3c"/></marker>
+  </defs>
+  <style>
+    .box{fill:#faf9f5;stroke:#d9d7d0;stroke-width:1.25}
+    .spine{fill:#faf9f5;stroke:#c15f3c;stroke-width:1.75}
+    .t{fill:#141413;font-size:13.5px;font-weight:600}
+    .s{fill:#6b6a65;font-size:11px}
+    .lbl{fill:#6b6a65;font-size:10.5px}
+    .lblA{fill:#c15f3c;font-size:10.5px;font-weight:600}
+    .ln{stroke:#6b6a65;stroke-width:1.4;fill:none}
+    .lnA{stroke:#c15f3c;stroke-width:1.8;fill:none}
+    .tag{fill:#8f8d86;font-size:9.5px}
+    .num{fill:#c15f3c;font-size:11px;font-weight:700}
+  </style>
+  <rect x="0" y="0" width="880" height="320" fill="#ffffff"/>
+
+  <rect class="box" x="30" y="52" width="190" height="96" rx="9"/>
+  <text class="num" x="48" y="76">1</text>
+  <text class="t" x="48" y="94">Substrate</text>
+  <text class="s" x="48" y="112">webhooks · capture · poll</text>
+  <text class="tag" x="48" y="130">unattended. most data</text>
+  <text class="tag" x="48" y="142">arrives here</text>
+
+  <rect class="box" x="250" y="52" width="190" height="96" rx="9"/>
+  <text class="num" x="268" y="76">2</text>
+  <text class="t" x="268" y="94">Before the meeting</text>
+  <text class="s" x="268" y="112">/retro · /plan · /standup</text>
+  <text class="tag" x="268" y="130">the pack exists before</text>
+  <text class="tag" x="268" y="142">anyone sits down</text>
+
+  <rect class="box" x="470" y="52" width="190" height="96" rx="9"/>
+  <text class="num" x="488" y="76">3</text>
+  <text class="t" x="488" y="94">After the meeting</text>
+  <text class="s" x="488" y="112">/workshop reconciles</text>
+  <text class="tag" x="488" y="130">recording + board →</text>
+  <text class="tag" x="488" y="142">one pack, a few proposals</text>
+
+  <rect class="spine" x="690" y="52" width="160" height="96" rx="9"/>
+  <text class="num" x="708" y="76">4</text>
+  <text class="t" x="708" y="94">The vault learns</text>
+  <text class="s" x="708" y="112">commitments</text>
+  <text class="tag" x="708" y="130">decisions · patterns ·</text>
+  <text class="tag" x="708" y="142">the pack itself</text>
+
+  <path class="ln" d="M 224 100 L 246 100" marker-end="url(#rah)"/>
+  <path class="ln" d="M 444 100 L 466 100" marker-end="url(#rah)"/>
+  <path class="ln" d="M 664 100 L 686 100" marker-end="url(#rah)"/>
+
+  <path class="lnA" d="M 770 152 L 770 218 L 345 218 L 345 154" marker-end="url(#rahA)"/>
+  <text class="lblA" x="557" y="208" text-anchor="middle">the next ceremony assembles from what the last one learned</text>
+
+  <line x1="30" y1="248" x2="850" y2="248" stroke="#d9d7d0" stroke-width="1"/>
+  <text class="tag" x="30" y="270">Movements 1–3 are what every meeting-notes tool does. Movement 4 — and the arrow back — is the only part that compounds.</text>
+  <text class="tag" x="30" y="288">Cut that arrow and each retro re-derives the same findings from nothing, which is what "third sprint running" costs you.</text>
+</svg>

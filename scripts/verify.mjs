@@ -1,0 +1,140 @@
+#!/usr/bin/env node
+/**
+ * The acceptance command. One thing to run, one thing to read.
+ *
+ * "If it needs a token, it isn't the demo." Nothing here reads a credential,
+ * opens a socket or starts a server — a judge on a fresh clone runs this and
+ * either sees `all checks passed` or a line naming exactly what is wrong. It is
+ * the closest this repo has to a test suite, and it exists because there is no
+ * test framework: the interesting bugs here are wiring bugs, and every check
+ * below corresponds to one that has actually shipped.
+ *
+ * The determinism check is the one worth explaining. `fixtures/` is committed
+ * AND generated, which is only safe if regenerating is a no-op — otherwise the
+ * demo rearranges itself between rehearsal and stage. It was not a no-op:
+ * `newEvent` stamped `Date.now()` into every event id, so a regenerate rewrote
+ * all 46 of them while claiming in a comment to be deterministic. Nobody
+ * noticed because nobody diffs a fixture they just rebuilt.
+ */
+
+import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
+import { readdirSync, readFileSync, statSync } from 'node:fs';
+import { join } from 'node:path';
+
+const root = new URL('..', import.meta.url).pathname;
+const t0 = Date.now();
+let failed = 0;
+
+/** Every file under a directory, hashed together, sorted so order cannot vary. */
+function digest(dir) {
+  const files = [];
+  (function walk(d) {
+    for (const e of readdirSync(d, { withFileTypes: true }).sort((a, b) => (a.name < b.name ? -1 : 1))) {
+      const p = join(d, e.name);
+      if (e.isDirectory()) walk(p);
+      else if (statSync(p).isFile()) files.push(p);
+    }
+  })(dir);
+  const h = createHash('sha256');
+  for (const f of files) h.update(f.slice(dir.length)).update(readFileSync(f));
+  return h.digest('hex');
+}
+
+function step(name, run) {
+  process.stdout.write(`  ${name}… `);
+  try {
+    /**
+     * A step may return a string, which is printed under its `ok`.
+     *
+     * Everything here either passes or fails, which is right for a gate — but
+     * `verify-design.mts` also REPORTS: the classes the preview draws and the
+     * app has never used, which is the design that has not been built. That is
+     * not a failure and must not become one, and discarding stdout on success
+     * left it visible only to somebody running the verifier directly. An
+     * inventory nobody sees is not an inventory.
+     */
+    const note = run();
+    console.log('ok');
+    if (typeof note === 'string' && note.trim()) {
+      console.log(note.trimEnd().split('\n').map((l) => `      ${l}`).join('\n'));
+    }
+  } catch (err) {
+    failed++;
+    console.log('FAILED');
+    const detail = (err.stdout?.toString() || '') + (err.stderr?.toString() || '') || err.message;
+    console.log(
+      detail
+        .trim()
+        .split('\n')
+        .slice(-12)
+        .map((l) => `      ${l}`)
+        .join('\n'),
+    );
+  }
+}
+
+const run = (cmd, args) => execFileSync(cmd, args, { cwd: root, stdio: 'pipe' });
+
+console.log('\nmission-control — acceptance\n');
+
+step('the workspace typechecks', () => run('npx', ['tsc', '-b']));
+
+step('the fixture regenerates deterministically', () => {
+  const before = digest(join(root, 'fixtures'));
+  run('npx', ['tsx', 'scripts/generate-fixture.mts']);
+  const after = digest(join(root, 'fixtures'));
+  if (before !== after) {
+    throw new Error(
+      'regenerating fixtures/ changed it.\n' +
+        'The committed fixture and a fresh generate must be byte-identical, or the\n' +
+        'demo can rearrange itself between rehearsal and stage. Run `git diff fixtures/`.',
+    );
+  }
+});
+
+step('the graph contract holds, and the detectors find what was planted', () =>
+  run('npx', ['tsx', 'scripts/verify-graph.mts']),
+);
+
+step('the refresh baselines, diffs and re-baselines', () =>
+  run('npx', ['tsx', 'scripts/verify-refresh.mts']),
+);
+
+/**
+ * The app still matches the design it was rebuilt to.
+ *
+ * Here rather than in a review checklist because a review checklist did not
+ * work: a proposal queue was built and removed, and every fact needed to avoid
+ * it was already written in `DIRECTION.md` and `DESIGN.md` and had been read.
+ */
+step('the app matches DIRECTION.md and DESIGN.md', () => {
+  const out = run('npx', ['tsx', 'scripts/verify-design.mts']).toString().split('\n');
+  // The report block: from the `note` line to the blank line that ends it.
+  const from = out.findIndex((l) => /^\s+note\s/.test(l));
+  if (from < 0) return '';
+  const rest = out.slice(from);
+  const to = rest.findIndex((l, i) => i > 0 && !l.trim());
+  return (to < 0 ? rest : rest.slice(0, to)).join('\n');
+});
+
+/**
+ * The fixture against the collector contract.
+ *
+ * Included because the fixture IS a collector's output — generated into the same
+ * shape a real one produces — so the check that will be run against real input
+ * should be passing against this input first. If it cannot validate the graph we
+ * wrote ourselves, it is not going to be trusted against somebody else's.
+ */
+step('the fixture reads as a collector\'s output should', () =>
+  run('npx', ['tsx', 'scripts/verify-collector.mts']),
+);
+
+step('the shell builds', () => run('npx', ['vite', 'build', '--config', 'apps/shell/vite.config.mts']));
+
+const secs = ((Date.now() - t0) / 1000).toFixed(1);
+if (failed) {
+  console.log(`\n${failed} check${failed === 1 ? '' : 's'} failed in ${secs}s\n`);
+  process.exit(1);
+}
+console.log(`\nall checks passed in ${secs}s — no credentials, no network, no server\n`);

@@ -1,0 +1,96 @@
+<svg viewBox="0 0 880 660" width="880" height="660" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="cfTitle cfDesc" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <title id="cfTitle">How a meeting becomes tickets, a page, and memory</title>
+  <desc id="cfDesc">Four inputs feed the workshop skill: a Zoom transcript, a Miro board's stickies and arrows, Confluence pages, and vault notes. The skill reconciles what was said, what was written on the board, and what a model read into one action per ask, then writes the pack to an editable brief note in the vault. A human edits that note. Accepting a proposal publishes the note's current text to Confluence or creates Jira tickets. Each accepted ticket writes a commitment note back into the vault, which is why the next ceremony starts from more than the last one did. Solid arrows are automatic; dashed arrows require a human to press accept.</desc>
+  <defs>
+    <marker id="cah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#6b6a65"/></marker>
+    <marker id="cahA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#c15f3c"/></marker>
+  </defs>
+  <style>
+    .box{fill:#faf9f5;stroke:#d9d7d0;stroke-width:1.25}
+    .spine{fill:#faf9f5;stroke:#c15f3c;stroke-width:1.75}
+    .hub{fill:#f0eee7;stroke:#d9d7d0;stroke-width:1.25}
+    .t{fill:#141413;font-size:14px;font-weight:600}
+    .s{fill:#6b6a65;font-size:11px}
+    .lbl{fill:#6b6a65;font-size:10.5px}
+    .lblA{fill:#c15f3c;font-size:10.5px;font-weight:600}
+    .ln{stroke:#6b6a65;stroke-width:1.4;fill:none}
+    .lnA{stroke:#c15f3c;stroke-width:1.8;fill:none}
+    .gate{stroke:#c15f3c;stroke-width:1.8;fill:none;stroke-dasharray:6 4}
+    .tag{fill:#8f8d86;font-size:9.5px}
+  </style>
+  <rect x="0" y="0" width="880" height="660" fill="#ffffff"/>
+
+  <!-- inputs -->
+  <rect class="box" x="36" y="34" width="194" height="70" rx="9"/>
+  <text class="t" x="54" y="60">Zoom</text>
+  <text class="s" x="54" y="78">the recording</text>
+  <text class="tag" x="54" y="94">what was said</text>
+
+  <rect class="box" x="246" y="34" width="194" height="70" rx="9"/>
+  <text class="t" x="264" y="60">Miro</text>
+  <text class="s" x="264" y="78">stickies + arrows</text>
+  <text class="tag" x="264" y="94">what was written</text>
+
+  <rect class="box" x="456" y="34" width="194" height="70" rx="9"/>
+  <text class="t" x="474" y="60">Confluence</text>
+  <text class="s" x="474" y="78">page bodies</text>
+  <text class="tag" x="474" y="94">already written down?</text>
+
+  <rect class="box" x="666" y="34" width="178" height="70" rx="9"/>
+  <text class="t" x="684" y="60">Vault</text>
+  <text class="s" x="684" y="78">notes</text>
+  <text class="tag" x="684" y="94">what we already knew</text>
+
+  <path class="ln" d="M 133 108 L 133 146" marker-end="url(#cah)"/>
+  <path class="ln" d="M 343 108 L 343 146" marker-end="url(#cah)"/>
+  <path class="ln" d="M 553 108 L 553 146" marker-end="url(#cah)"/>
+  <path class="ln" d="M 755 108 L 755 146" marker-end="url(#cah)"/>
+
+  <!-- the skill -->
+  <rect class="hub" x="36" y="150" width="808" height="88" rx="10"/>
+  <text class="t" x="60" y="180">/workshop — reconcile()</text>
+  <text class="s" x="60" y="200">said · written · inferred → one cluster per ask, never the same ask twice</text>
+  <text class="tag" x="60" y="220">tuned to split rather than merge: a false split is one click, a false merge loses an action item</text>
+
+  <path class="ln" d="M 440 242 L 440 286" marker-end="url(#cah)"/>
+  <text class="lbl" x="452" y="268">assembles</text>
+
+  <!-- the pack -->
+  <rect class="spine" x="250" y="290" width="380" height="92" rx="9"/>
+  <text class="t" x="274" y="318">The pack — a brief note</text>
+  <text class="s" x="274" y="337">workshop-&lt;transcriptId&gt; · lives in the vault</text>
+  <text class="tag" x="274" y="355">never overwritten by a re-run · never recalled into a turn</text>
+  <text class="lblA" x="274" y="372">you edit this before anything is published</text>
+
+  <path class="lnA" d="M 646 336 L 700 336" marker-end="url(#cahA)"/>
+  <text class="lblA" x="710" y="332">human</text>
+  <text class="tag" x="710" y="346">edits in the note page</text>
+
+  <path class="gate" d="M 350 386 L 260 432" marker-end="url(#cahA)"/>
+  <path class="gate" d="M 530 386 L 620 432" marker-end="url(#cahA)"/>
+  <text class="lblA" x="440" y="410" text-anchor="middle">proposals</text>
+
+  <!-- outputs -->
+  <rect class="box" x="110" y="436" width="250" height="82" rx="9"/>
+  <text class="t" x="132" y="464">Confluence page</text>
+  <text class="s" x="132" y="482">the note's text as it stands now</text>
+  <text class="tag" x="132" y="500">not what the skill first wrote</text>
+
+  <rect class="box" x="520" y="436" width="250" height="82" rx="9"/>
+  <text class="t" x="542" y="464">Jira tickets</text>
+  <text class="s" x="542" y="482">+ a provenance comment</text>
+  <text class="tag" x="542" y="500">who asked, when, in which meeting</text>
+
+  <!-- the ratchet -->
+  <path class="lnA" d="M 774 477 L 866 477 L 866 69 L 852 69" marker-end="url(#cahA)"/>
+  <text class="lblA" transform="rotate(-90 850 290)" x="850" y="290" text-anchor="middle">every accepted ticket writes a commitment note back</text>
+
+  <!-- legend -->
+  <line x1="36" y1="560" x2="844" y2="560" stroke="#d9d7d0" stroke-width="1"/>
+  <line class="ln" x1="48" y1="586" x2="88" y2="586" marker-end="url(#cah)"/>
+  <text class="lbl" x="98" y="590">automatic — reading, assembling, remembering</text>
+  <line class="gate" x1="440" y1="586" x2="480" y2="586" marker-end="url(#cahA)"/>
+  <text class="lbl" x="490" y="590">a human presses accept</text>
+  <text class="tag" x="48" y="618">Nothing leaves this diagram without somebody pressing a button. The vault is the only thing that fills up on its own.</text>
+  <text class="tag" x="48" y="638">The loop on the right is the point: without it, next sprint's ceremony starts from the same blank slate as this one.</text>
+</svg>

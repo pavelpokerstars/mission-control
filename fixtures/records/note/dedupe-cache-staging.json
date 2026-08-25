@@ -1,0 +1,24 @@
+{
+  "id": "dedupe-cache-staging",
+  "kind": "commitment",
+  "title": "Dedupe cache in front of the charge endpoint",
+  "owner": "dana@example.com",
+  "dueAt": "2026-07-29",
+  "container": "sprint:PAY Sprint 12",
+  "status": "resolved",
+  "joins": [
+    {
+      "key": "PAY-9012",
+      "tier": "EXTRACTED"
+    }
+  ],
+  "at": "2026-07-06T13:10:00Z",
+  "evidence": [
+    {
+      "record": "zoom:sprint-12-planning",
+      "at": 610,
+      "quote": "PAY-9012 is the cache. I can have it in staging inside the week."
+    }
+  ],
+  "body": "Named its own ticket in the room, which is the easy case."
+}
