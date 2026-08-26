@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Mission Control — Judge Demo Storyboard</title>
+<style>
+  :root {
+    --ground:#EEF0F3; --app:#FFFFFF; --sunk:#F4F6F8; --line:#E1E5EA; --line-2:#CBD2DA;
+    --ink:#14171C; --ink-2:#535B66; --ink-3:#69727E; --btn:#14171C; --btn-ink:#FFFFFF;
+    --crit:#B3352B; --crit-bg:#FBEDEC; --warn:#8A6209; --warn-bg:#FBF3E2; --ok:#2C6650; --ok-bg:#E9F2ED;
+    --s-jira:#2C6BD9; --s-slack:#A0348C; --s-zoom:#167F8C; --s-conf:#3E7A46; --s-miro:#9A7413;
+    --sans:"Instrument Sans", ui-sans-serif, system-ui, -apple-system, sans-serif;
+    --mono:"IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+    --shadow:0 1px 2px rgba(20,23,28,.06), 0 12px 32px -16px rgba(20,23,28,.22);
+    --r:10px;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--ground); color:var(--ink); font-family:var(--sans); line-height:1.55; -webkit-font-smoothing:antialiased; }
+  header { max-width:1080px; margin:0 auto; padding:40px 24px 8px; }
+  header h1 { font-size:1.9rem; margin:0 0 6px; }
+  header p { color:var(--ink-2); margin:0; max-width:70ch; }
+  .wrap { max-width:1080px; margin:0 auto; padding:24px; display:grid; gap:22px; }
+  .frame { background:var(--app); border:1px solid var(--line); border-radius:14px; box-shadow:var(--shadow); overflow:hidden; }
+  .frame .top { display:flex; align-items:center; gap:12px; padding:12px 16px; border-bottom:1px solid var(--line); background:var(--sunk); }
+  .frame .top .t { font-family:var(--mono); font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-3); }
+  .frame .top .beat { margin-left:auto; font-family:var(--mono); font-size:11px; color:var(--ink-3); }
+  .frame .stage { padding:18px 18px 20px; }
+  .shot { border:1px solid var(--line); border-radius:10px; padding:16px; background:var(--sunk); margin-bottom:14px; }
+  .meta { display:grid; grid-template-columns:120px 1fr; gap:8px 14px; font-size:.92rem; }
+  .meta dt { font-family:var(--mono); font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-3); padding-top:3px; }
+  .meta dd { margin:0; color:var(--ink-2); }
+  .vo { background:var(--sunk); border-left:3px solid var(--s-jira); padding:12px 14px; border-radius:0 8px 8px 0; font-style:italic; color:var(--ink-2); }
+  .do { font-weight:600; color:var(--ink); }
+  .chip { display:inline-flex; align-items:center; gap:6px; font-family:var(--mono); font-size:10px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; padding:3px 9px; border-radius:99px; }
+  .chip.crit{color:var(--crit);background:var(--crit-bg);} .chip.warn{color:var(--warn);background:var(--warn-bg);}
+  .chip.ok{color:var(--ok);background:var(--ok-bg);} .chip.plain{color:var(--ink-3);background:var(--sunk);border:1px solid var(--line);}
+  .dot{width:8px;height:8px;border-radius:50%;display:inline-block;}
+  .jira{background:var(--s-jira)} .slack{background:var(--s-slack)} .conf{background:var(--s-conf)} .zoom{background:var(--s-zoom)} .miro{background:var(--s-miro)}
+  .rowitem { display:flex; gap:12px; align-items:flex-start; padding:12px 14px; background:var(--app); border:1px solid var(--line); border-radius:10px; margin-bottom:10px; border-left:3px solid var(--crit); }
+  .rowitem h4 { margin:0 0 4px; font-size:1rem; }
+  .rowitem p { margin:0; color:var(--ink-2); font-size:.9rem; }
+  .slackcard { background:var(--app); border:1px solid var(--line); border-radius:10px; overflow:hidden; }
+  .slackcard .bar { background:var(--sunk); border-bottom:1px solid var(--line); padding:8px 14px; font-family:var(--mono); font-size:11px; color:var(--ink-3); }
+  .slackcard .bar::before { content:"# "; color:var(--s-slack); font-weight:600; }
+  .slackcard .body { padding:14px 16px; }
+  .slackcard .body .who { font-weight:600; margin-bottom:6px; }
+  .slackcard .body .who .app-tag { font-family:var(--mono); font-size:9px; background:var(--sunk); color:var(--ink-3); padding:2px 5px; border-radius:3px; margin-left:6px; }
+  .attach { border-left:3px solid var(--crit); background:var(--sunk); padding:10px 12px; border-radius:0 6px 6px 0; margin-top:10px; }
+  .attach b{display:block;margin-bottom:4px;font-size:.92rem;}
+  .evrow { display:flex; gap:12px; align-items:flex-start; padding:10px 12px; background:var(--app); border:1px solid var(--line); border-radius:8px; margin-bottom:8px; border-left:3px solid var(--s-slack); }
+  .evrow.miro { border-left-color:var(--s-jira); }
+  .evrow p { margin:0; color:var(--ink-2); font-size:.9rem; }
+  .evrow .src { font-family:var(--mono); font-size:10px; color:var(--ink-3); }
+  .chat .turn { display:flex; gap:10px; margin-bottom:12px; }
+  .chat .badge { width:28px; height:28px; border-radius:6px; background:var(--btn); color:var(--btn-ink); display:grid; place-items:center; font-family:var(--mono); font-size:11px; flex:none; }
+  .chat .turn.you .badge { background:var(--s-jira); }
+  .chat .bubble { background:var(--app); border:1px solid var(--line); border-radius:10px; padding:10px 12px; font-size:.9rem; }
+  .composer { display:flex; gap:8px; margin-top:8px; }
+  .composer input { flex:1; padding:10px 12px; font:inherit; border:1px solid var(--line-2); border-radius:8px; background:var(--sunk); }
+  .composer button { padding:10px 14px; background:var(--s-jira); color:#fff; border:none; border-radius:8px; font-weight:600; }
+  .srcband { display:flex; gap:10px; flex-wrap:wrap; }
+  .srcband .s { display:flex; align-items:center; gap:7px; background:var(--app); border:1px solid var(--line); border-radius:99px; padding:6px 12px; font-size:.85rem; }
+  .nav { position:sticky; top:0; z-index:10; background:var(--ground); border-bottom:1px solid var(--line); padding:12px 24px; display:flex; gap:8px; flex-wrap:wrap; }
+  .nav a { font-family:var(--mono); font-size:11px; color:var(--ink-2); text-decoration:none; border:1px solid var(--line-2); border-radius:99px; padding:6px 12px; }
+  .nav a:hover { border-color:var(--ink-3); color:var(--ink); }
+  .note { color:var(--ink-3); font-size:.82rem; margin-top:4px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Mission Control — Judge Demo Storyboard</h1>
+  <p>A frame-by-frame walk of the 3-minute judge journey, drawn with the product's own
+  surfaces. Each frame shows what the judge sees, what they do, and the script beat it maps to.</p>
+</header>
+
+<nav class="nav">
+  <a href="#f0">0 · Gate</a>
+  <a href="#f1">1 · Problem</a>
+  <a href="#f2">2 · Morning Slack</a>
+  <a href="#f3">3 · Check-in list</a>
+  <a href="#f4">4 · Open conflict</a>
+  <a href="#f5">5 · Sources</a>
+  <a href="#f6">6 · Ask MC</a>
+  <a href="#f7">7 · Value</a>
+  <a href="#f8">8 · Close</a>
+</nav>
+
+<div class="wrap">
+
+  <!-- FRAME 0 -->
+  <section class="frame" id="f0">
+    <div class="top"><span class="t">Frame 0 · Entry</span><span class="beat">0:00</span></div>
+    <div class="stage">
+      <div class="shot">
+        <div style="max-width:420px;margin:0 auto;background:var(--app);border:1px solid var(--line);border-radius:16px;padding:30px;box-shadow:var(--shadow);">
+          <div style="font-family:var(--mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--ink-3);text-align:center;margin-bottom:14px;">Mission Control</div>
+          <h3 style="margin:0 0 8px;text-align:center;">Welcome, judge</h3>
+          <p style="color:var(--ink-2);font-size:.9rem;text-align:center;margin:0 0 18px;">You get a private 20-minute session to explore the demo. Enter your name to begin.</p>
+          <label style="display:block;font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);margin-bottom:6px;">Your name</label>
+          <input style="width:100%;padding:12px;border:1px solid var(--line-2);border-radius:10px;background:var(--sunk);font:inherit;" placeholder="e.g. Judge A" />
+          <button style="width:100%;margin-top:12px;padding:12px;background:var(--s-jira);color:#fff;border:none;border-radius:10px;font-weight:600;">Enter the demo</button>
+        </div>
+      </div>
+      <dl class="meta">
+        <dt>Judge sees</dt><dd>A clean name-entry screen. No account, no password — just a name.</dd>
+        <dt>Judge does</dt><dd class="do">Types their name and clicks "Enter the demo".</dd>
+        <dt>What happens</dt><dd>A unique 20-min session is minted locally; the product loads instantly. Unlimited judges can do this at once.</dd>
+        <dt>Voiceover</dt><dd class="vo">"Every team has a source of truth. The problem is… we have five of them."</dd>
+      </dl>
+      <p class="note">Minimal change: client-side session, no backend. Site loads the moment the name is entered.</p>
+    </div>
+  </section>
+
+  <!-- FRAME 1 -->
+  <section class="frame" id="f1">
+    <div class="top"><span class="t">Frame 1 · The Problem</span><span class="beat">0:00–0:25</span></div>
+    <div class="stage">
+      <div class="shot" style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
+        <span class="s" style="display:inline-flex;align-items:center;gap:7px;background:var(--app);border:1px solid var(--line);border-radius:8px;padding:10px 14px;"><i class="dot slack"></i> Slack</span>
+        <span class="s" style="display:inline-flex;align-items:center;gap:7px;background:var(--app);border:1px solid var(--line);border-radius:8px;padding:10px 14px;"><i class="dot jira"></i> Jira</span>
+        <span class="s" style="display:inline-flex;align-items:center;gap:7px;background:var(--app);border:1px solid var(--line);border-radius:8px;padding:10px 14px;"><i class="dot conf"></i> Confluence</span>
+        <span class="s" style="display:inline-flex;align-items:center;gap:7px;background:var(--app);border:1px solid var(--line);border-radius:8px;padding:10px 14px;"><i class="dot miro"></i> Miro</span>
+      </div>
+      <dl class="meta">
+        <dt>Judge sees</dt><dd>Five product icons — the "five sources of truth" — with Slack pulsing first, then Jira, Confluence, Miro, back to Slack.</dd>
+        <dt>Judge does</dt><dd class="do">Watches. (This beat is the presenter's screen, not the judge's clicks.)</dd>
+        <dt>Voiceover</dt><dd class="vo">"A decision gets made in Slack. The work gets tracked in Jira. The plan lives in Miro. The docs sit in Confluence. And by tomorrow, those sources don't always agree."</dd>
+      </dl>
+    </div>
+  </section>
+
+  <!-- FRAME 2 -->
+  <section class="frame" id="f2">
+    <div class="top"><span class="t">Frame 2 · Morning Slack</span></span><span class="beat">0:45–1:05</span></div>
+    <div class="stage">
+      <div class="shot">
+        <div class="slackcard">
+          <div class="bar">standup-alpha</div>
+          <div class="body">
+            <div class="who">Mission Control <span class="app-tag">APP</span></div>
+            <p style="margin:0;color:var(--ink-2);"><b style="color:var(--ink)">MISSION CONTROL — Morning Check-In</b><br/>3 items need your attention.</p>
+            <div class="attach">
+              <b>⚠ Conflict detected</b> Jira and Slack appear to disagree on the status of a current item.
+            </div>
+            <div class="attach" style="border-left-color:var(--warn);">
+              <b>🔗 Possible missing follow-up</b> A decision was made yesterday but no related Jira item was found.
+            </div>
+            <div class="attach" style="border-left-color:var(--s-miro);">
+              <b>📌 Dependency risk</b> An active item may be waiting on unresolved work.
+            </div>
+            <button style="margin-top:12px;padding:9px 14px;background:var(--s-jira);color:#fff;border:none;border-radius:8px;font-weight:600;">Open Mission Control →</button>
+          </div>
+        </div>
+      </div>
+      <dl class="meta">
+        <dt>Judge sees</dt><dd>The Slack-styled notification: aubergine rail, # channel, the three-item digest with severity colours.</dd>
+        <dt>Judge does</dt><dd class="do">Clicks "Open Mission Control →".</dd>
+        <dt>Voiceover</dt><dd class="vo">"Your morning starts where it already starts today: Slack… it tells you what actually deserves your attention."</dd>
+      </dl>
+    </div>
+  </section>
+
+  <!-- FRAME 3 -->
+  <section class="frame" id="f3">
+    <div class="top"><span class="t">Frame 3 · Check-in list</span><span class="beat">1:05</span></div>
+    <div class="stage">
+      <div class="shot">
+        <div style="font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);margin-bottom:10px;">Mission Control · Alerts</div>
+        <div class="rowitem">
+          <div>
+            <span class="chip crit">Sources disagree</span>
+            <h4 style="margin-top:8px;">Slack and Jira disagree on PAY-9045's status</h4>
+            <p>Team said "shipped" in #eng-payments; Jira still shows "In Review".</p>
+          </div>
+          <span style="margin-left:auto;color:var(--ink-3);font-family:var(--mono);font-size:11px;">today →</span>
+        </div>
+        <div class="rowitem" style="border-left-color:var(--warn);">
+          <div>
+            <span class="chip warn">Missing ticket</span>
+            <h4 style="margin-top:8px;">Yesterday's decision has no Jira item</h4>
+            <p>A promise in stand-up has no ticket tracking it.</p>
+          </div>
+          <span style="margin-left:auto;color:var(--ink-3);font-family:var(--mono);font-size:11px;">1 day →</span>
+        </div>
+        <div class="rowitem" style="border-left-color:var(--s-miro);">
+          <div>
+            <span class="chip plain">Dependency</span>
+            <h4 style="margin-top:8px;">PAY-9041 is blocking PAY-9045</h4>
+            <p>An active item waits on work that isn't moving.</p>
+          </div>
+          <span style="margin-left:auto;color:var(--ink-3);font-family:var(--mono);font-size:11px;">2 days →</span>
+        </div>
+      </div>
+      <dl class="meta">
+        <dt>Judge sees</dt><dd>The morning check-in — worst-first, each row colour-coded by source and severity.</dd>
+        <dt>Judge does</dt><dd class="do">Opens the top row (the conflict).</dd>
+        <dt>Guide strip</dt><dd style="color:var(--ink-2);">"This is your morning check-in — open the top alert to see what needs you."</dd>
+        <dt>Voiceover</dt><dd class="vo">"Here's one example. Mission Control detected a conversation in Slack doesn't match Jira."</dd>
+      </dl>
+    </div>
+  </section>
+
+  <!-- FRAME 4 -->
+  <section class="frame" id="f4">
+    <div class="top"><span class="t">Frame 4 · Open the conflict</span><span class="beat">1:05–1:45</span></div>
+    <div class="stage">
+      <div class="shot">
+        <div style="font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);margin-bottom:8px;">Alert · Sources disagree</div>
+        <h3 style="margin:0 0 6px;">Slack and Jira disagree on PAY-9045's status</h3>
+        <p style="color:var(--ink-2);margin:0 0 14px;">Fired today, when sprint-12 closed.</p>
+        <div style="font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);margin-bottom:8px;">Both records, newest first</div>
+        <div class="evrow">
+          <i class="dot slack"></i>
+          <div><span class="src">slack · #eng-payments — dana</span><p>"We shipped the fix, it's live."</p></div>
+        </div>
+        <div class="evrow miro">
+          <i class="dot jira"></i>
+          <div><span class="src">jira · PAY-9045</span><p>Status: In Review. Assignee: open.</p></div>
+        </div>
+      </div>
+      <dl class="meta">
+        <dt>Judge sees</dt><dd>The claim, then the two source records side by side — each with its coloured left rail (Slack aubergine, Jira blue) and a source chip.</dd>
+        <dt>Judge does</dt><dd class="do">Reads the two sources; opens one to see the original.</dd>
+        <dt>Guide strip</dt><dd style="color:var(--ink-2);">"This alert shows a conflict between sources — open a source to see why it fired."</dd>
+        <dt>Voiceover</dt><dd class="vo">"Mission Control connects those pieces automatically. And importantly, it shows you why it raised the alert."</dd>
+      </dl>
+    </div>
+  </section>
+
+  <!-- FRAME 5 -->
+  <section class="frame" id="f5">
+    <div class="top"><span class="t">Frame 5 · Sources</span><span class="beat">1:45</span></div>
+    <div class="stage">
+      <div class="shot">
+        <div style="font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);margin-bottom:10px;">Mission Control · Sources</div>
+        <div class="srcband">
+          <span class="s"><i class="dot jira"></i> Jira</span>
+          <span class="s"><i class="dot slack"></i> Slack</span>
+          <span class="s"><i class="dot zoom"></i> Zoom</span>
+          <span class="s"><i class="dot conf"></i> Confluence</span>
+          <span class="s"><i class="dot miro"></i> Miro</span>
+        </div>
+        <p style="color:var(--ink-2);font-size:.92rem;margin-top:14px;">Read across all five. Each surface keeps its own colour so the judge sees exactly which tool each fact came from.</p>
+      </div>
+      <dl class="meta">
+        <dt>Judge sees</dt><dd>The five connected sources, each in its product colour — the visual proof the assistant reasons across them all.</dd>
+        <dt>Judge does</dt><dd class="do">Notes the tool behind each surface, then moves to Ask.</dd>
+        <dt>Guide strip</dt><dd style="color:var(--ink-2);">"These are the tools Mission Control connects — Slack, Jira, Confluence, Miro."</dd>
+        <dt>Voiceover</dt><dd class="vo">"It brings together the context spread across your tools."</dd>
+      </dl>
+    </div>
+  </section>
+
+  <!-- FRAME 6 -->
+  <section class="frame" id="f6">
+    <div class="top"><span class="t">Frame 6 · Ask Mission Control</span><span class="beat">1:45–2:15</span></div>
+    <div class="stage">
+      <div class="shot">
+        <div style="font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);margin-bottom:10px;">Ask · Mission Control</div>
+        <div class="chat">
+          <div class="turn you"><div class="badge">PP</div><div class="bubble">What's the issue here, and what should the team clarify at stand-up?</div></div>
+          <div class="turn"><div class="badge">MC</div><div class="bubble">The conflict is on <b>PAY-9045</b>. Slack says the fix shipped; Jira still shows <i>In Review</i> with no assignee. Clarify at stand-up: (1) who owns closing the ticket, (2) confirm the fix is truly live, (3) update Jira so the status matches reality. There's also a missing ticket for yesterday's decision — capture it so it isn't lost.</div></div>
+          <div class="turn you"><div class="badge">PP</div><div class="bubble">Are there other decisions from yesterday not reflected in Jira?</div></div>
+          <div class="turn"><div class="badge">MC</div><div class="bubble">One: the promise in #eng-payments to "ship the fix" has no Jira item. I'd raise a missing-ticket alert for it.</div></div>
+        </div>
+        <div class="composer"><input placeholder="Ask anything…" /><button>Ask</button></div>
+      </div>
+      <dl class="meta">
+        <dt>Judge sees</dt><dd>A chat where Mission Control answers from the joined context, citing Slack and Jira by name.</dd>
+        <dt>Judge does</dt><dd class="do">Types (or clicks) the suggested question; asks a follow-up.</dd>
+        <dt>Guide strip</dt><dd style="color:var(--ink-2);">"Ask Mission Control: 'What's the issue here, and what should we clarify at stand-up?'"</dd>
+        <dt>Voiceover</dt><dd class="vo">"Mission Control isn't just retrieving documents. It's reasoning across them."</dd>
+      </dl>
+      <p class="note">Backed by OpenRouter (free model, shared key) — answers live, no card, always up.</p>
+    </div>
+  </section>
+
+  <!-- FRAME 7 -->
+  <section class="frame" id="f7">
+    <div class="top"><span class="t">Frame 7 · The Value</span><span class="beat">2:15–2:40</span></div>
+    <div class="stage">
+      <div class="shot" style="text-align:center;color:var(--ink-2);font-family:var(--mono);font-size:12px;line-height:2;">
+        Conversation → decision<br/>
+        ↓<br/>
+        Decision → Jira<br/>
+        ↓<br/>
+        Jira → dependency<br/>
+        ↓<br/>
+        Dependency → warning<br/>
+        ↓<br/>
+        Warning → team conversation
+      </div>
+      <dl class="meta">
+        <dt>Judge sees</dt><dd>The chain: how one caught conflict cascades into better stand-up, cleaner Jira, fewer surprises.</dd>
+        <dt>Voiceover</dt><dd class="vo">"A Scrum Master walks in knowing where the conversation needs to go. A developer understands why a decision was made."</dd>
+      </dl>
+    </div>
+  </section>
+
+  <!-- FRAME 8 -->
+  <section class="frame" id="f8">
+    <div class="top"><span class="t">Frame 8 · Close</span><span class="beat">2:40–3:05</span></div>
+    <div class="stage">
+      <div class="shot" style="text-align:center;padding:30px;">
+        <div style="font-family:var(--mono);font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-3);">Mission Control</div>
+        <h2 style="margin:14px 0 6px;">Stop searching. Start knowing.</h2>
+        <div class="srcband" style="justify-content:center;margin-top:14px;">
+          <span class="s"><i class="dot slack"></i> Slack</span>
+          <span class="s"><i class="dot jira"></i> Jira</span>
+          <span class="s"><i class="dot conf"></i> Confluence</span>
+          <span class="s"><i class="dot miro"></i> Miro</span>
+        </div>
+      </div>
+      <dl class="meta">
+        <dt>Judge sees</dt><dd>The logo, the line, and the four tools orbiting it — the thesis in one image.</dd>
+        <dt>Voiceover</dt><dd class="vo">"Mission Control gives your team a shared second brain… when something needs your attention, it tells you."</dd>
+      </dl>
+    </div>
+  </section>
+
+</div>
+</body>
+</html>

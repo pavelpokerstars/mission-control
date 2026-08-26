@@ -31,6 +31,7 @@ import { buildCrossSurfaceTools, type AgentTool } from './tools.js';
 import { COPILOT_MODEL, copilotSdkInstalled, copilotToken, createCopilotAgent } from './copilot.js';
 import { CLAUDE_EFFORT, CLAUDE_MODEL, createClaudeAgent } from './claude.js';
 import { CLAUDE_CLI_MODEL, claudeCliAvailable, createClaudeCliAgent } from './claude-cli.js';
+import { OPENROUTER_MODEL, createOpenRouterAgent } from './openrouter.js';
 
 const SYSTEM_PROMPT = `
 You are Mission Control, the planning assistant for an agile engineering team.
@@ -159,11 +160,16 @@ export function agentStatus(): {
   /** Which provider the mode selects — named even when its key is missing, so
    *  the panel can label itself without guessing. `live` is the truth about
    *  whether it will answer. */
-  provider: 'copilot' | 'claude' | 'claude-cli';
+  provider: 'copilot' | 'claude' | 'claude-cli' | 'openrouter';
   live: boolean;
   model: string;
   effort?: string;
 } {
+  if (mode() === 'openrouter') {
+    return process.env.OPENROUTER_API_KEY || process.env.OPENROUTER_KEY
+      ? { provider: 'openrouter', live: true, model: OPENROUTER_MODEL }
+      : { provider: 'openrouter', live: false, model: 'stub (OPENROUTER_API_KEY not set)' };
+  }
   if (mode() === 'live') {
     // Deliberately not gated on GITHUB_TOKEN. The runtime authenticates from
     // stored OAuth or `gh` CLI auth when no token is set, so "no token" is not
@@ -286,6 +292,26 @@ export async function createAgent(
     system: SYSTEM_PROMPT,
     withMemory,
   };
+
+  if (mode() === 'openrouter') {
+    // The judge-demo path: free model via OpenRouter, the shared
+    // OPENROUTER_API_KEY. No tools loop — the rendered context is enough for a
+    // demo, and it avoids free-model tool-call flakiness stalling the turn.
+    const key = process.env.OPENROUTER_API_KEY || process.env.OPENROUTER_KEY;
+    if (!key) {
+      console.warn(
+        '[agent] MC_MODE=openrouter but OPENROUTER_API_KEY is not set — falling back to the scripted stub.',
+      );
+      return scriptedStub(cfg);
+    }
+    try {
+      const or = await createOpenRouterAgent({ ...cfg, key });
+      if (or) return or;
+    } catch (err) {
+      console.warn('[agent] OpenRouter provider failed to start — falling back to the stub:', err);
+    }
+    return scriptedStub(cfg);
+  }
 
   if (mode() === 'live') {
     // No `GITHUB_TOKEN` is not a reason to give up. The SDK's `useLoggedInUser`

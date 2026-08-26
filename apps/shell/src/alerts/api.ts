@@ -23,7 +23,13 @@ import type { Evidence, Finding, Note, WorkItem } from '@mc/domain';
  * else is silently undefined at build time, which is the trap this shape
  * avoids.
  */
-export const API = import.meta.env.VITE_MC_GATEWAY ?? 'http://localhost:8787';
+export const API =
+  import.meta.env.VITE_MC_GATEWAY ??
+  // Deployed (served from the gateway itself): talk same-origin. Dev: hit the
+  // local gateway on :8787. This means one Railway service with no extra config.
+  (typeof location !== 'undefined' && location.hostname === 'localhost'
+    ? 'http://localhost:8787'
+    : '');
 
 export interface FindingDetail {
   finding: Finding;

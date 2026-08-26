@@ -27,6 +27,7 @@ import { isParked, Later } from './Later';
 import { NotePage } from './NotePage';
 import { RecordView } from './RecordView';
 import { Sources } from './Sources';
+import { Guide } from '../Guide';
 import type { Counts } from './Chrome';
 
 export default function AlertApp(): JSX.Element {
@@ -93,6 +94,7 @@ export default function AlertApp(): JSX.Element {
 
   return (
     <div className="app-shell">
+      <Guide />
       {route.name === 'alerts' && <AlertList route={route} counts={counts} />}
       {route.name === 'alert' && (
         <AlertPage id={route.id} route={route} counts={counts} onActed={() => refresh.current()} />

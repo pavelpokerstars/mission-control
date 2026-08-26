@@ -924,6 +924,41 @@ async function main(): Promise<void> {
 
   app.use('/api/webhooks', webhookRouter((input) => capture(vault, input)));
 
+  /**
+   * Serve the built shell so a single Railway service is the whole app.
+   *
+   * The shell is a Vite build in `apps/shell/dist`; the gateway already owns
+   * the API, so serving the static files here means one deploy, one URL, no
+   * separate frontend host. The shell uses HASH routing, so there is no
+   * history-fallback to compute — every deep link is just `#/…` and the static
+   * `index.html` answers it. This block is placed AFTER every `/api/*` route so
+   * it never shadows them.
+   *
+   * `MC_SERVE_STATIC` (default on) lets a local dev pairing (vite on :4200 +
+   * gateway on :8787) keep serving the API only by unsetting it; the Railway
+   * service sets `MC_MODE=openrouter` and leaves it on.
+   */
+  if ((process.env.MC_SERVE_STATIC ?? '1') !== '0') {
+    const { fileURLToPath } = await import('node:url');
+    const { existsSync } = await import('node:fs');
+    const dist = fileURLToPath(new URL('../../shell/dist', import.meta.url));
+    if (existsSync(dist)) {
+      const staticMid = (await import('express')).static(dist, { extensions: ['html'] });
+      app.use(staticMid);
+      // SPA catch-all: anything not an /api route and not a real file returns
+      // index.html so the hash router can take over. `res.sendFile` resolves
+      // relative to cwd otherwise, so pass an absolute path.
+      app.get(/^(?!\/api\/).*/, (_req, res) => {
+        res.sendFile(`${dist}/index.html`, (err) => {
+          if (err) res.status(404).send('Mission Control shell not built. Run `npm run build`.');
+        });
+      });
+      console.log(`[static] serving shell from ${dist}`);
+    } else {
+      console.warn('[static] apps/shell/dist not found — run `npm run build` before serving.');
+    }
+  }
+
   const server = app.listen(PORT, BIND, (err?: Error) => {
     /**
      * `MC_BIND` is user-supplied, so the bind can fail — `EADDRNOTAVAIL` for an
