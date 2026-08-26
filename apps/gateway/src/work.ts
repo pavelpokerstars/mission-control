@@ -28,28 +28,44 @@ import {
   buildTimeline,
   byRecency,
   classifySignalFor,
+  COLUMN_PHRASE,
+  DEFAULT_AGING_DAYS,
   findContradictions,
   findCycles,
   segmentTime,
   slackTsToIso,
+  statusAgeOf,
+  statusAgeText,
   statusEntry,
+  tokens,
   WORK_SIGNAL_RANK,
   type Evidence,
   type Owner,
+  type RecordRef,
   type TrailEntry,
   type CanvasConnector,
   type WorkItem,
+  type AgingDays,
   type WorkItemKey,
+  type WorkItemStatus,
   type WorkLane,
   type WorkRow,
   type WorkSignal,
 } from '@mc/domain';
-import type { Connectors } from '@mc/connectors';
+import {
+  lookupStatusWord,
+  projectArrows,
+  projectStatusObservations,
+  type Connectors,
+  type GraphSource,
+  type StatusObservation,
+} from '@mc/connectors';
+import { agingDays } from './graph-source.js';
 import type { VaultStore } from '@mc/vault';
 import { boardArrows, TRAIL_DAYS } from './issue.js';
+import { stripHtml } from './format.js';
 
-/** How long in one status before the lane says so out loud. */
-const AGING_DAYS = 7;
+
 
 /** How recent a record has to be to count as "people are talking about this". */
 const ACTIVE_DAYS = 3;
@@ -97,17 +113,35 @@ const SETTLED = new Set(['done']);
  * disagreement — which is the failure `classifySignalFor` being shared already
  * prevents one level down.
  */
+/**
+ * One record, reduced to what a text search needs.
+ *
+ * DELIBERATELY NOT A `TrailEntry`. That carries the full `quote`, and holding
+ * every Slack message of a 50,000-message programme resident on every findings
+ * request is a different proposition from the loops above, which hold one at a
+ * time. Tokens are what the search actually reads; the label and ref are what a
+ * citation needs; the body is not kept.
+ */
+export interface CorpusEntry {
+  surface: Owner;
+  ts: string;
+  /** `#channel — author`, or a page title. Already phrased for a citation. */
+  label: string;
+  tokens: string[];
+  ref?: RecordRef;
+}
+
 export interface WorkFacts {
   rows: WorkRow[];
   people: string[];
   sprint?: string;
   /** Every dependency loop, so a caller can report the loop rather than a member. */
   cycles: WorkItemKey[][];
+  /** Every record read, keyed or not. Present only when `GatherOpts.corpus`. */
+  corpus?: CorpusEntry[];
 }
 
-export async function gatherWorkFacts(
-  c: Connectors,
-  vault: VaultStore,
+export interface GatherOpts {
   /**
    * The dependency arrows to reason over.
    *
@@ -127,8 +161,95 @@ export async function gatherWorkFacts(
    * tiers, which is what `isStructuralDependency` tests to decide whether a
    * cycle may be raised at all.
    */
-  arrowsOverride?: CanvasConnector[],
+  arrows?: CanvasConnector[];
+  /**
+   * `StoredIssue.updatedAt` and the carry chain, per key.
+   *
+   * Without it `aging` can only speak when the durable event log holds a
+   * transition — which on a live graph it never does, because no collector
+   * writes one. That is not a degraded signal, it is the detector being
+   * structurally dead: measured on `fixtures-programme`, removing
+   * `events.jsonl` took the finding count from 14 to 7 and every `aging` row
+   * with it.
+   */
+  observations?: StatusObservation[];
+  /**
+   * The vendor's status word to one of ours, for the EVENT LOG.
+   *
+   * Absent, `buildTimeline` reads only words already in our vocabulary and
+   * abandons any lane it cannot read. That is the safe default and the wrong
+   * one here: a real log speaks the workflow's words.
+   */
+  mapStatus?: (vendor: string) => WorkItemStatus | undefined;
+  /** Per-column patience. Defaults to `DEFAULT_AGING_DAYS`. */
+  agingDays?: AgingDays;
+  /**
+   * Also return every record we read, keyed or not.
+   *
+   * OPT-IN, and that is the whole design of it. The gather already reads every
+   * Slack message, every transcript paragraph and every Confluence page and
+   * then **indexes only the keyed minority** into `said` — on the realistic
+   * fixture that is 35 of 296 records read and discarded. `dropped_commitment`
+   * needs the discarded majority, because a promise that has gone quiet is by
+   * definition one that no keyed record mentions.
+   *
+   * `/api/work` calls the same gather and must not start paying to materialise
+   * a corpus it never reads, which is why this is a flag rather than a field
+   * that is always populated.
+   */
+  corpus?: boolean;
+}
+
+/**
+ * The options every caller should be passing, built from one graph in one place.
+ *
+ * WHY THIS EXISTS AT ALL. There are exactly two callers — the lane route and
+ * the findings pass — and they are required to agree: a row that says *"41 days
+ * in in progress"* and an alert page that says something else about the same
+ * ticket is the specific failure this codebase keeps writing shared functions
+ * to prevent. Each of the four options below is a thing one caller could
+ * silently omit, and every omission is invisible rather than loud — no arrows
+ * means no cycle, no observations means no `aging` at all, no mapper means
+ * every lane on a real workflow is abandoned, no thresholds means the defaults
+ * quietly override a deployment's config.
+ *
+ * `lookupStatusWord` rather than `statusOf`: an event payload carries no
+ * `statusCategory`, so there is nothing for the fallback to read and a word we
+ * cannot map must abandon the lane rather than land in `todo`.
+ */
+export function workOpts(source: GraphSource): GatherOpts {
+  return {
+    arrows: projectArrows(source.graph),
+    observations: projectStatusObservations(source.graph),
+    mapStatus: lookupStatusWord,
+    agingDays: agingDays(),
+  };
+}
+
+export async function gatherWorkFacts(
+  c: Connectors,
+  vault: VaultStore,
+  opts: GatherOpts = {},
 ): Promise<WorkFacts> {
+  const {
+    arrows: arrowsOverride,
+    observations,
+    mapStatus,
+    agingDays = DEFAULT_AGING_DAYS,
+    corpus: wantCorpus = false,
+  } = opts;
+
+  /**
+   * Every record read, keyed or not — the half `said` throws away.
+   *
+   * Filled beside the existing loops rather than in a second pass over the same
+   * five surfaces: the connectors are already awaited above and a second gather
+   * would be a second set of network calls against a live board.
+   */
+  const corpus: CorpusEntry[] = [];
+  const keep = (e: CorpusEntry): void => {
+    if (wantCorpus) corpus.push(e);
+  };
   const boardId = process.env.MIRO_BOARD_ID ?? 'demo-board';
   const spaceKey = process.env.CONFLUENCE_SPACE_KEY ?? 'MC';
 
@@ -168,6 +289,15 @@ export async function gatherWorkFacts(
   for (const ch of channels) {
     for (const m of await c.slack.listMessages(ch.id)) {
       const ts = slackTsToIso(m.ts);
+      if (ts) {
+        keep({
+          surface: 'slack',
+          ts,
+          label: `#${ch.name} — ${m.author}`,
+          tokens: [...tokens(m.text)],
+          ref: { surface: 'slack', id: m.ts, parentId: ch.id },
+        });
+      }
       for (const key of m.mentions) {
         add(key, {
           surface: 'slack',
@@ -187,6 +317,19 @@ export async function gatherWorkFacts(
   for (const meta of transcripts) {
     const t = await c.zoom.getTranscript(meta.id);
     for (const seg of t?.segments ?? []) {
+      // A paragraph whose moment cannot be computed is dropped from the
+      // corpus rather than stamped with one. The corpus exists to answer "has
+      // anything happened SINCE", and an entry with no `ts` cannot.
+      const segAt = segmentTime(meta.startedAt, seg.start);
+      if (segAt) {
+        keep({
+          surface: 'zoom',
+          ts: segAt,
+          label: `${meta.meetingTopic} — ${seg.speaker}`,
+          tokens: [...tokens(seg.text)],
+          ref: { surface: 'zoom', id: meta.id, at: seg.start },
+        });
+      }
       for (const key of seg.mentions) {
         add(key, {
           surface: 'zoom',
@@ -204,6 +347,13 @@ export async function gatherWorkFacts(
   }
 
   for (const p of pages) {
+    keep({
+      surface: 'confluence',
+      ts: p.updatedAt,
+      label: p.title,
+      tokens: [...tokens(`${p.title} ${stripHtml(p.html)}`)],
+      ref: { surface: 'confluence', id: p.id },
+    });
     for (const key of p.relatedKeys) {
       add(key, {
         surface: 'confluence',
@@ -247,8 +397,15 @@ export async function gatherWorkFacts(
    * do not know, so no aging signal is claimed.
    */
   const lanes = new Map(
-    buildTimeline(events, { items, notes: vault.list() }).lanes.map((l) => [l.key, l]),
+    buildTimeline(events, {
+      items,
+      notes: vault.list(),
+      ...(mapStatus ? { mapStatus } : {}),
+    }).lanes.map((l) => [l.key, l]),
   );
+
+  /** The collector's own dates and carry chain, per key. Empty is a real state. */
+  const observed = new Map((observations ?? []).map((o) => [o.key, o]));
 
   // ---- The two structural facts -------------------------------------------
   const cycles = findCycles(arrows);
@@ -334,21 +491,62 @@ export async function gatherWorkFacts(
       });
     }
 
-    // Days in the status it is in NOW, not a lifetime: a ticket filed in March
-    // and picked up yesterday is one day old here, which is the number that
-    // means anything.
-    const ageDays = lanes.get(item.key)?.ageDays;
-    if (ageDays !== undefined && ageDays >= AGING_DAYS && !SETTLED.has(item.status)) {
+    /**
+     * Days in the status it is in NOW, not a lifetime — a ticket filed in March
+     * and picked up yesterday is one day old here, which is the number that
+     * means anything.
+     *
+     * `statusAgeOf` owns the precedence between the measured number and the
+     * bounded one, so this reads whichever is available and never has to know
+     * which. `undefined` is a supported answer: no number, no signal.
+     */
+    const obs = observed.get(item.key);
+    const age = statusAgeOf({
+      item,
+      ...(lanes.get(item.key) ? { lane: lanes.get(item.key)! } : {}),
+      ...(obs?.lastVendorUpdate ? { lastVendorUpdate: obs.lastVendorUpdate } : {}),
+      now,
+    });
+
+    /**
+     * `null` means this column never ages, and it is the precision gate.
+     * `backlog` is the case it exists for.
+     */
+    const threshold = agingDays[item.status];
+    if (age && threshold !== null && age.days >= threshold && !SETTLED.has(item.status)) {
+      const carried = obs?.carriedFrom ?? [];
       signals.push({
         kind: 'aging',
         tone: 'warn',
-        // [judge-local patch] status words like `in_review` already begin with
-        // "in"; dropping the literal stops the lane rendering "7 days in in review".
-        text: `${Math.round(ageDays)} days in ${item.status.replace('_', ' ').replace(/^in\s+/i, '')}`,
-        // The newest thing anybody said about it, or the status itself when
-        // nobody has. Silence IS the finding here, so an empty citation list
-        // would be the honest answer and a confusing one.
-        evidence: [trail[0] ?? statusEntry(item)].map(asEvidence),
+        text: statusAgeText(item.status, age),
+        /**
+         * Three rows, in this order, and at least one always exists so an alert
+         * page is never evidence-free.
+         *
+         * The first two are OUR OBSERVATION and carry no `ref` on purpose — a
+         * sprint is not a record and neither is a date, and an evidence row
+         * that promises a document and delivers a 404 is worse than a plain
+         * sentence. Only the third is a citation, and only when somebody
+         * actually said something.
+         */
+        evidence: [
+          ...carried.slice(-1).map(
+            (c): Evidence => ({
+              surface: 'jira',
+              label: `${c.label} closed${
+                c.closedAt ?? c.endsAt ? ` on ${(c.closedAt ?? c.endsAt)!.slice(0, 10)}` : ''
+              } with ${item.key} still ${COLUMN_PHRASE[item.status]}`,
+            }),
+          ),
+          ...(trail[0] && trail[0].surface !== 'jira'
+            ? [asEvidence(trail[0])]
+            : [
+                {
+                  surface: 'jira' as const,
+                  label: `${item.key} is ${COLUMN_PHRASE[item.status]} in the tracker, and nothing outside Jira mentions it`,
+                },
+              ]),
+        ],
       });
     }
 
@@ -391,7 +589,7 @@ export async function gatherWorkFacts(
       signals: signals.sort((a, b) => WORK_SIGNAL_RANK[b.kind] - WORK_SIGNAL_RANK[a.kind]),
       counts,
       lastActivity: stamps.length ? new Date(Math.max(...stamps)).toISOString() : undefined,
-      ageDays,
+      ...(age ? { ageDays: age.days, ageBasis: age.basis, ageSince: age.since } : {}),
     };
   };
 
@@ -421,7 +619,13 @@ export async function gatherWorkFacts(
    * and it breaks ties alphabetically so the same fixtures always open the same
    * way.
    */
-  return { rows: inSprint.map(rowFor).sort(order), people, sprint, cycles };
+  return {
+    rows: inSprint.map(rowFor).sort(order),
+    people,
+    sprint,
+    cycles,
+    ...(wantCorpus ? { corpus } : {}),
+  };
 }
 
 /**
@@ -436,9 +640,9 @@ export async function buildWorkLane(
   assignee: string | undefined,
   c: Connectors,
   vault: VaultStore,
-  arrows?: CanvasConnector[],
+  opts: GatherOpts = {},
 ): Promise<WorkLane> {
-  const { rows, people, sprint } = await gatherWorkFacts(c, vault, arrows);
+  const { rows, people, sprint } = await gatherWorkFacts(c, vault, opts);
 
   /**
    * Who the lane opens on when nobody asked for anyone: whoever has the most to

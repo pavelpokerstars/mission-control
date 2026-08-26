@@ -30,6 +30,7 @@ import {
   type WorkItem,
   type WorkItemKey,
 } from '@mc/domain';
+import { lookupStatusWord } from '@mc/connectors';
 import type { Connectors, GraphSource } from '@mc/connectors';
 import { recall, type VaultStore } from '@mc/vault';
 import { eventLog, type EventLog } from './events.js';
@@ -543,8 +544,9 @@ export function buildCrossSurfaceTools(
           kind: {
             type: 'string',
             description:
-              'One kind only: missing_ticket, disagreement, cycle, aging, ' +
-              'suspect_link, undetected_dependency. Omit for all of them.',
+              'One kind only: missing_ticket, unlinked_commitment, ' +
+              'dropped_commitment, disagreement, cycle, aging, suspect_link, ' +
+              'undetected_dependency. Omit for all of them.',
           },
           limit: { type: 'number', description: 'How many to return. Default 20.' },
         },
@@ -903,7 +905,7 @@ export function buildCrossSurfaceTools(
           vault.readEvents({ since, key, limit: 2_000 }),
           c.jira.listItems(),
         ]);
-        const timeline = buildTimeline(events, { items, notes: vault.list() });
+        const timeline = buildTimeline(events, { items, notes: vault.list(), mapStatus: lookupStatusWord });
         const lanes = key ? timeline.lanes.filter((l) => l.key === key) : timeline.lanes;
 
         return {
@@ -1352,6 +1354,78 @@ export function buildCrossSurfaceTools(
           emitVaultEvent('note.updated', updated, { via: 'proposal', reverified: true });
           settle(p, 'accepted');
           return { reverified: updated.id, verifiedAt: updated.verifiedAt };
+        }
+
+        /**
+         * Attach the reconstructed ticket to the promise.
+         *
+         * THIS BRANCH IS NOT OPTIONAL. `accept_proposal` is a chain of
+         * `if (p.kind === …)` blocks with no default, so a kind added to the
+         * union without one falls straight through to `settle(p, 'accepted')`:
+         * the proposal reports success, the button says it worked, and nothing
+         * is written. That is the worst failure available here and this repo
+         * has already paid for it once — `update_issue`, `link_issues` and
+         * `post_message` sat in the union for months with no branch.
+         *
+         * The join is written as `EXTRACTED`, and that is the whole point of
+         * the human gate: a reconstruction is a guess until somebody who knows
+         * confirms it, and confirming it is what turns it into a fact the
+         * detector may act on. `filedKeys` reads exactly this tier, so the
+         * alert stops firing the moment it lands.
+         */
+        if (p.kind === 'link_commitment') {
+          const payload = p.payload as { noteId: string; key: string; why: string };
+          const note = vault.get(payload.noteId);
+          if (!note) return { error: `note ${payload.noteId} is gone` };
+          const updated = await vault.update(note.id, {
+            relatedKeys: [...new Set([...note.relatedKeys, payload.key])],
+            joins: {
+              ...(note.joins ?? {}),
+              [payload.key]: { tier: 'EXTRACTED', why: 'confirmed by a person on the alert' },
+            },
+          });
+          emitVaultEvent('note.updated', updated, { via: 'proposal', linkedTo: payload.key });
+          /**
+           * Provenance on the ticket, with its OWN echo token.
+           *
+           * Stamping it with the proposal's would leave the comment webhook
+           * unsuppressed — the same reason `create_issue`'s provenance comment
+           * takes a second token. A comment is not a field, so `FIELD_OWNER`
+           * is untouched and this needs no further gate.
+           */
+          const commentToken = log.markOutbound(`${p.id}:comment`);
+          /**
+           * THE COMMENT IS PROVENANCE, NOT THE EFFECT, so its failure must not
+           * be reported as the link's.
+           *
+           * The vault write above is what stops the alert firing and it has
+           * already happened. Letting this throw sent the caller down the
+           * "the vendor refused" path, which says *"Nothing was written"* — and
+           * that was a lie: measured under `MC_SAFE_MODE`, the note had the key,
+           * the alert was gone, and the screen said the write had not happened.
+           * Reporting a failure that did not occur is the same class of error as
+           * reporting a success that did not, and on this product it is worse,
+           * because the reader's next move is to do it again.
+           */
+          let provenance: string | undefined;
+          try {
+            await c.jira.comment(payload.key, [
+              `Linked from Mission Control: ${payload.why}`,
+              '',
+              `Promised in ${note.container?.replace(/^sprint:/, '') ?? 'a meeting'} and taken by ${note.owner ?? 'somebody'}.`,
+              ...note.evidence.map((e) => `- ${e.label}${e.quote ? ` — “${e.quote}”` : ''}`),
+            ].join('\n'));
+          } catch (err) {
+            provenance = err instanceof Error ? err.message : String(err);
+            console.warn(`[link_commitment] ${payload.key} linked; provenance comment failed:`, provenance);
+          }
+          settle(p, 'accepted');
+          return {
+            linked: payload.key,
+            note: updated.id,
+            commentToken,
+            ...(provenance ? { provenanceFailed: provenance } : {}),
+          };
         }
 
         if (p.kind === 'promote_to_pattern') {

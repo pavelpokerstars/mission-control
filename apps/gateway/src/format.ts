@@ -94,16 +94,36 @@ export function stripHtml(html: string): string {
  *
  * `at` is seconds into the recording; omitted it opens at the top, which is the
  * honest answer for a citation of the recording as a whole.
+ *
+ * AND ON AN UNTIMED RECORD IT IS NOT SECONDS AT ALL, which is why `t.timed`
+ * has to be passed. What the Zoom collector reaches is Docs NOTES, not
+ * recordings: there are no speakers and no offsets, so `annotateTranscript`
+ * derives one segment per paragraph and `start` is a PARAGRAPH INDEX, with
+ * `timed: false` saying so. The alert page renders `Evidence.at` as
+ * `Math.floor(at / 60)`, so paragraph 3 of the meeting the flagship alert is
+ * built on displayed as **"0m in"** — a moment nobody recorded, printed beside
+ * a quotation, on the page whose entire argument is that its citations are
+ * checkable.
+ *
+ * So the body `at` is dropped and `ref.at` is kept: the citation still opens at
+ * paragraph 3 with the line marked, and the page claims no clock. `records.ts`
+ * already had exactly this rule and this reasoning; it simply never reached the
+ * one place that renders a duration.
  */
 export function zoomEvidence(
-  t: { id: string; meetingTopic?: string },
+  t: { id: string; meetingTopic?: string; timed?: boolean },
   o: { speaker?: string; at?: number; quote?: string; suffix?: string } = {},
 ): Evidence {
+  // `timed` is optional and absent means timed, so a caller with a real
+  // recording is unaffected and every existing citation keeps its offset.
+  const showsClock = o.at !== undefined && t.timed !== false;
   return {
     surface: 'zoom',
     label: `${t.meetingTopic ?? 'recording'}${o.speaker ? ` — ${o.speaker}` : ''}${o.suffix ?? ''}`,
-    ...(o.at === undefined ? {} : { at: o.at }),
+    ...(showsClock ? { at: o.at } : {}),
     ...(o.quote === undefined ? {} : { quote: o.quote }),
+    // The REF keeps its position whether or not it is a clock — that is what
+    // opens the record at the right line, and it is the whole point of citing.
     ref: { surface: 'zoom', id: t.id, ...(o.at === undefined ? {} : { at: o.at }) },
   };
 }

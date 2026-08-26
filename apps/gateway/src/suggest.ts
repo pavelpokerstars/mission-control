@@ -44,6 +44,7 @@ import {
   type WorkItemKey,
   type WorkItemStatus,
 } from '@mc/domain';
+import { lookupStatusWord } from '@mc/connectors';
 import type { Connectors } from '@mc/connectors';
 import type { CanvasConnector } from '@mc/domain';
 import type { VaultStore } from '@mc/vault';
@@ -216,7 +217,7 @@ async function gatherFacts(
 function factsFor(g: Gathered, windowDays: number): Facts {
   const since = new Date(Date.now() - windowDays * 86_400_000).toISOString();
   const inWindow = g.events.filter((e) => e.ts >= since);
-  return { ...g, timeline: buildTimeline(inWindow, { items: g.items, notes: g.notes }) };
+  return { ...g, timeline: buildTimeline(inWindow, { items: g.items, notes: g.notes, mapStatus: lookupStatusWord }) };
 }
 
 /**

@@ -21,7 +21,12 @@
  */
 
 import {
+  type AgingDays,
   type StoredNode,
+  isNodeKind,
+  reconstructCommitmentJoin,
+  tokens,
+  type JoinCandidate,
   FINDING_RANK,
   type Evidence,
   type Finding,
@@ -32,9 +37,10 @@ import {
   type WorkRow,
   type WorkSignal,
 } from '@mc/domain';
-import { projectArrows, type Connectors, type GraphSource } from '@mc/connectors';
+import { buildIdentities, type Connectors, type GraphSource } from '@mc/connectors';
 import type { VaultStore } from '@mc/vault';
-import { gatherWorkFacts } from './work.js';
+import { gatherWorkFacts, workOpts, type CorpusEntry } from './work.js';
+import { agingDays } from './graph-source.js';
 import { answeredFindingIds } from './act.js';
 
 /**
@@ -78,6 +84,27 @@ const DAY_MS = 86_400_000;
  *                          retro held: the only moment that is neither nagging
  *                          nor too late.
  */
+/**
+ * The issues in one container, with just enough of each to match a promise
+ * against. Built once per pass rather than per note.
+ */
+function scopeByContainer(graph: StoredGraph): Map<string, JoinCandidate[]> {
+  const issues = new Map(
+    graph.nodes.filter(isNodeKind('issue')).map((n) => [n.id, n]),
+  );
+  const out = new Map<string, JoinCandidate[]>();
+  for (const e of graph.links) {
+    if (e.relation !== 'in_sprint') continue;
+    const issue = issues.get(e.source);
+    if (!issue) continue;
+    out.set(e.target, [
+      ...(out.get(e.target) ?? []),
+      { key: issue.key, label: issue.label, ...(issue.assignee ? { assignee: issue.assignee } : {}) },
+    ]);
+  }
+  return out;
+}
+
 export function findMissingTickets(notes: Note[], graph: StoredGraph, now = Date.now()): Finding[] {
   type Container = Extract<StoredNode, { kind: 'sprint' | 'release' }>;
   const containers = new Map<string, Container>(
@@ -107,16 +134,67 @@ export function findMissingTickets(notes: Note[], graph: StoredGraph, now = Date
     byLabel.set(c.label, byLabel.has(c.label) ? null : c);
   }
 
+  /**
+   * The identity map and the per-container scope, built once.
+   *
+   * `resolve` matters more than it looks: the graph keys people on email, a
+   * note's `owner` is whatever the meeting called them, and an issue's
+   * `assignee` is a handle. Comparing any two of those raw matches nothing on
+   * real data — which would make the owner filter, the gate the whole
+   * reconstruction rests on, silently reject every candidate.
+   */
+  const identities = buildIdentities(graph);
+  const scopes = scopeByContainer(graph);
+
   const out: Finding[] = [];
   for (const n of notes) {
     if (n.kind !== 'commitment' || n.status !== 'open') continue;
-    if (n.relatedKeys.length > 0) continue;
+    /**
+     * A key SOMEBODY TYPED is a ticket. A key we reconstructed is a claim about
+     * a ticket, and only the first may silence this alert.
+     *
+     * `Note.joins` has always been the field that knows the difference — it is
+     * persisted, round-tripped through the frontmatter and asserted by
+     * `verify-graph.mts` — and until now nothing read its tier to decide
+     * anything. This gate was `relatedKeys.length > 0`, so the moment anything
+     * starts reconstructing joins, the flagship alert goes quiet on promises
+     * that genuinely were never filed, silently and with nothing failing.
+     *
+     * Absent from `joins` means `EXTRACTED`, so every note written before this
+     * stays correct without being rewritten.
+     */
+    if (filedKeys(n).length > 0) continue;
     if (!n.owner || !n.dueAt) continue;
 
     const container = n.container
       ? (containers.get(n.container) ?? byLabel.get(n.container) ?? undefined)
       : undefined;
     if (!container || container.state !== 'closed') continue;
+
+    /**
+     * Is there a ticket this promise is probably about?
+     *
+     * Two answers, two claims. "Nobody filed this" and "this is almost
+     * certainly ORB-1438 and nothing records the connection" want different
+     * sentences, different evidence and different buttons — the first creates a
+     * ticket, the second links to one. Before this, every promise discussed in
+     * a stand-up under a ticket nobody named out loud got the first, which is
+     * the wrong answer stated confidently.
+     *
+     * A key already on the note but NOT `EXTRACTED` counts as a reconstruction
+     * too: something upstream worked it out and `filedKeys` correctly refused
+     * to treat it as filed, so the alert should say what it knows rather than
+     * throw it away.
+     */
+    const guessedAlready = n.relatedKeys.find((k) => n.joins?.[k] && n.joins[k]!.tier !== 'EXTRACTED');
+    const reconstructed = guessedAlready
+      ? { key: guessedAlready, why: n.joins![guessedAlready]!.why ?? 'reconstructed upstream', confidence: n.joins![guessedAlready]!.confidence ?? 0.5 }
+      : reconstructCommitmentJoin({
+          title: n.title,
+          ...(n.owner ? { owner: n.owner } : {}),
+          scope: scopes.get(container.id) ?? [],
+          resolve: identities.resolve,
+        });
 
     const overdueDays = Math.floor((now - Date.parse(n.dueAt)) / DAY_MS);
     /**
@@ -131,8 +209,23 @@ export function findMissingTickets(notes: Note[], graph: StoredGraph, now = Date
      */
     const dueFromSprint = n.tags?.includes('due-from-sprint') === true;
     out.push({
+      /**
+       * THE ID STAYS ON THE `missing_ticket:` NAMESPACE FOR BOTH KINDS, and it
+       * is not cosmetic.
+       *
+       * Three separate things key on `Finding.id` and none of them would
+       * survive a rename: `suppressedIds` and `answeredFindingIds` in `act.ts`
+       * — so every deferral and dismissal somebody has already made would come
+       * straight back — and `notifiedIds` in `notify.ts`, which reads
+       * `mc.memory_surfaced` off the durable log. That last one is the
+       * expensive one: the first pass after a rename re-announces every alert
+       * the user was already told about, at `warn`, which `worthSending` lets
+       * through.
+       *
+       * A note produces exactly one of the two kinds, so uniqueness holds.
+       */
       id: `missing_ticket:${n.id}`,
-      kind: 'missing_ticket',
+      kind: reconstructed ? 'unlinked_commitment' : 'missing_ticket',
       subject: { kind: 'commitment', noteId: n.id },
       /**
        * An inherited date never reaches `crit`, and this was got wrong once in
@@ -152,8 +245,19 @@ export function findMissingTickets(notes: Note[], graph: StoredGraph, now = Date
        * the first should outrank the second. `warn` still counts on the front
        * door — only `ok` does not — so nothing is hidden by this.
        */
-      severity: !dueFromSprint && overdueDays >= OVERDUE_CRIT_DAYS ? 'crit' : 'warn',
-      claim: `${n.title} was never filed`,
+      /**
+       * A reconstruction NEVER reaches `crit`.
+       *
+       * `crit` outranks everything on the front door and `worthSending` turns
+       * it into a morning interruption. "Nobody filed this" is a fact; "this is
+       * probably ORB-1438" is our reading of two titles and one assignee, and a
+       * reading must not be able to shout.
+       */
+      severity:
+        !reconstructed && !dueFromSprint && overdueDays >= OVERDUE_CRIT_DAYS ? 'crit' : 'warn',
+      claim: reconstructed
+        ? `${n.title} is probably ${reconstructed.key}, and nothing says so`
+        : `${n.title} was never filed`,
       impact: [
         dueFromSprint
           ? `Taken by ${n.owner}, with no date given`
@@ -163,14 +267,290 @@ export function findMissingTickets(notes: Note[], graph: StoredGraph, now = Date
           : overdueDays > 0
             ? `${overdueDays} day${overdueDays === 1 ? '' : 's'} past due`
             : 'not yet due',
-        `${container.label} has closed and no issue references it`,
+        reconstructed
+          ? `${container.label} has closed and no record connects the two`
+          : `${container.label} has closed and no issue references it`,
       ].join(' · '),
       // When the container closed, not when this pass ran. A finding that
       // restamps itself every pass cannot be aged, ranked or deduplicated, and
       // "fired 08:02 today" would be a lie about a promise made in July.
       firedAt: container.closedAt ?? container.endsAt ?? n.dueAt,
-      evidence: n.evidence,
+      /**
+       * The reconstruction's reason rides along as an evidence row with NO
+       * `ref`, because it is our own observation rather than a document.
+       * `AlertPage` renders a ref-less row as a plain sentence and does not
+       * offer to open it — which is the difference between citing and
+       * asserting, and the reason a reader can weigh the guess at all.
+       */
+      evidence: reconstructed
+        ? [...n.evidence, { surface: 'jira' as const, label: reconstructed.why }]
+        : n.evidence,
       dedupeKey: `missing_ticket:${n.id}`,
+    });
+  }
+  return out;
+}
+
+// ---------------------------------------------------------------------------
+// The promise nobody has mentioned since
+// ---------------------------------------------------------------------------
+
+/**
+ * How large a share of the corpus a word may appear in and still count as
+ * distinctive.
+ *
+ * A promise has gone quiet if nothing since has NAMED it, and the whole
+ * difficulty is deciding what naming it means when the promise contains no
+ * ticket key. The answer is corpus-relative document frequency: a word carried
+ * by one record in twenty is about something; a word in a third of them is
+ * furniture.
+ *
+ * TUNED UPWARDS WHEN IN DOUBT, NEVER DOWN, AND THE ASYMMETRY IS THE WHOLE
+ * ARGUMENT. A missed follow-up fires an alert at somebody who has been chasing
+ * the thing daily, which is the fastest way to teach them the list is not
+ * listening. A spurious follow-up only keeps us quiet about one promise. So the
+ * failure this is tuned to prefer is silence.
+ *
+ * AND IT DOES NOT DISCRIMINATE AS WELL AS IT LOOKS. Measured on
+ * `fixtures-programme`: at 0.05, promise-001 ("chase the vendor sandbox") reads
+ * as FOLLOWED UP because eight different records say *"ORB-XXXX is still
+ * blocked on the vendor sandbox"* about eight unrelated tickets. That is
+ * recurring stand-up boilerplate, not a follow-up. The rule failed SAFE, which
+ * is the design, but it must not be quoted as evidence the rule is precise. At
+ * 0.01 the whole thing collapses to single-occurrence words and everything
+ * reads as dropped.
+ */
+const DF_MAX_SHARE = 0.05;
+
+/** Below four characters a word is almost never the subject of a promise. */
+const MIN_TERM_LENGTH = 4;
+
+/**
+ * How many surfaces must have said ANYTHING recently before silence means
+ * anything.
+ *
+ * Without this the detector fires hardest on a programme whose collectors have
+ * not run — nothing has been said since, because nothing has been read since.
+ * "We do not know" and "nobody mentioned it" are different answers and only the
+ * second is worth interrupting somebody about.
+ */
+const MIN_LIVE_SURFACES = 2;
+
+const dfIndexCache = new Map<string, { at: string; df: Map<string, number>; size: number }>();
+
+/**
+ * Document frequency over the corpus, memoised on the graph's `generatedAt`.
+ *
+ * ON `generatedAt` ALONE, and deliberately not on the event log. The corpus is
+ * the DERIVED tier — only a collector run changes it — and `generatedAt` is
+ * exactly its subject. Keying it on the vault's event count instead would tear
+ * the index down every thirty seconds under the canvas poll, which is the
+ * documented anti-pattern that once left a screen on "Loading…" for ever while
+ * the network tab showed only 200s. A new vault note changes the QUERY, not the
+ * index.
+ */
+function documentFrequency(
+  corpus: CorpusEntry[],
+  generatedAt: string,
+): { df: Map<string, number>; size: number } {
+  const hit = dfIndexCache.get(generatedAt);
+  if (hit && hit.at === generatedAt) return { df: hit.df, size: hit.size };
+
+  const df = new Map<string, number>();
+  for (const r of corpus) {
+    for (const t of new Set(r.tokens)) df.set(t, (df.get(t) ?? 0) + 1);
+  }
+  dfIndexCache.clear();
+  dfIndexCache.set(generatedAt, { at: generatedAt, df, size: corpus.length });
+  return { df, size: corpus.length };
+}
+
+/**
+ * A promise made out loud, its sprint still running, and nothing since has
+ * named it.
+ *
+ * WHY IT IS NOT `missing_ticket` WITH A DIFFERENT TRIGGER. That one fires when
+ * a container CLOSES and says the tracker never got this. This fires while the
+ * container is still OPEN and says the conversation dropped it — a different
+ * claim, a different moment, and a different thing to do about it. They are
+ * mutually exclusive by construction on `container.state`, one line each, so
+ * neither has to know the other exists.
+ *
+ * WHY `lastHeardOf` AND NOT "was it ever acknowledged". The obvious test is
+ * whether anything after the promise mentions it, and it is a one-shot test: a
+ * promise acknowledged once the following morning and then dropped for two
+ * months passes it for ever. That is precisely the failure this exists to
+ * catch. So the question is asked from the LAST time anybody mentioned it, not
+ * from when it was made.
+ */
+export function findDroppedCommitments(args: {
+  notes: Note[];
+  graph: StoredGraph;
+  corpus: CorpusEntry[];
+  now?: number;
+}): Finding[] {
+  const { notes, graph, corpus, now = Date.now() } = args;
+  if (!corpus.length) return [];
+
+  const containers = new Map(
+    graph.nodes
+      .filter((n) => n.kind === 'sprint' || n.kind === 'release')
+      .map((n) => [n.id, n as Extract<StoredNode, { kind: 'sprint' | 'release' }>]),
+  );
+  const byLabel = new Map<string, Extract<StoredNode, { kind: 'sprint' | 'release' }> | null>();
+  for (const c of containers.values()) {
+    byLabel.set(c.label, byLabel.has(c.label) ? null : c);
+  }
+
+  const meetings = graph.nodes
+    .filter((n) => n.kind === 'meeting')
+    .map((n) => ({ id: n.id, label: n.label, at: 'at' in n && n.at ? Date.parse(n.at) : NaN }))
+    .filter((m) => Number.isFinite(m.at))
+    .sort((a, b) => a.at - b.at);
+
+  const { df, size } = documentFrequency(corpus, graph.graph.generatedAt);
+  const cap = Math.max(1, Math.floor(size * DF_MAX_SHARE));
+
+  /**
+   * How recently each surface said anything at all — the "we do not know"
+   * guard. Computed once over the whole corpus rather than per note.
+   */
+  const freshestBySurface = new Map<string, number>();
+  for (const r of corpus) {
+    const t = Date.parse(r.ts);
+    if (!Number.isFinite(t)) continue;
+    freshestBySurface.set(r.surface, Math.max(freshestBySurface.get(r.surface) ?? 0, t));
+  }
+
+  const out: Finding[] = [];
+  for (const n of notes) {
+    if (n.kind !== 'commitment' || n.status !== 'open') continue;
+    if (filedKeys(n).length > 0) continue;
+    // Half the precision gate. `dueAt` is NOT required here, unlike
+    // `missing_ticket`: a promise inside a running sprint has not missed
+    // anything yet, so a date would be a gate on the wrong thing. What replaces
+    // it is `G4` below — the promise must be openable.
+    if (!n.owner) continue;
+    /**
+     * It has to be CITABLE. A promise with no ref is one we cannot show
+     * somebody, and an alert that says "you said this" and cannot open the
+     * moment is the uncited assertion this product exists not to be.
+     */
+    if (!n.evidence.some((e) => e.ref)) continue;
+
+    const container = n.container
+      ? (containers.get(n.container) ?? byLabel.get(n.container) ?? undefined)
+      : undefined;
+    /**
+     * `active`, not `!== 'closed'`. `future` admits a sprint that has not
+     * started, and nagging about a promise for next sprint is the one thing the
+     * trigger question was settled to avoid.
+     */
+    if (!container || container.state !== 'active') continue;
+
+    const terms = [...tokens(n.title)].filter(
+      (t) => t.length >= MIN_TERM_LENGTH && !tokens(n.owner!).has(t),
+    );
+    const distinctive = terms.filter((t) => (df.get(t) ?? 0) <= cap);
+    // No distinctive term means no test, and no test means no claim. Not a
+    // weaker finding — an absent one.
+    if (!distinctive.length) continue;
+
+    const madeAt = Date.parse(n.createdAt);
+    if (!Number.isFinite(madeAt)) continue;
+
+    /**
+     * The meeting the promise was made in does not count as having heard of it
+     * again.
+     *
+     * Zoom notes become one corpus entry per PARAGRAPH, so the same meeting
+     * contributes several — and the paragraphs after the promise are all
+     * stamped later than it. Without this, a promise stated at the top of a
+     * stand-up and glanced off two lines down reads as followed up, which
+     * silently suppresses the finding; and when it does not suppress it, the
+     * alert cites the same record twice under two different headings, which
+     * reads as a bug and costs the page its credibility.
+     */
+    const promisedIn = new Set(
+      n.evidence.map((e) => e.ref?.id).filter((id): id is string => !!id),
+    );
+
+    let lastHeardOf = madeAt;
+    let lastRecord: CorpusEntry | undefined;
+    for (const r of corpus) {
+      const t = Date.parse(r.ts);
+      if (!Number.isFinite(t) || t <= madeAt || t <= lastHeardOf) continue;
+      if (r.ref && promisedIn.has(r.ref.id)) continue;
+      if (!distinctive.some((d) => r.tokens.includes(d))) continue;
+      lastHeardOf = t;
+      lastRecord = r;
+    }
+
+    /**
+     * THE TRIGGER: a meeting has run since we last heard of it.
+     *
+     * The stand-up is where this should have come up, so the honest moment to
+     * say "it did not" is after one has happened. A day count would fire on a
+     * quiet week; a meeting having run and passed it over is the actual event.
+     */
+    const since = meetings.filter((m) => m.at > lastHeardOf);
+    if (!since.length) continue;
+
+    /**
+     * And somebody has to have been TALKING, or silence means nothing.
+     *
+     * On a programme whose collectors stopped running, every promise looks
+     * dropped. Requiring two surfaces to carry something newer than the last
+     * mention is what separates "nobody said anything about it" from "nothing
+     * was read".
+     */
+    const live = [...freshestBySurface.values()].filter((t) => t > lastHeardOf).length;
+    if (live < MIN_LIVE_SURFACES) continue;
+
+    const first = since[0]!;
+    const quietDays = Math.floor((now - lastHeardOf) / DAY_MS);
+
+    out.push({
+      id: `dropped_commitment:${n.id}`,
+      kind: 'dropped_commitment',
+      subject: { kind: 'commitment', noteId: n.id },
+      // Always `warn`. `crit` outranks the flagship on the front door and turns
+      // into a morning ping; "nobody has mentioned this" does not earn that.
+      severity: 'warn',
+      claim: `${n.title} has gone quiet`,
+      impact: [
+        `Taken by ${n.owner}`,
+        `${since.length} meeting${since.length === 1 ? '' : 's'} since`,
+        `${quietDays} day${quietDays === 1 ? '' : 's'} with nothing on Slack, Confluence or a later meeting naming it`,
+      ].join(' · '),
+      /**
+       * The moment the first meeting ran without it — a dated fact off a graph
+       * node, never `Date.now()`. It moves only when a real new record arrives,
+       * at which point the finding legitimately re-dates.
+       */
+      firedAt: new Date(first.at).toISOString(),
+      evidence: [
+        // The promise itself, verbatim — it already came from `zoomEvidence`
+        // and already carries the ref that opens it at its line.
+        ...n.evidence,
+        // The last thing anybody said, when there was one after the promise.
+        ...(lastRecord
+          ? [
+              {
+                surface: lastRecord.surface,
+                label: `last heard of in ${lastRecord.label}`,
+                ...(lastRecord.ref ? { ref: lastRecord.ref } : {}),
+              } as Evidence,
+            ]
+          : []),
+        // Our own observation. No `ref` — there is no document called "silence",
+        // and a dead link here would be worse than a plain sentence.
+        {
+          surface: 'zoom',
+          label: `${first.label} ran on ${new Date(first.at).toISOString().slice(0, 10)} and did not come back to it`,
+        },
+      ],
+      dedupeKey: `dropped_commitment:${n.id}`,
     });
   }
   return out;
@@ -284,7 +664,11 @@ const SIGNAL_FINDINGS: Partial<Record<WorkSignal['kind'], Finding['kind']>> = {
  * says "two sources disagree" and an alert that says the same cannot come from
  * two different ideas of disagreement.
  */
-function findFromWorkRows(rows: WorkRow[], cycles: WorkItemKey[][]): Finding[] {
+function findFromWorkRows(
+  rows: WorkRow[],
+  cycles: WorkItemKey[][],
+  agingDays: AgingDays,
+): Finding[] {
   const out: Finding[] = [];
 
   for (const row of rows) {
@@ -313,14 +697,50 @@ function findFromWorkRows(rows: WorkRow[], cycles: WorkItemKey[][]): Finding[] {
         severity: TONE[signal.tone],
         claim: claimFor(kind, row, signal, members),
         impact: signal.text,
-        // The newest record that made this true, not the moment the pass ran.
-        firedAt: row.lastActivity ?? new Date().toISOString(),
+        /**
+         * When this became true, not when the pass ran.
+         *
+         * `aging` gets its own answer because the generic one is wrong for it in
+         * a way that quietly disables ranking. `row.lastActivity` is the newest
+         * thing anybody SAID about the ticket — and a ticket nobody has
+         * mentioned is precisely the aging case, so it was `undefined` for all
+         * seven findings on `fixtures-programme` and every one of them fell
+         * through to `Date.now()`. `rankFindings` sorts oldest-first inside a
+         * severity, so all seven carried the same instant and a 41-day ticket
+         * could not outrank a 16-day one.
+         *
+         * The moment an aging finding became true is the moment it crossed its
+         * column's threshold: `ageSince` plus that many days. That is a stable,
+         * dated fact, so the finding can be aged, ranked and deduplicated the
+         * way every other kind can.
+         */
+        firedAt: agingFiredAt(kind, row, agingDays) ?? row.lastActivity ?? new Date().toISOString(),
         evidence: signal.evidence ?? [],
         dedupeKey: loop ? `cycle:${members.join('>')}` : `${kind}:${row.item.key}`,
       });
     }
   }
   return out;
+}
+
+/**
+ * The moment an aging row crossed its column's threshold, or `undefined` for
+ * every other kind.
+ *
+ * Returns `undefined` rather than guessing whenever the row carries no
+ * `ageSince` — which is the same "no number is claimed" state `statusAgeOf`
+ * returns, arriving here.
+ */
+function agingFiredAt(
+  kind: Finding['kind'],
+  row: WorkRow,
+  agingDays: AgingDays,
+): string | undefined {
+  if (kind !== 'aging' || !row.ageSince) return undefined;
+  const threshold = agingDays[row.item.status];
+  if (threshold === null || threshold === undefined) return undefined;
+  const crossed = Date.parse(row.ageSince) + threshold * DAY_MS;
+  return Number.isFinite(crossed) ? new Date(crossed).toISOString() : undefined;
 }
 
 /** The headline. `signal.text` is already phrased, and becomes the impact line. */
@@ -336,6 +756,15 @@ function claimFor(
     case 'disagreement':
       return `${row.item.key} is called done and not done`;
     case 'aging':
+      /**
+       * The headline stays the same for both bases and the qualifier lives in
+       * the impact line, beside the number it qualifies.
+       *
+       * Stating the basis here as well read *"ORB-1669 has not moved in at
+       * least 31 days — at least 31 days in development"*: the claim and the
+       * impact are shown one above the other, so saying it twice is not
+       * emphasis, it is a row that looks like a bug.
+       */
       return `${row.item.key} has not moved`;
     default:
       return signal.text;
@@ -402,12 +831,18 @@ export async function runFindings({
   // `gatherWorkFacts`. Only EXTRACTED edges survive `projectArrows`, so a
   // declared link nothing corroborates cannot raise a cycle banner.
   const lane = connectors
-    ? await gatherWorkFacts(connectors, vault, projectArrows(source.graph))
+    ? // `corpus: true` here and NOT in `/api/work`: the lane route never reads
+      // it, and materialising every record on a request that does not want them
+      // is the same bargain `suggest.ts` already refused to make.
+      await gatherWorkFacts(connectors, vault, { ...workOpts(source), corpus: true })
     : undefined;
 
   const findings = dedupe([
     ...findMissingTickets(notes, source.graph),
-    ...(lane ? findFromWorkRows(lane.rows, lane.cycles) : []),
+    ...(lane?.corpus
+      ? findDroppedCommitments({ notes, graph: source.graph, corpus: lane.corpus })
+      : []),
+    ...(lane ? findFromWorkRows(lane.rows, lane.cycles, agingDays()) : []),
     ...findLinkProblems(source.graph, byKey),
   ]);
 
@@ -476,6 +911,18 @@ export interface FindingDetail {
   checklist?: { title: string; tracked: boolean; ref: string }[];
 }
 
+/**
+ * The keys on a note that somebody actually typed, as opposed to the ones we
+ * worked out.
+ *
+ * One definition, because the gate and the checklist have to tell the same
+ * story: a guessed key rendered in the checklist's `ref` column beside an
+ * unticked box reads as a filed ticket with a broken tick.
+ */
+export function filedKeys(n: Note): WorkItemKey[] {
+  return n.relatedKeys.filter((k) => (n.joins?.[k]?.tier ?? 'EXTRACTED') === 'EXTRACTED');
+}
+
 export async function findingDetail(
   id: string,
   input: FindingsInput,
@@ -510,15 +957,22 @@ export async function findingDetail(
       detail.checklist = vault
         .list()
         .filter((n) => n.container === note.container && n.kind === 'commitment')
-        .map((n) => ({
-          title: n.title,
-          tracked: n.relatedKeys.length > 0,
-          ref: n.relatedKeys.length
-            ? n.relatedKeys
-                .map((k) => `${k}${byKey.get(k) ? ` · ${byKey.get(k)!.status.replace('_', ' ')}` : ''}`)
-                .join(', ')
-            : 'no ticket',
-        }))
+        .map((n) => {
+          const filed = filedKeys(n);
+          return {
+            title: n.title,
+            tracked: filed.length > 0,
+            ref: filed.length
+              ? filed
+                  .map((k) => `${k}${byKey.get(k) ? ` · ${byKey.get(k)!.status.replace('_', ' ')}` : ''}`)
+                  .join(', ')
+              : n.relatedKeys.length
+                ? // Reconstructed, and said so. The checklist is the alert's
+                  // argument, so a guess must read as a guess.
+                  `probably ${n.relatedKeys.join(', ')} — nothing says so`
+                : 'no ticket',
+          };
+        })
         /**
          * Ticks first, then the crosses, and THIS alert's own promise last.
          *
