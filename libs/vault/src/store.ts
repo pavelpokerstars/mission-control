@@ -319,8 +319,23 @@ export class VaultStore {
       ...(draft.dueAt ? { dueAt: draft.dueAt } : {}),
       ...(draft.container ? { container: draft.container } : {}),
       ...(draft.joins ? { joins: draft.joins } : {}),
-      createdAt: now,
-      updatedAt: now,
+      /**
+       * A SUPPLIED DATE WINS, and this was hardcoded to `now`.
+       *
+       * `seedNotes` copies the fixture's claims in through this path, so every
+       * promise made in June arrived in the vault stamped with the moment the
+       * gateway booted. Nothing failed and the note looked right — but
+       * `dropped_commitment` measures how long a promise has gone unmentioned
+       * from `createdAt`, so on a freshly seeded vault every promise had been
+       * made "just now" and the detector could not fire at all. The timeline's
+       * note markers read the same field and were equally wrong.
+       *
+       * `now` stays the default, which is the honest answer when a human writes
+       * a note by hand and supplies no date. Same shape as the explicit `id`
+       * above: the caller may say, and is believed when it does.
+       */
+      createdAt: draft.createdAt ?? now,
+      updatedAt: draft.updatedAt ?? draft.createdAt ?? now,
       body,
     };
 

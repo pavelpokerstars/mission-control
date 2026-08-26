@@ -271,7 +271,7 @@
       "status": "To Do",
       "statusCategory": "todo",
       "createdAt": "2026-05-28T09:00:00.000Z",
-      "updatedAt": "2026-06-14T12:00:00.000Z",
+      "updatedAt": "2026-06-11T11:00:00.000Z",
       "url": "https://example.com/browse/ORB-1200"
     },
     {
@@ -286,7 +286,7 @@
       "assignee": "hugo.hart",
       "createdAt": "2026-05-28T09:00:00.000Z",
       "resolvedAt": "2026-06-13T16:00:00.000Z",
-      "updatedAt": "2026-06-14T12:00:00.000Z",
+      "updatedAt": "2026-06-13T16:00:00.000Z",
       "url": "https://example.com/browse/ORB-1207"
     },
     {
@@ -301,7 +301,7 @@
       "assignee": "orla.oakes",
       "createdAt": "2026-05-28T09:00:00.000Z",
       "resolvedAt": "2026-06-13T16:00:00.000Z",
-      "updatedAt": "2026-06-14T12:00:00.000Z",
+      "updatedAt": "2026-06-13T16:00:00.000Z",
       "url": "https://example.com/browse/ORB-1214"
     },
     {
@@ -316,7 +316,7 @@
       "assignee": "bo.bright",
       "createdAt": "2026-05-28T09:00:00.000Z",
       "resolvedAt": "2026-06-13T16:00:00.000Z",
-      "updatedAt": "2026-06-14T12:00:00.000Z",
+      "updatedAt": "2026-06-13T16:00:00.000Z",
       "url": "https://example.com/browse/ORB-1221"
     },
     {
@@ -331,7 +331,7 @@
       "assignee": "esme.ellis",
       "createdAt": "2026-05-28T09:00:00.000Z",
       "resolvedAt": "2026-06-13T16:00:00.000Z",
-      "updatedAt": "2026-06-14T12:00:00.000Z",
+      "updatedAt": "2026-06-13T16:00:00.000Z",
       "url": "https://example.com/browse/ORB-1228"
     },
     {
@@ -346,7 +346,7 @@
       "assignee": "bo.bright",
       "createdAt": "2026-05-28T09:00:00.000Z",
       "resolvedAt": "2026-06-13T16:00:00.000Z",
-      "updatedAt": "2026-06-14T12:00:00.000Z",
+      "updatedAt": "2026-06-13T16:00:00.000Z",
       "url": "https://example.com/browse/ORB-1235"
     },
     {
@@ -361,7 +361,7 @@
       "assignee": "orla.oakes",
       "createdAt": "2026-05-28T09:00:00.000Z",
       "resolvedAt": "2026-06-13T16:00:00.000Z",
-      "updatedAt": "2026-06-14T12:00:00.000Z",
+      "updatedAt": "2026-06-13T16:00:00.000Z",
       "url": "https://example.com/browse/ORB-1242"
     },
     {
@@ -376,7 +376,7 @@
       "assignee": "cleo.calder",
       "createdAt": "2026-05-28T09:00:00.000Z",
       "resolvedAt": "2026-06-13T16:00:00.000Z",
-      "updatedAt": "2026-06-14T12:00:00.000Z",
+      "updatedAt": "2026-06-13T16:00:00.000Z",
       "url": "https://example.com/browse/ORB-1249"
     },
     {
@@ -391,7 +391,7 @@
       "assignee": "jonas.jost",
       "createdAt": "2026-05-28T09:00:00.000Z",
       "resolvedAt": "2026-06-13T16:00:00.000Z",
-      "updatedAt": "2026-06-14T12:00:00.000Z",
+      "updatedAt": "2026-06-13T16:00:00.000Z",
       "url": "https://example.com/browse/ORB-1256"
     },
     {
@@ -405,7 +405,7 @@
       "statusCategory": "doing",
       "assignee": "esme.ellis",
       "createdAt": "2026-05-28T09:00:00.000Z",
-      "updatedAt": "2026-06-14T12:00:00.000Z",
+      "updatedAt": "2026-06-13T11:00:00.000Z",
       "url": "https://example.com/browse/ORB-1263"
     },
     {
@@ -420,7 +420,7 @@
       "assignee": "orla.oakes",
       "createdAt": "2026-05-28T09:00:00.000Z",
       "resolvedAt": "2026-06-13T16:00:00.000Z",
-      "updatedAt": "2026-06-14T12:00:00.000Z",
+      "updatedAt": "2026-06-13T16:00:00.000Z",
       "url": "https://example.com/browse/ORB-1270"
     },
     {
@@ -435,7 +435,7 @@
       "assignee": "kira.kerr",
       "createdAt": "2026-05-28T09:00:00.000Z",
       "resolvedAt": "2026-06-13T16:00:00.000Z",
-      "updatedAt": "2026-06-14T12:00:00.000Z",
+      "updatedAt": "2026-06-13T16:00:00.000Z",
       "url": "https://example.com/browse/ORB-1277"
     },
     {
@@ -450,7 +450,7 @@
       "assignee": "jonas.jost",
       "createdAt": "2026-06-11T09:00:00.000Z",
       "resolvedAt": "2026-06-27T16:00:00.000Z",
-      "updatedAt": "2026-06-28T12:00:00.000Z",
+      "updatedAt": "2026-06-27T16:00:00.000Z",
       "url": "https://example.com/browse/ORB-1284"
     },
     {
@@ -464,7 +464,7 @@
       "statusCategory": "done",
       "createdAt": "2026-06-11T09:00:00.000Z",
       "resolvedAt": "2026-06-27T16:00:00.000Z",
-      "updatedAt": "2026-06-28T12:00:00.000Z",
+      "updatedAt": "2026-06-27T16:00:00.000Z",
       "url": "https://example.com/browse/ORB-1291"
     },
     {
@@ -479,7 +479,7 @@
       "assignee": "greta.gale",
       "createdAt": "2026-06-11T09:00:00.000Z",
       "resolvedAt": "2026-06-27T16:00:00.000Z",
-      "updatedAt": "2026-06-28T12:00:00.000Z",
+      "updatedAt": "2026-06-27T16:00:00.000Z",
       "url": "https://example.com/browse/ORB-1298"
     },
     {
@@ -494,7 +494,7 @@
       "assignee": "mara.moss",
       "createdAt": "2026-06-11T09:00:00.000Z",
       "resolvedAt": "2026-06-27T16:00:00.000Z",
-      "updatedAt": "2026-06-28T12:00:00.000Z",
+      "updatedAt": "2026-06-27T16:00:00.000Z",
       "url": "https://example.com/browse/ORB-1305"
     },
     {
@@ -509,7 +509,7 @@
       "assignee": "cleo.calder",
       "createdAt": "2026-06-11T09:00:00.000Z",
       "resolvedAt": "2026-06-27T16:00:00.000Z",
-      "updatedAt": "2026-06-28T12:00:00.000Z",
+      "updatedAt": "2026-06-27T16:00:00.000Z",
       "url": "https://example.com/browse/ORB-1312"
     },
     {
@@ -524,7 +524,7 @@
       "assignee": "luca.lund",
       "createdAt": "2026-06-11T09:00:00.000Z",
       "resolvedAt": "2026-06-27T16:00:00.000Z",
-      "updatedAt": "2026-06-28T12:00:00.000Z",
+      "updatedAt": "2026-06-27T16:00:00.000Z",
       "url": "https://example.com/browse/ORB-1319"
     },
     {
@@ -538,7 +538,7 @@
       "statusCategory": "todo",
       "assignee": "greta.gale",
       "createdAt": "2026-06-11T09:00:00.000Z",
-      "updatedAt": "2026-06-28T12:00:00.000Z",
+      "updatedAt": "2026-06-17T11:00:00.000Z",
       "url": "https://example.com/browse/ORB-1326"
     },
     {
@@ -553,7 +553,7 @@
       "assignee": "finn.frost",
       "createdAt": "2026-06-11T09:00:00.000Z",
       "resolvedAt": "2026-06-27T16:00:00.000Z",
-      "updatedAt": "2026-06-28T12:00:00.000Z",
+      "updatedAt": "2026-06-27T16:00:00.000Z",
       "url": "https://example.com/browse/ORB-1333"
     },
     {
@@ -568,7 +568,7 @@
       "assignee": "ada.ash",
       "createdAt": "2026-06-11T09:00:00.000Z",
       "resolvedAt": "2026-06-27T16:00:00.000Z",
-      "updatedAt": "2026-06-28T12:00:00.000Z",
+      "updatedAt": "2026-06-27T16:00:00.000Z",
       "url": "https://example.com/browse/ORB-1340"
     },
     {
@@ -583,7 +583,7 @@
       "assignee": "ada.ash",
       "createdAt": "2026-06-11T09:00:00.000Z",
       "resolvedAt": "2026-06-27T16:00:00.000Z",
-      "updatedAt": "2026-06-28T12:00:00.000Z",
+      "updatedAt": "2026-06-27T16:00:00.000Z",
       "url": "https://example.com/browse/ORB-1347"
     },
     {
@@ -598,7 +598,7 @@
       "assignee": "cleo.calder",
       "createdAt": "2026-06-11T09:00:00.000Z",
       "resolvedAt": "2026-06-27T16:00:00.000Z",
-      "updatedAt": "2026-06-28T12:00:00.000Z",
+      "updatedAt": "2026-06-27T16:00:00.000Z",
       "url": "https://example.com/browse/ORB-1354"
     },
     {
@@ -613,7 +613,7 @@
       "assignee": "finn.frost",
       "createdAt": "2026-06-11T09:00:00.000Z",
       "resolvedAt": "2026-06-27T16:00:00.000Z",
-      "updatedAt": "2026-06-28T12:00:00.000Z",
+      "updatedAt": "2026-06-27T16:00:00.000Z",
       "url": "https://example.com/browse/ORB-1361"
     },
     {
@@ -628,7 +628,7 @@
       "assignee": "jonas.jost",
       "createdAt": "2026-06-25T09:00:00.000Z",
       "resolvedAt": "2026-07-11T16:00:00.000Z",
-      "updatedAt": "2026-07-12T12:00:00.000Z",
+      "updatedAt": "2026-07-11T16:00:00.000Z",
       "url": "https://example.com/browse/ORB-1368"
     },
     {
@@ -643,7 +643,7 @@
       "assignee": "luca.lund",
       "createdAt": "2026-06-25T09:00:00.000Z",
       "resolvedAt": "2026-07-11T16:00:00.000Z",
-      "updatedAt": "2026-07-12T12:00:00.000Z",
+      "updatedAt": "2026-07-11T16:00:00.000Z",
       "url": "https://example.com/browse/ORB-1375"
     },
     {
@@ -657,7 +657,7 @@
       "statusCategory": "done",
       "createdAt": "2026-06-25T09:00:00.000Z",
       "resolvedAt": "2026-07-11T16:00:00.000Z",
-      "updatedAt": "2026-07-12T12:00:00.000Z",
+      "updatedAt": "2026-07-11T16:00:00.000Z",
       "url": "https://example.com/browse/ORB-1382"
     },
     {
@@ -671,7 +671,7 @@
       "statusCategory": "doing",
       "assignee": "hugo.hart",
       "createdAt": "2026-06-25T09:00:00.000Z",
-      "updatedAt": "2026-07-12T12:00:00.000Z",
+      "updatedAt": "2026-07-07T11:00:00.000Z",
       "url": "https://example.com/browse/ORB-1389"
     },
     {
@@ -686,7 +686,7 @@
       "assignee": "ivy.iver",
       "createdAt": "2026-06-25T09:00:00.000Z",
       "resolvedAt": "2026-07-11T16:00:00.000Z",
-      "updatedAt": "2026-07-12T12:00:00.000Z",
+      "updatedAt": "2026-07-11T16:00:00.000Z",
       "url": "https://example.com/browse/ORB-1396"
     },
     {
@@ -701,7 +701,7 @@
       "assignee": "dev.dunne",
       "createdAt": "2026-06-25T09:00:00.000Z",
       "resolvedAt": "2026-07-11T16:00:00.000Z",
-      "updatedAt": "2026-07-12T12:00:00.000Z",
+      "updatedAt": "2026-07-11T16:00:00.000Z",
       "url": "https://example.com/browse/ORB-1403"
     },
     {
@@ -716,7 +716,7 @@
       "assignee": "ivy.iver",
       "createdAt": "2026-06-25T09:00:00.000Z",
       "resolvedAt": "2026-07-11T16:00:00.000Z",
-      "updatedAt": "2026-07-12T12:00:00.000Z",
+      "updatedAt": "2026-07-11T16:00:00.000Z",
       "url": "https://example.com/browse/ORB-1410"
     },
     {
@@ -731,7 +731,7 @@
       "assignee": "nils.nord",
       "createdAt": "2026-06-25T09:00:00.000Z",
       "resolvedAt": "2026-07-11T16:00:00.000Z",
-      "updatedAt": "2026-07-12T12:00:00.000Z",
+      "updatedAt": "2026-07-11T16:00:00.000Z",
       "url": "https://example.com/browse/ORB-1417"
     },
     {
@@ -746,7 +746,7 @@
       "assignee": "orla.oakes",
       "createdAt": "2026-06-25T09:00:00.000Z",
       "resolvedAt": "2026-07-11T16:00:00.000Z",
-      "updatedAt": "2026-07-12T12:00:00.000Z",
+      "updatedAt": "2026-07-11T16:00:00.000Z",
       "url": "https://example.com/browse/ORB-1424"
     },
     {
@@ -761,7 +761,7 @@
       "assignee": "mara.moss",
       "createdAt": "2026-06-25T09:00:00.000Z",
       "resolvedAt": "2026-07-11T16:00:00.000Z",
-      "updatedAt": "2026-07-12T12:00:00.000Z",
+      "updatedAt": "2026-07-11T16:00:00.000Z",
       "url": "https://example.com/browse/ORB-1431"
     },
     {
@@ -776,7 +776,7 @@
       "assignee": "jonas.jost",
       "createdAt": "2026-06-25T09:00:00.000Z",
       "resolvedAt": "2026-07-11T16:00:00.000Z",
-      "updatedAt": "2026-07-12T12:00:00.000Z",
+      "updatedAt": "2026-07-11T16:00:00.000Z",
       "url": "https://example.com/browse/ORB-1438"
     },
     {
@@ -791,7 +791,7 @@
       "assignee": "hugo.hart",
       "createdAt": "2026-06-25T09:00:00.000Z",
       "resolvedAt": "2026-07-11T16:00:00.000Z",
-      "updatedAt": "2026-07-12T12:00:00.000Z",
+      "updatedAt": "2026-07-11T16:00:00.000Z",
       "url": "https://example.com/browse/ORB-1445"
     },
     {
@@ -805,7 +805,7 @@
       "statusCategory": "doing",
       "assignee": "luca.lund",
       "createdAt": "2026-07-09T09:00:00.000Z",
-      "updatedAt": "2026-07-26T12:00:00.000Z",
+      "updatedAt": "2026-07-18T11:00:00.000Z",
       "url": "https://example.com/browse/ORB-1452"
     },
     {
@@ -820,7 +820,7 @@
       "assignee": "cleo.calder",
       "createdAt": "2026-07-09T09:00:00.000Z",
       "resolvedAt": "2026-07-25T16:00:00.000Z",
-      "updatedAt": "2026-07-26T12:00:00.000Z",
+      "updatedAt": "2026-07-25T16:00:00.000Z",
       "url": "https://example.com/browse/ORB-1459"
     },
     {
@@ -835,7 +835,7 @@
       "assignee": "mara.moss",
       "createdAt": "2026-07-09T09:00:00.000Z",
       "resolvedAt": "2026-07-25T16:00:00.000Z",
-      "updatedAt": "2026-07-26T12:00:00.000Z",
+      "updatedAt": "2026-07-25T16:00:00.000Z",
       "url": "https://example.com/browse/ORB-1466"
     },
     {
@@ -849,7 +849,7 @@
       "statusCategory": "done",
       "createdAt": "2026-07-09T09:00:00.000Z",
       "resolvedAt": "2026-07-25T16:00:00.000Z",
-      "updatedAt": "2026-07-26T12:00:00.000Z",
+      "updatedAt": "2026-07-25T16:00:00.000Z",
       "url": "https://example.com/browse/ORB-1473"
     },
     {
@@ -864,7 +864,7 @@
       "assignee": "hugo.hart",
       "createdAt": "2026-07-09T09:00:00.000Z",
       "resolvedAt": "2026-07-25T16:00:00.000Z",
-      "updatedAt": "2026-07-26T12:00:00.000Z",
+      "updatedAt": "2026-07-25T16:00:00.000Z",
       "url": "https://example.com/browse/ORB-1480"
     },
     {
@@ -879,7 +879,7 @@
       "assignee": "greta.gale",
       "createdAt": "2026-07-09T09:00:00.000Z",
       "resolvedAt": "2026-07-25T16:00:00.000Z",
-      "updatedAt": "2026-07-26T12:00:00.000Z",
+      "updatedAt": "2026-07-25T16:00:00.000Z",
       "url": "https://example.com/browse/ORB-1487"
     },
     {
@@ -894,7 +894,7 @@
       "assignee": "kira.kerr",
       "createdAt": "2026-07-09T09:00:00.000Z",
       "resolvedAt": "2026-07-25T16:00:00.000Z",
-      "updatedAt": "2026-07-26T12:00:00.000Z",
+      "updatedAt": "2026-07-25T16:00:00.000Z",
       "url": "https://example.com/browse/ORB-1494"
     },
     {
@@ -909,7 +909,7 @@
       "assignee": "kira.kerr",
       "createdAt": "2026-07-09T09:00:00.000Z",
       "resolvedAt": "2026-07-25T16:00:00.000Z",
-      "updatedAt": "2026-07-26T12:00:00.000Z",
+      "updatedAt": "2026-07-25T16:00:00.000Z",
       "url": "https://example.com/browse/ORB-1501"
     },
     {
@@ -924,7 +924,7 @@
       "assignee": "dev.dunne",
       "createdAt": "2026-07-09T09:00:00.000Z",
       "resolvedAt": "2026-07-25T16:00:00.000Z",
-      "updatedAt": "2026-07-26T12:00:00.000Z",
+      "updatedAt": "2026-07-25T16:00:00.000Z",
       "url": "https://example.com/browse/ORB-1508"
     },
     {
@@ -938,7 +938,7 @@
       "statusCategory": "doing",
       "assignee": "orla.oakes",
       "createdAt": "2026-07-09T09:00:00.000Z",
-      "updatedAt": "2026-07-26T12:00:00.000Z",
+      "updatedAt": "2026-07-18T11:00:00.000Z",
       "url": "https://example.com/browse/ORB-1515"
     },
     {
@@ -953,7 +953,7 @@
       "assignee": "ivy.iver",
       "createdAt": "2026-07-09T09:00:00.000Z",
       "resolvedAt": "2026-07-25T16:00:00.000Z",
-      "updatedAt": "2026-07-26T12:00:00.000Z",
+      "updatedAt": "2026-07-25T16:00:00.000Z",
       "url": "https://example.com/browse/ORB-1522"
     },
     {
@@ -968,7 +968,7 @@
       "assignee": "dev.dunne",
       "createdAt": "2026-07-09T09:00:00.000Z",
       "resolvedAt": "2026-07-25T16:00:00.000Z",
-      "updatedAt": "2026-07-26T12:00:00.000Z",
+      "updatedAt": "2026-07-25T16:00:00.000Z",
       "url": "https://example.com/browse/ORB-1529"
     },
     {
@@ -983,7 +983,7 @@
       "assignee": "hugo.hart",
       "createdAt": "2026-07-23T09:00:00.000Z",
       "resolvedAt": "2026-08-08T16:00:00.000Z",
-      "updatedAt": "2026-08-09T12:00:00.000Z",
+      "updatedAt": "2026-08-08T16:00:00.000Z",
       "url": "https://example.com/browse/ORB-1536"
     },
     {
@@ -998,7 +998,7 @@
       "assignee": "ada.ash",
       "createdAt": "2026-07-23T09:00:00.000Z",
       "resolvedAt": "2026-08-08T16:00:00.000Z",
-      "updatedAt": "2026-08-09T12:00:00.000Z",
+      "updatedAt": "2026-08-08T16:00:00.000Z",
       "url": "https://example.com/browse/ORB-1543"
     },
     {
@@ -1013,7 +1013,7 @@
       "assignee": "cleo.calder",
       "createdAt": "2026-07-23T09:00:00.000Z",
       "resolvedAt": "2026-08-08T16:00:00.000Z",
-      "updatedAt": "2026-08-09T12:00:00.000Z",
+      "updatedAt": "2026-08-08T16:00:00.000Z",
       "url": "https://example.com/browse/ORB-1550"
     },
     {
@@ -1028,7 +1028,7 @@
       "assignee": "esme.ellis",
       "createdAt": "2026-07-23T09:00:00.000Z",
       "resolvedAt": "2026-08-08T16:00:00.000Z",
-      "updatedAt": "2026-08-09T12:00:00.000Z",
+      "updatedAt": "2026-08-08T16:00:00.000Z",
       "url": "https://example.com/browse/ORB-1557"
     },
     {
@@ -1042,7 +1042,7 @@
       "statusCategory": "done",
       "createdAt": "2026-07-23T09:00:00.000Z",
       "resolvedAt": "2026-08-08T16:00:00.000Z",
-      "updatedAt": "2026-08-09T12:00:00.000Z",
+      "updatedAt": "2026-08-08T16:00:00.000Z",
       "url": "https://example.com/browse/ORB-1564"
     },
     {
@@ -1057,7 +1057,7 @@
       "assignee": "luca.lund",
       "createdAt": "2026-07-23T09:00:00.000Z",
       "resolvedAt": "2026-08-08T16:00:00.000Z",
-      "updatedAt": "2026-08-09T12:00:00.000Z",
+      "updatedAt": "2026-08-08T16:00:00.000Z",
       "url": "https://example.com/browse/ORB-1571"
     },
     {
@@ -1072,7 +1072,7 @@
       "assignee": "esme.ellis",
       "createdAt": "2026-07-23T09:00:00.000Z",
       "resolvedAt": "2026-08-08T16:00:00.000Z",
-      "updatedAt": "2026-08-09T12:00:00.000Z",
+      "updatedAt": "2026-08-07T11:00:00.000Z",
       "url": "https://example.com/browse/ORB-1578"
     },
     {
@@ -1087,7 +1087,7 @@
       "assignee": "cleo.calder",
       "createdAt": "2026-07-23T09:00:00.000Z",
       "resolvedAt": "2026-08-08T16:00:00.000Z",
-      "updatedAt": "2026-08-09T12:00:00.000Z",
+      "updatedAt": "2026-08-08T16:00:00.000Z",
       "url": "https://example.com/browse/ORB-1585"
     },
     {
@@ -1102,7 +1102,7 @@
       "assignee": "cleo.calder",
       "createdAt": "2026-07-23T09:00:00.000Z",
       "resolvedAt": "2026-08-08T16:00:00.000Z",
-      "updatedAt": "2026-08-09T12:00:00.000Z",
+      "updatedAt": "2026-08-08T16:00:00.000Z",
       "url": "https://example.com/browse/ORB-1592"
     },
     {
@@ -1117,7 +1117,7 @@
       "assignee": "ada.ash",
       "createdAt": "2026-07-23T09:00:00.000Z",
       "resolvedAt": "2026-08-08T16:00:00.000Z",
-      "updatedAt": "2026-08-09T12:00:00.000Z",
+      "updatedAt": "2026-08-08T16:00:00.000Z",
       "url": "https://example.com/browse/ORB-1599"
     },
     {
@@ -1132,22 +1132,22 @@
       "assignee": "jonas.jost",
       "createdAt": "2026-07-23T09:00:00.000Z",
       "resolvedAt": "2026-08-08T16:00:00.000Z",
-      "updatedAt": "2026-08-09T12:00:00.000Z",
+      "updatedAt": "2026-08-08T16:00:00.000Z",
       "url": "https://example.com/browse/ORB-1606"
     },
     {
       "id": "issue:ORB-1613",
       "kind": "issue",
       "source": "jira",
-      "label": "Split the session store",
+      "label": "Split the pricing table",
       "key": "ORB-1613",
       "level": "story",
       "status": "Closed",
       "statusCategory": "done",
-      "assignee": "orla.oakes",
+      "assignee": "ada.ash",
       "createdAt": "2026-07-23T09:00:00.000Z",
       "resolvedAt": "2026-08-08T16:00:00.000Z",
-      "updatedAt": "2026-08-09T12:00:00.000Z",
+      "updatedAt": "2026-08-08T16:00:00.000Z",
       "url": "https://example.com/browse/ORB-1613"
     },
     {
@@ -1161,7 +1161,7 @@
       "statusCategory": "doing",
       "assignee": "hugo.hart",
       "createdAt": "2026-08-06T09:00:00.000Z",
-      "updatedAt": "2026-08-23T12:00:00.000Z",
+      "updatedAt": "2026-08-23T11:00:00.000Z",
       "url": "https://example.com/browse/ORB-1620"
     },
     {
@@ -1175,7 +1175,7 @@
       "statusCategory": "doing",
       "assignee": "bo.bright",
       "createdAt": "2026-08-06T09:00:00.000Z",
-      "updatedAt": "2026-08-23T12:00:00.000Z",
+      "updatedAt": "2026-08-20T11:00:00.000Z",
       "url": "https://example.com/browse/ORB-1627"
     },
     {
@@ -1189,7 +1189,7 @@
       "statusCategory": "doing",
       "assignee": "mara.moss",
       "createdAt": "2026-08-06T09:00:00.000Z",
-      "updatedAt": "2026-08-23T12:00:00.000Z",
+      "updatedAt": "2026-08-20T11:00:00.000Z",
       "url": "https://example.com/browse/ORB-1634"
     },
     {
@@ -1203,7 +1203,7 @@
       "statusCategory": "doing",
       "assignee": "nils.nord",
       "createdAt": "2026-08-06T09:00:00.000Z",
-      "updatedAt": "2026-08-23T12:00:00.000Z",
+      "updatedAt": "2026-08-20T11:00:00.000Z",
       "url": "https://example.com/browse/ORB-1641"
     },
     {
@@ -1217,7 +1217,7 @@
       "statusCategory": "doing",
       "assignee": "kira.kerr",
       "createdAt": "2026-08-06T09:00:00.000Z",
-      "updatedAt": "2026-08-23T12:00:00.000Z",
+      "updatedAt": "2026-08-23T11:00:00.000Z",
       "url": "https://example.com/browse/ORB-1648"
     },
     {
@@ -1230,7 +1230,7 @@
       "status": "In Development",
       "statusCategory": "doing",
       "createdAt": "2026-08-06T09:00:00.000Z",
-      "updatedAt": "2026-08-23T12:00:00.000Z",
+      "updatedAt": "2026-07-29T11:00:00.000Z",
       "url": "https://example.com/browse/ORB-1655"
     },
     {
@@ -1244,7 +1244,7 @@
       "statusCategory": "doing",
       "assignee": "greta.gale",
       "createdAt": "2026-08-06T09:00:00.000Z",
-      "updatedAt": "2026-08-23T12:00:00.000Z",
+      "updatedAt": "2026-08-07T11:00:00.000Z",
       "url": "https://example.com/browse/ORB-1662"
     },
     {
@@ -1258,7 +1258,7 @@
       "statusCategory": "doing",
       "assignee": "greta.gale",
       "createdAt": "2026-08-06T09:00:00.000Z",
-      "updatedAt": "2026-08-23T12:00:00.000Z",
+      "updatedAt": "2026-07-26T11:00:00.000Z",
       "url": "https://example.com/browse/ORB-1669"
     },
     {
@@ -1272,7 +1272,7 @@
       "statusCategory": "todo",
       "assignee": "ada.ash",
       "createdAt": "2026-08-06T09:00:00.000Z",
-      "updatedAt": "2026-08-23T12:00:00.000Z",
+      "updatedAt": "2026-08-07T11:00:00.000Z",
       "url": "https://example.com/browse/HLX-1676"
     },
     {
@@ -1286,7 +1286,7 @@
       "statusCategory": "doing",
       "assignee": "jonas.jost",
       "createdAt": "2026-08-06T09:00:00.000Z",
-      "updatedAt": "2026-08-23T12:00:00.000Z",
+      "updatedAt": "2026-07-27T11:00:00.000Z",
       "url": "https://example.com/browse/HLX-1683"
     },
     {
@@ -1300,7 +1300,7 @@
       "statusCategory": "todo",
       "assignee": "finn.frost",
       "createdAt": "2026-08-06T09:00:00.000Z",
-      "updatedAt": "2026-08-23T12:00:00.000Z",
+      "updatedAt": "2026-08-23T11:00:00.000Z",
       "url": "https://example.com/browse/HLX-1690"
     },
     {
@@ -1314,7 +1314,7 @@
       "statusCategory": "doing",
       "assignee": "kira.kerr",
       "createdAt": "2026-08-06T09:00:00.000Z",
-      "updatedAt": "2026-08-23T12:00:00.000Z",
+      "updatedAt": "2026-08-20T11:00:00.000Z",
       "url": "https://example.com/browse/HLX-1697"
     },
     {
@@ -1328,7 +1328,7 @@
       "statusCategory": "todo",
       "assignee": "jonas.jost",
       "createdAt": "2026-08-06T09:00:00.000Z",
-      "updatedAt": "2026-08-23T12:00:00.000Z",
+      "updatedAt": "2026-08-20T11:00:00.000Z",
       "url": "https://example.com/browse/HLX-1704"
     },
     {
@@ -1342,7 +1342,7 @@
       "statusCategory": "doing",
       "assignee": "greta.gale",
       "createdAt": "2026-08-06T09:00:00.000Z",
-      "updatedAt": "2026-08-23T12:00:00.000Z",
+      "updatedAt": "2026-08-20T11:00:00.000Z",
       "url": "https://example.com/browse/HLX-1711"
     },
     {
@@ -1356,7 +1356,7 @@
       "statusCategory": "doing",
       "assignee": "cleo.calder",
       "createdAt": "2026-08-06T09:00:00.000Z",
-      "updatedAt": "2026-08-23T12:00:00.000Z",
+      "updatedAt": "2026-08-07T11:00:00.000Z",
       "url": "https://example.com/browse/HLX-1718"
     },
     {
@@ -1370,7 +1370,7 @@
       "statusCategory": "doing",
       "assignee": "orla.oakes",
       "createdAt": "2026-08-06T09:00:00.000Z",
-      "updatedAt": "2026-08-23T12:00:00.000Z",
+      "updatedAt": "2026-08-07T11:00:00.000Z",
       "url": "https://example.com/browse/HLX-1725"
     },
     {
@@ -1384,7 +1384,7 @@
       "statusCategory": "doing",
       "assignee": "kira.kerr",
       "createdAt": "2026-08-06T09:00:00.000Z",
-      "updatedAt": "2026-08-23T12:00:00.000Z",
+      "updatedAt": "2026-08-22T11:00:00.000Z",
       "url": "https://example.com/browse/HLX-1732"
     },
     {
@@ -1398,7 +1398,7 @@
       "statusCategory": "doing",
       "assignee": "mara.moss",
       "createdAt": "2026-08-06T09:00:00.000Z",
-      "updatedAt": "2026-08-23T12:00:00.000Z",
+      "updatedAt": "2026-08-23T11:00:00.000Z",
       "url": "https://example.com/browse/HLX-1739"
     },
     {
@@ -1411,7 +1411,7 @@
       "status": "Code review",
       "statusCategory": "doing",
       "createdAt": "2026-08-06T09:00:00.000Z",
-      "updatedAt": "2026-08-23T12:00:00.000Z",
+      "updatedAt": "2026-08-21T11:00:00.000Z",
       "url": "https://example.com/browse/HLX-1746"
     },
     {
@@ -1425,7 +1425,7 @@
       "statusCategory": "doing",
       "assignee": "kira.kerr",
       "createdAt": "2026-08-06T09:00:00.000Z",
-      "updatedAt": "2026-08-23T12:00:00.000Z",
+      "updatedAt": "2026-08-21T11:00:00.000Z",
       "url": "https://example.com/browse/HLX-1753"
     },
     {
@@ -5470,7 +5470,7 @@
     },
     {
       "source": "issue:ORB-1613",
-      "target": "person:orla.oakes@example.com",
+      "target": "person:ada.ash@example.com",
       "relation": "assigned_to",
       "tier": "EXTRACTED",
       "origin": "structural",
@@ -5589,6 +5589,14 @@
       "evidence": []
     },
     {
+      "source": "issue:ORB-1655",
+      "target": "sprint:Orbit 32",
+      "relation": "in_sprint",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
       "source": "issue:ORB-1662",
       "target": "sprint:Orbit 33",
       "relation": "in_sprint",
@@ -5615,6 +5623,14 @@
     {
       "source": "issue:ORB-1669",
       "target": "sprint:Orbit 33",
+      "relation": "in_sprint",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "issue:ORB-1669",
+      "target": "sprint:Orbit 32",
       "relation": "in_sprint",
       "tier": "EXTRACTED",
       "origin": "structural",
@@ -5655,6 +5671,14 @@
     {
       "source": "issue:HLX-1683",
       "target": "sprint:Orbit 33",
+      "relation": "in_sprint",
+      "tier": "EXTRACTED",
+      "origin": "structural",
+      "evidence": []
+    },
+    {
+      "source": "issue:HLX-1683",
+      "target": "sprint:Orbit 32",
       "relation": "in_sprint",
       "tier": "EXTRACTED",
       "origin": "structural",

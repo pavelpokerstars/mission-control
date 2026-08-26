@@ -20,7 +20,7 @@
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, relative } from 'node:path';
 
 const root = new URL('..', import.meta.url).pathname;
 const t0 = Date.now();
@@ -79,6 +79,65 @@ const run = (cmd, args) => execFileSync(cmd, args, { cwd: root, stdio: 'pipe' })
 console.log('\nmission-control — acceptance\n');
 
 step('the workspace typechecks', () => run('npx', ['tsc', '-b']));
+
+/**
+ * A file-sync conflict copy in the tree is not cosmetic — it CORRUPTS a run.
+ *
+ * `loadGraphSource` reads every `*.json` under `records/`, and `seedNotes`
+ * derives a note's id from its filename, so `promise-001 2.md` loads as a
+ * second commitment and the flagship alert appears twice. Both fixtures are
+ * also checked byte-for-byte below, and that digest walks the directory — so a
+ * stray file makes the determinism check fail for a reason that has nothing to
+ * do with the generator, which is exactly the kind of false alarm that teaches
+ * somebody to ignore a verifier.
+ *
+ * Measured on a checkout under `~/Documents`: one `npm run fixture` rewrites
+ * ~300 records at once and iCloud minted 501 conflict copies.
+ *
+ * First, so the failure names the real cause before anything downstream trips
+ * over it.
+ */
+step('no file-sync conflict copies in the tree', () => {
+  const strays = [];
+  const walk = (dir) => {
+    for (const e of readdirSync(dir, { withFileTypes: true })) {
+      if (e.name === 'node_modules' || e.name === '.git') continue;
+      const full = join(dir, e.name);
+      if (e.isDirectory()) walk(full);
+      else if (/ \d+\.\w+$/.test(e.name)) strays.push(relative(root, full));
+    }
+  };
+  /**
+   * The directories where a stray actually corrupts a run, and not the caches.
+   *
+   * A conflict copy under `records/` loads as a phantom record and one under
+   * `notes/` loads as a duplicate commitment — that is the failure this check
+   * exists for. A copy of `vault/raw/provider-probe.json` is a cache that
+   * regenerates, and failing the acceptance command over one is how a verifier
+   * teaches people to ignore it.
+   */
+  for (const d of [
+    'fixtures',
+    'fixtures-programme',
+    join('vault', 'notes'),
+    join('vault-programme', 'notes'),
+  ]) {
+    try {
+      walk(join(root, d));
+    } catch {
+      // The directory need not exist — a vault is created on first boot.
+    }
+  }
+  if (strays.length) {
+    throw new Error(
+      `${strays.length} file-sync conflict cop${strays.length === 1 ? 'y' : 'ies'}, e.g.\n` +
+        strays.slice(0, 5).map((s) => `  ${s}`).join('\n') +
+        `\nThese load as phantom records and duplicate notes. Delete them, and\n` +
+        `exclude this checkout from iCloud/Dropbox sync — a fixture regenerate\n` +
+        `rewrites hundreds of files at once and reliably provokes them.`,
+    );
+  }
+});
 
 step('the fixture regenerates deterministically', () => {
   const before = digest(join(root, 'fixtures'));

@@ -245,6 +245,26 @@ function statusOf(vendor: string, category: string): WorkItemStatus {
 }
 
 /**
+ * The map lookup ALONE — no category fallback, no `'todo'` default.
+ *
+ * `statusOf` is right for a node, which carries a `statusCategory` the collector
+ * declared. An EVENT PAYLOAD carries neither: `{ from: 'In Development', to:
+ * 'Code review' }` is the whole of it. Handing that to `statusOf` would pass a
+ * category of `undefined` and land every unmapped word in `'todo'`, which is
+ * the fabrication `buildTimeline`'s lane-dropping rule exists to refuse — a
+ * ticket would read as having sat in `todo` for the length of a status nobody
+ * could name.
+ *
+ * So this returns `undefined` and lets the caller decide, which for
+ * `buildTimeline` means abandoning the lane. Exported because `@mc/domain` may
+ * not own the map — it is `MC_STATUS_MAP` configuration — and a second copy
+ * there would drift from the one every projection reads.
+ */
+export function lookupStatusWord(vendor: string): WorkItemStatus | undefined {
+  return STATUS_WORDS[vendor.toLowerCase()];
+}
+
+/**
  * Who a per-source identifier belongs to — the consumer half of the identity map.
  *
  * WHY THIS IS THE THING WITHOUT WHICH NOTHING JOINS. The graph keys people on
@@ -379,11 +399,41 @@ function projectWorkItems(g: StoredGraph): WorkItem[] {
   const sprints = new Map(g.nodes.filter(isNodeKind('sprint')).map((n) => [n.id, n.label]));
   const identities = buildIdentities(g);
 
-  const sprintOf = new Map<string, string>();
+  /**
+   * WHICH sprint, when an issue is in several — and it routinely is.
+   *
+   * `sprintNames()` on a real Jira returns a LIST, and
+   * `import-jira-issues.mts` emits one `in_sprint` edge per name, so a ticket
+   * carried from Orbit 30 into Orbit 31 has two. This used to be a plain
+   * `sprintOf.set` in a loop over `g.links`, which kept whichever edge happened
+   * to come last — quite possibly a CLOSED sprint. `gatherWorkFacts` then
+   * filters on `i.sprint === activeSprintOf(items)`, so the carried tickets —
+   * the ones that have been in play longest and are exactly what the lane
+   * exists to surface — dropped out of the sprint entirely, silently.
+   *
+   * The active sprint wins; failing that, the one that ends latest; failing
+   * that, whatever came first, so the answer is stable rather than dependent on
+   * edge order.
+   */
+  const sprintNodes = new Map(g.nodes.filter(isNodeKind('sprint')).map((n) => [n.id, n]));
+  const sprintsOf = new Map<string, string[]>();
   const epicOf = new Map<string, string>();
   for (const e of g.links) {
-    if (e.relation === 'in_sprint') sprintOf.set(e.source, sprints.get(e.target) ?? e.target);
+    if (e.relation === 'in_sprint') sprintsOf.set(e.source, [...(sprintsOf.get(e.source) ?? []), e.target]);
     if (e.relation === 'belongs_to_epic') epicOf.set(e.source, e.target.replace(/^issue:/, ''));
+  }
+
+  const rank = (id: string): number => {
+    const n = sprintNodes.get(id);
+    if (!n) return 0;
+    return n.state === 'active' ? 3 : n.state === 'future' ? 2 : 1;
+  };
+  const ends = (id: string): number => Date.parse(sprintNodes.get(id)?.endsAt ?? '') || 0;
+
+  const sprintOf = new Map<string, string>();
+  for (const [issue, targets] of sprintsOf) {
+    const best = [...targets].sort((a, b) => rank(b) - rank(a) || ends(b) - ends(a))[0]!;
+    sprintOf.set(issue, sprints.get(best) ?? best);
   }
 
   return g.nodes.filter(isNodeKind('issue')).map((n) => ({
@@ -434,6 +484,69 @@ export function projectArrows(g: StoredGraph): CanvasConnector[] {
     });
   }
   return out;
+}
+
+/**
+ * The two facts about an issue that the connector interface has nowhere to put,
+ * and that time-in-status cannot be honest without.
+ *
+ * WHY NOT ON `WorkItem`. `WorkItem.updatedAt` is not the collector's date: the
+ * projection stamps `new Date().toISOString()` when a collector wrote none, so
+ * an issue with no known date reads as touched this second. Widening `WorkItem`
+ * to carry a nullable second date would leave two fields one character apart
+ * where the wrong one is the plausible-looking one — the same argument that
+ * keeps `StoredNode` and `GraphNode` two families. This is a separate, narrow
+ * projection whose whole job is to be unable to lie.
+ *
+ * `carriedFrom` is the closed sprints this issue is still in. It exists because
+ * a carry is the one time-in-status fact a live graph states OUTRIGHT rather
+ * than by inference: a ticket in both Orbit 30 (closed 26 Jul) and Orbit 31
+ * (active) demonstrably did not finish in Orbit 30, whatever any date says, and
+ * an empty list is a real answer rather than a missing one.
+ */
+export interface StatusObservation {
+  key: WorkItemKey;
+  /** `StoredIssue.updatedAt`, verbatim. Absent when the collector wrote none. */
+  lastVendorUpdate?: string;
+  /** Closed sprints this issue is in, oldest close first. Empty is an answer. */
+  carriedFrom: { id: string; label: string; endsAt?: string; closedAt?: string }[];
+}
+
+/**
+ * `StoredIssue.updatedAt` and the carry chain, with NO fallback of any kind.
+ *
+ * The absence of a fallback is the entire point. `import-programme-graph.mts`
+ * writes `updatedAt` only when the source had one and writes no `createdAt` or
+ * `resolvedAt` at all, so "the collector told us nothing about when this last
+ * moved" is a state that genuinely occurs on the live path — and the honest
+ * rendering of it is no signal, not a zero.
+ */
+export function projectStatusObservations(g: StoredGraph): StatusObservation[] {
+  const sprints = new Map(g.nodes.filter(isNodeKind('sprint')).map((n) => [n.id, n]));
+
+  const inSprints = new Map<string, string[]>();
+  for (const e of g.links) {
+    if (e.relation !== 'in_sprint') continue;
+    inSprints.set(e.source, [...(inSprints.get(e.source) ?? []), e.target]);
+  }
+
+  const when = (s: { closedAt?: string; endsAt?: string }): number =>
+    Date.parse(s.closedAt ?? s.endsAt ?? '') || 0;
+
+  return g.nodes.filter(isNodeKind('issue')).map((n) => ({
+    key: n.key,
+    ...(n.updatedAt ? { lastVendorUpdate: n.updatedAt } : {}),
+    carriedFrom: (inSprints.get(n.id) ?? [])
+      .map((id) => sprints.get(id))
+      .filter((s): s is NonNullable<typeof s> => !!s && s.state === 'closed')
+      .map((s) => ({
+        id: s.id,
+        label: s.label,
+        ...(s.endsAt ? { endsAt: s.endsAt } : {}),
+        ...(s.closedAt ? { closedAt: s.closedAt } : {}),
+      }))
+      .sort((a, b) => when(a) - when(b)),
+  }));
 }
 
 /** Board cards, laid out in a readable grid. Position is ours only in the mock. */

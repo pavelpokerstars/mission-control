@@ -10,6 +10,12 @@ dist/
 
 # Secrets. .env.example IS committed; the real thing never is.
 .env
+# And any hand-made copy of it. A backup taken before editing carries exactly
+# the same credentials as the original, and `.env` alone does not match it —
+# `.env.backup-20260825` is a different filename, and git would happily commit
+# a live token under it.
+.env.backup*
+.env.*.backup
 .env.local
 .env.*.local
 
@@ -40,6 +46,11 @@ dist/
 # skipped it. The root `tsc -b` still covered it, which is why this never
 # surfaced as an error.
 /vault/
+# The second vault, for MC_GRAPH_DIR=./fixtures-programme. Same rule as above:
+# working state, never a fixture. A vault is not reseeded once it holds
+# anything, so a second graph needs a second vault or it reads the first
+# programme's claims against the second programme's keys.
+/vault-programme/
 
 # The record of the two August planning sessions — four named colleagues,
 # verbatim quotes, meeting times and live board ids. It is genuinely useful to

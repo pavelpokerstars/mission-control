@@ -1256,7 +1256,7 @@ vault. It touches no vendor and is deliberately not cached: `/api/work` pays for
 a five-surface gather, and this is the screen the app opens on and the one a
 notification links into.
 
-**All six kinds fire, and four of them reach the front door.**
+**All EIGHT kinds fire, and six of them reach the front door.**
 `undetected_dependency` and `suspect_link` are `COVERAGE_KINDS`: they fall out of
 the graph's tiers **one per edge**, so a real programme produces them by the
 hundred (measured: 840 and 268 on a 5,000-issue import) and an alert list whose
@@ -1279,6 +1279,27 @@ and `buildTimeline` stay the single definition, so a row saying "two sources
 disagree" and the alert saying the same cannot come from two ideas of
 disagreement. `gatherWorkFacts` in `work.ts` is the shared gather; `buildWorkLane`
 is one shaping of it and `runFindings` is another.
+
+**The programme fixture carries a realistic `updatedAt` spread and a carry
+chain, and both were missing.** Every one of its eighty issues used to be
+stamped `day(sprint.end, 12)` — one instant for the whole sprint — so the
+bounded basis computed correctly for every row and every row read the same 2.6
+days, crossing no threshold. And no issue had more than one `in_sprint` edge, so
+`carriedFrom` was empty for all eighty and the carry evidence row was
+unreachable. `sprintNames()` on a real board returns a LIST and
+`import-jira-issues.mts` emits one edge per name, so carryover is the normal
+case live and was the impossible case here. `IDLE` in
+`generate-programme-fixture.mts` is the weighted table — ten entries inside a
+working week, four in the tail — because uniform scatter flagged twelve of the
+twenty active-sprint tickets, which is the dashboard the front door may not
+become.
+
+**`projectWorkItems` used to collapse carryover to whichever `in_sprint` edge
+came last**, possibly a *closed* sprint — and `gatherWorkFacts` filters on
+`i.sprint === activeSprintOf(items)`, so the carried tickets, the ones in play
+longest and exactly what the lane exists to surface, dropped out of the sprint
+entirely and silently. The active sprint wins now, then the one ending latest,
+so the answer is stable rather than dependent on edge order.
 
 **`blocked_by`, `unwritten` and `activity` are deliberately NOT findings.** They
 are true, useful on a row you are already reading, and not reasons to interrupt
@@ -1323,6 +1344,123 @@ Severity is `crit` / `warn` / `ok`, matching `DESIGN.md` §1 rather than
 `WorkSignal.tone`'s `alarm`/`warn`/`info` — translating between two severity
 scales on one screen is how a row and the page it opens disagree about how bad
 something is.
+
+**A promise nobody typed a key into now produces one of TWO alerts, and they
+are different claims rather than one softened.** Measured on the fixture shaped
+like real collector output, **zero of twenty-four meetings names a Jira key** —
+which is the shape of the real thing, because nobody says a ticket number aloud
+in a stand-up. So every promise made in a meeting reached the vault with
+`relatedKeys: []` and the flagship alert reported it as *never filed*, including
+when it was plainly the ticket everybody in the room was looking at.
+
+| | fires when | claim | button |
+|---|---|---|---|
+| `missing_ticket` | no filed key **and** no reconstruction | *"… was never filed"* | Create the ticket |
+| `unlinked_commitment` | no filed key **and** exactly one reconstruction | *"… is probably ORB-1585, and nothing says so"* | Link it to the ticket |
+
+**Both keep the `missing_ticket:<noteId>` id, and that is not cosmetic.** Three
+things key on `Finding.id`: `suppressedIds` and `answeredFindingIds` in `act.ts`
+— so every deferral and dismissal already made would come straight back — and
+`notifiedIds` in `notify.ts`, which reads `mc.memory_surfaced` off the durable
+log. That last one is the expensive one: the first pass after a rename
+re-announces every alert the user was already told about. A note produces
+exactly one of the two kinds, so uniqueness still holds.
+
+**`libs/domain/src/joins.ts` is the reconstruction, and it is deterministic
+code.** `infer.ts` is the right instrument for *"this page is about the same
+outage"* and the wrong one here, for the reason `skills.ts` is deterministic:
+this feeds a DETECTOR, and an alert list that changes between two runs over the
+same data is worthless. The pipeline is `scope ∩ owner ∩ words`:
+
+- **scope** — issues in the promise's own container. NEVER the programme. The
+  worked example is `PLT-4412 "Provision the payments settled topic"`, which
+  matches the flagship promise beautifully and is in no sprint at all.
+- **owner** — the assignee resolves to the same person, through
+  `buildIdentities`. This is the filter doing the real work.
+- **words** — the titles clear `JOIN_MATCH` (0.4) *and* share `MIN_SHARED_WORDS`
+  (2). Two floors, because the coefficient alone runs high for two tiny sets
+  sharing one word.
+
+**It mints only when EXACTLY ONE candidate clears, and that refusal is the
+design.** Not "highest score, breaking ties" — measured on `fixtures/` for
+*"Dana takes the settled event end to end"*, the leader is **PAY-9033 at 0.50
+and it is the wrong ticket**, with PAY-9031 and PAY-9032 tied behind at 0.40.
+A tie-break by score would mint a confident wrong link with a plausible reason
+attached. Two survivors mint nothing and the alert stays `missing_ticket`.
+
+**Nothing writes a reconstruction into the vault.** The vault is the asserted
+layer — it accumulates and is never rebuilt — so a stored guess would outlive
+any threshold change and could not be undone by switching this off. It runs in
+the pass, every time. What a person confirms on the alert *is* written, as
+`EXTRACTED`, which is what stops it firing again.
+
+**`Note.joins` was fully built and had no consumer.** It is persisted,
+round-tripped through the frontmatter and asserted by `verify-graph.mts`, and
+nothing read its tier to decide anything: `findMissingTickets` gated on
+`relatedKeys.length > 0` regardless of provenance. So the moment anything
+reconstructs a key, the flagship alert goes quiet on promises that genuinely
+were never filed — silently. `filedKeys` is the one definition now, and the
+checklist reads it too, because a guessed key rendered beside an unticked box
+reads as a filed ticket with a broken tick.
+
+**`dropped_commitment` is the other new one: promised out loud, its sprint still
+RUNNING, and nothing since has named it.** `missing_ticket` fires when a
+container closes and says the tracker never got this; this fires while the
+container is open and says the *conversation* dropped it. Mutually exclusive by
+construction on `container.state` — `active` here, `closed` there — so neither
+detector knows the other exists. `active` and not `!== 'closed'`, because
+`future` admits a sprint that has not started and nagging about next sprint is
+exactly what the trigger question was settled to avoid.
+
+- **The question is asked from `lastHeardOf`, not from when the promise was
+  made.** "Was it ever acknowledged" is a one-shot test that a promise
+  acknowledged once the next morning and dropped for two months passes for
+  ever — which is the failure this exists to catch.
+- **The meeting the promise was made in does not count as hearing of it again.**
+  A Zoom note becomes one corpus entry per paragraph, so the paragraphs after
+  the promise are all stamped later than it: without this, a promise glanced off
+  two lines below itself reads as followed up.
+- **The trigger is a meeting having run since**, not a day count. A stand-up is
+  where this should have come up, so a stand-up passing it over is the event.
+- **`DF_MAX_SHARE` is raised when in doubt, never lowered.** A missed follow-up
+  fires at somebody who has been chasing daily; a spurious one only keeps us
+  quiet. It is tuned to prefer silence — and it does not discriminate as well as
+  it looks: on the fixture, "chase the vendor sandbox" reads as followed up
+  because eight records say *"ORB-XXXX is still blocked on the vendor sandbox"*
+  about eight unrelated tickets. It failed SAFE, which is the design, and it
+  must not be quoted as evidence the rule is precise.
+- **`MIN_LIVE_SURFACES` is the "we do not know" guard.** Without it the detector
+  fires hardest on a programme whose collectors have stopped running — nothing
+  has been said since because nothing has been *read* since.
+- **The corpus is opt-in** (`GatherOpts.corpus`). The gather already reads every
+  Slack message, transcript paragraph and Confluence page and indexes only the
+  keyed minority; `/api/work` must not start paying to materialise the rest.
+  `CorpusEntry` keeps tokens, not bodies.
+- **The DF index is memoised on `graph.generatedAt` ALONE.** The corpus is the
+  derived tier and only a collector run changes it. Keying it on the event log
+  would tear it down every thirty seconds under the canvas poll — the documented
+  anti-pattern that once left a screen on "Loading…" for ever.
+
+**`vault.create()` used to stamp `createdAt: now`, discarding the draft's own.**
+`seedNotes` copies the fixture's claims through that path, so a promise made in
+June arrived in the vault dated the moment the gateway booted — and
+`dropped_commitment` measures from `createdAt`, so on a freshly seeded vault
+every promise had been made "just now" and the detector could not fire at all.
+A supplied date wins now; `now` is still the default for a note written by hand.
+
+**`accept_proposal` is a chain of `if` blocks with NO default**, so
+`link_commitment` needed a branch or accepting it would settle `accepted`, write
+nothing and report success — the failure `update_issue`, `link_issues` and
+`post_message` already shipped with. Its Jira comment is provenance rather than
+the effect, so a comment failure is reported as such: the vault write has
+already happened, and saying *"nothing was written"* when the alert has stopped
+firing is the same class of lie as claiming a success that did not happen.
+
+**`askProposal` no longer hardcodes `channel: 'eng-payments'`.** That is the
+fixture's own channel; pointed at any other programme it drafted a message to a
+channel that does not exist. The channel comes off a Slack evidence label
+(`#channel — author`), and when nothing resolves the field is **omitted** rather
+than guessed.
 
 **`findMissingTickets` gates on four things and every one is load-bearing:** an
 open `commitment`, **no** `relatedKeys`, an `owner` **and** a `dueAt`, and a
@@ -1446,15 +1584,70 @@ cross-surface join, which is the only thing here a Jira tab cannot do.
 - **Unassigned sprint work is always shown.** It is nobody's row and therefore
   everybody's problem; the reason it is unassigned is that no personal lane has
   ever shown it.
-- **"Days in this status" is measured, never `updatedAt`.** One `buildTimeline`
-  over the durable log, indexed by key, over the same `TRAIL_DAYS` window the
-  dossier uses — which is why `issue.ts` exports it. `updatedAt` means "last
-  touched anything" (a comment, a field edit, and in mock mode a value stamped at
-  boot) and reading a status age out of it was wrong on every row in both
-  directions: the lane said MC-103 had sat 0 days while the dossier said 14, so
-  the aging signal never fired on the ticket the lane exists to surface.
-  A ticket with no transitions in the window gets no `ageDays` and claims no
-  aging signal — "we do not know" beats a fabricated zero.
+- **"Days in this status" has TWO bases, and `statusAgeOf` owns the choice.**
+  `measured` comes from one `buildTimeline` over the durable log, indexed by
+  key, over the same `TRAIL_DAYS` window the dossier uses — which is why
+  `issue.ts` exports it. `bounded` comes from `StoredIssue.updatedAt` and reads
+  *"at least 31 days in development — last touched 2026-07-26"*.
+
+  **The second basis exists because the first is structurally dead on live
+  data.** No collector writes an `events.jsonl` — `import-programme-graph.mts`
+  writes `graph.json` and nothing else — so `buildTimeline` has nothing to
+  measure until the Jira webhook and the scheduled re-derive have been running
+  for weeks. Measured: `fixtures-programme` yields 16 findings, and the same
+  directory with `events.jsonl` removed (which IS the live shape) yielded **7,
+  with every `aging` row gone**. The detector was not degraded, it could not
+  fire at all, and nothing anywhere failed.
+
+  **`updatedAt` was correctly rejected as an ESTIMATE and is honest as a
+  BOUND**, and the distinction is the whole of it. Every event that moves
+  `updatedAt` — a comment, a field edit, a rank — moves it *forward*, which
+  makes `now - updatedAt` *smaller*; a status change necessarily touches the
+  issue, so nothing can have left its status since. The error is
+  one-directional: it can understate the wait and cannot overstate it. That is
+  what makes "at least" sayable, and **the qualifier and the date must survive
+  to the reader** — `statusAgeText` is the one place either is worded.
+
+  **A lane that disagrees with the graph is discarded, not preferred.** The
+  collector re-read the ticket this morning; the log stopped at whatever webhook
+  last arrived. Five of twenty-seven lanes disagreed on `fixtures-programme` and
+  two shipped as findings naming a status the ticket was not in — `HLX-1704`
+  read *"16 days in backlog"* against a last transition into `In Development`.
+
+  **`buildTimeline` takes a `mapStatus` and abandons a lane it cannot read.**
+  An event payload carries the workflow's own word and no `statusCategory`, and
+  this used to cast it straight to `WorkItemStatus`. Pass `lookupStatusWord`
+  (exported from `@mc/connectors`, the map lookup alone — no category fallback,
+  no `'todo'` default) at every call site; `workOpts` does it for the two that
+  matter. The *whole lane* is dropped rather than the one event, because
+  skipping it silently merges the segments either side and overstates the age.
+
+  **`DEFAULT_AGING_DAYS` is per column, and `null` means never.** This is
+  `aging`'s precision gate, as `owner && dueAt` is `missing_ticket`'s. A single
+  `AGING_DAYS = 7` shipped *"16 days in backlog"* as a live alert — a backlog
+  item ageing is what a backlog IS. `MC_AGING_DAYS` replaces the table, loaded
+  by `loadAgingDays` in `graph-source.ts` on exactly the `MC_STATUS_MAP` rules:
+  merged over the defaults, unknown key rejected loudly, unreadable file refuses
+  to boot, and deliberately not inside `MC_GRAPH_DIR`.
+
+  A ticket with neither basis gets no `ageDays` and claims no aging signal —
+  "we do not know" beats a fabricated zero.
+
+- **`flowEfficiency` is `null` when the log cannot express waiting.** It divides
+  active by active-plus-waiting, so a workflow that never records a review or
+  blocked transition yields 1.0 — *"100% of its measured life was active work"* —
+  about a programme nobody measured. `fixtures-programme`'s log moves between
+  `Backlog`, `In Development` and `Closed` only, so all twenty-seven lanes would
+  have claimed perfect flow. Asked once over the whole timeline, because it is a
+  property of the LOG'S VOCABULARY and not of any one ticket.
+
+- **`firedAt` on an aging finding is when it crossed its threshold.** The
+  generic `row.lastActivity ?? Date.now()` is wrong here in a way that disables
+  ranking entirely: `lastActivity` is the newest thing anybody *said*, and a
+  ticket nobody has mentioned is precisely the aging case — so it was
+  `undefined` for all seven findings and every one carried the same
+  `Date.now()`. `rankFindings` sorts oldest-first inside a severity, so a
+  41-day ticket could not outrank a 16-day one.
 
 **A ticket picked — `GET /api/issue/:key`.** The whole context, in the order
 somebody actually needs it: the disagreements, then *where it came from*, then

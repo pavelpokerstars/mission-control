@@ -39,6 +39,7 @@ import {
   type WorkItem,
   type WorkItemKey,
 } from '@mc/domain';
+import { lookupStatusWord } from '@mc/connectors';
 import type { Connectors } from '@mc/connectors';
 import type { VaultStore } from '@mc/vault';
 import type { EventLog } from './events.js';
@@ -363,7 +364,7 @@ export async function buildDossier(
   // change every number derived from them.
   const sinceIso = new Date(since).toISOString();
   const events = history.filter((e) => e.ts >= sinceIso).slice(0, 2_000);
-  const lane = buildTimeline(events, { items, notes: vault.list() }).lanes.find((l) => l.key === key);
+  const lane = buildTimeline(events, { items, notes: vault.list(), mapStatus: lookupStatusWord }).lanes.find((l) => l.key === key);
 
   const counts: Partial<Record<Owner, number>> = {};
   for (const e of trail) counts[e.surface] = (counts[e.surface] ?? 0) + 1;

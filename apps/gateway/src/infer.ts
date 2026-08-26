@@ -57,7 +57,7 @@ import {
   type GraphEdgeKind,
   type Owner,
 } from '@mc/domain';
-import type { Connectors } from '@mc/connectors';
+import type { Connectors, GraphSource } from '@mc/connectors';
 import type { VaultStore } from '@mc/vault';
 import { stripHtml } from './format.js';
 import { createStructured, type ProviderCaps } from './structured.js';
@@ -106,9 +106,27 @@ interface CatalogueEntry {
   label: string;
 }
 
-/** A piece of text the join key could not place, with enough to cite it. */
+/**
+ * A piece of text the join key could not place, with enough to cite it.
+ *
+ * `surface` is DELIBERATELY WIDER than `Owner` here, and only here. GitHub is
+ * one of the five collectors and is not a `Surface`: it owns no field in
+ * `FIELD_OWNER`, and adding it to the union would reach `Evidence.surface`,
+ * every `for (const s of SURFACES)` loop and every per-surface colour map —
+ * which is the same argument that keeps `provenance` from becoming a sixth
+ * `Owner`. This is an internal label on a corpus entry, read by nothing but the
+ * prompt and the locator, so it can afford to name the real source.
+ *
+ * The consequence is deliberate and worth knowing: a PR can be EVIDENCE for a
+ * relation between two catalogued things, and cannot itself be one end of an
+ * inferred edge. `pr → issue` links already exist as `mentions` edges written
+ * by `import-github-prs.mts` off the branch name; surfacing those is a
+ * projection question, not an inference one.
+ */
+type CorpusSurface = Owner | 'github';
+
 interface CorpusRecord {
-  surface: Owner;
+  surface: CorpusSurface;
   locator: string;
   text: string;
   /** Keys the regex DID find here, so the model can relate rather than re-extract. */
@@ -135,6 +153,17 @@ export interface Relationizer {
 async function gatherCorpus(
   c: Connectors,
   vault: VaultStore,
+  /**
+   * The graph, for the one surface that has no connector.
+   *
+   * GitHub is one of the five collectors and there is no `Connectors.github` —
+   * `pr` nodes reach `sources.ts` for a count and nothing else. On the
+   * programme fixture that is 120 of 296 records, the largest population of the
+   * lot, and a merged PR is the single clearest piece of evidence that anything
+   * was followed up on. Read straight off the graph rather than inventing a
+   * sixth connector, which would be a surface with one reader.
+   */
+  graph?: GraphSource,
 ): Promise<InferenceInput> {
   const boardId = process.env.MIRO_BOARD_ID ?? 'demo-board';
   const spaceKey = process.env.CONFLUENCE_SPACE_KEY ?? 'MC';
@@ -159,17 +188,35 @@ async function gatherCorpus(
     })),
   ].slice(0, MAX_CATALOGUE);
 
-  const records: CorpusRecord[] = [];
-  const add = (surface: Owner, locator: string, text: string): void => {
+  /**
+   * ONE BUCKET PER SURFACE, because a flat list plus a slice starves whichever
+   * surface is appended last.
+   *
+   * This was a flat `records[]` with `records.slice(0, MAX_RECORDS)` at the end,
+   * and the append order is slack, zoom, confluence, miro, vault. Measured on
+   * `fixtures-programme`: slack contributed 59 and zoom 101, which is exactly
+   * 160 — so **every Confluence page, every sticky and every vault note was cut
+   * before the model saw it**, silently. The ten Confluence relations the pass
+   * did produce came from matching page TITLES in the catalogue, not from
+   * reading a single page body.
+   *
+   * That is the difference between "the model did not find a connection there"
+   * and "the model was never shown that surface", and from the outside the two
+   * are indistinguishable — which is what makes it worth the extra structure.
+   */
+  const buckets = new Map<CorpusSurface, CorpusRecord[]>();
+  const add = (surface: CorpusSurface, locator: string, text: string): void => {
     const trimmed = text.trim();
     // A sentence too short to carry a claim cannot carry a relation either.
     if (trimmed.length < 24) return;
-    records.push({
+    const into = buckets.get(surface) ?? [];
+    into.push({
       surface,
       locator,
       text: trimmed.slice(0, MAX_TEXT),
       keys: extractKeys(trimmed),
     });
+    buckets.set(surface, into);
   };
 
   for (const ch of channels) {
@@ -193,7 +240,67 @@ async function gatherCorpus(
     add(VAULT, n.id, `${n.title}. ${n.body}`);
   }
 
-  return { catalogue, records: records.slice(0, MAX_RECORDS) };
+  /**
+   * GitHub, read off the graph because it has no connector.
+   *
+   * A PR's `branch` is carried deliberately: `import-github-prs.mts` joins on
+   * the branch name, so `feat/ORB-1641-retry` is where the key lives and the
+   * title routinely does not mention it at all.
+   */
+  if (graph) {
+    for (const n of graph.graph.nodes) {
+      if (n.kind !== 'pr') continue;
+      const id = n.id.replace(/^pr:github\//, '');
+      const rec = graph.records.get(`pr/${id.replace(/\//g, '-')}`) as
+        | { number?: number; title?: string; branch?: string; merged?: boolean }
+        | undefined;
+      if (!rec) continue;
+      add(
+        'github',
+        n.id,
+        `${rec.title ?? n.label} (branch ${rec.branch ?? 'unknown'}${rec.merged ? ', merged' : ', open'})`,
+      );
+    }
+  }
+
+  /**
+   * A FAIR SHARE PER SURFACE, drawn round-robin.
+   *
+   * Every surface gets its first record before any surface gets its second, so
+   * a chatty Slack export cannot crowd out a wiki. Within a surface the order
+   * is whatever the connector returned, which is already newest-first where it
+   * means anything.
+   *
+   * AND IT SAYS WHAT IT DROPPED. A cap that silently truncates reads as "we
+   * looked at everything and found nothing there", which is the one thing a
+   * coverage number must never imply.
+   */
+  const records: CorpusRecord[] = [];
+  const queues = [...buckets.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+  for (let i = 0; records.length < MAX_RECORDS; i++) {
+    let took = false;
+    for (const [, q] of queues) {
+      if (i >= q.length) continue;
+      records.push(q[i]!);
+      took = true;
+      if (records.length >= MAX_RECORDS) break;
+    }
+    if (!took) break;
+  }
+
+  const dropped = queues
+    .map(([surface, q]) => {
+      const taken = records.filter((r) => r.surface === surface).length;
+      return q.length > taken ? `${surface} ${q.length - taken}` : '';
+    })
+    .filter(Boolean);
+  if (dropped.length) {
+    console.log(
+      `[infer] corpus capped at ${MAX_RECORDS}; not shown to the model: ${dropped.join(', ')}`,
+    );
+  }
+
+  return { catalogue, records };
 }
 
 // ---------------------------------------------------------------------------
@@ -494,6 +601,8 @@ export function startInference(
   c: Connectors,
   vault: VaultStore,
   r: Relationizer | null,
+  /** The graph, for GitHub — the surface with no connector. */
+  graph?: () => GraphSource,
 ): Inference {
   let edges: InferredEdge[] = [];
   let running = false;
@@ -504,7 +613,7 @@ export function startInference(
     if (!r || running || stopped) return;
     running = true;
     try {
-      const corpus = await gatherCorpus(c, vault);
+      const corpus = await gatherCorpus(c, vault, graph?.());
       edges = await cachedRelations(r, corpus);
       lastAt = Date.now();
       if (edges.length) console.log(`[infer] ${edges.length} inferred relation(s) over the corpus`);

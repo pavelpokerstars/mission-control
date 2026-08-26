@@ -44,6 +44,7 @@ import {
 import { createHash } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
+import { lookupStatusWord } from '@mc/connectors';
 import type { ConfluencePage, Connectors } from '@mc/connectors';
 import type { VaultStore } from '@mc/vault';
 import type { StoredContainer } from '@mc/domain';
@@ -197,7 +198,7 @@ async function gather(ctx: SkillContext, days: number): Promise<Gathered> {
     items,
     notes,
     pages,
-    timeline: buildTimeline(events, { items, notes }),
+    timeline: buildTimeline(events, { items, notes, mapStatus: lookupStatusWord }),
     graph: buildRelationGraph({ items, notes, connectors: arrows, pages }),
   };
 }

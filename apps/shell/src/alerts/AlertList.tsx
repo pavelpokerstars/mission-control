@@ -30,6 +30,8 @@ export const KIND_LABEL: Record<FindingKind, string> = {
   suspect_link: 'Stale link',
   undetected_dependency: 'Unrecorded dependency',
   aging: 'Not moving',
+  unlinked_commitment: 'Probably this ticket',
+  dropped_commitment: 'Raised, then dropped',
 };
 
 const DAY_MS = 86_400_000;

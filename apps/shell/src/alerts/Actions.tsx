@@ -41,6 +41,12 @@ const PRIMARY: Partial<Record<Finding['kind'], string>> = {
   suspect_link: 'Ask whether it still holds',
   undetected_dependency: 'Add the link',
   aging: 'Ask the owner',
+  // "Link it", not "Create it": the ticket already exists and the missing thing
+  // is the connection. Offering to create one here would file a duplicate.
+  unlinked_commitment: 'Link it to the ticket',
+  // Static, because `PRIMARY` is looked up with no finding in scope — so it
+  // cannot name the owner, however much better "Ask Esme" would read.
+  dropped_commitment: 'Ask the owner where this got to',
 };
 
 /**
@@ -58,6 +64,8 @@ const DISMISS: Partial<Record<Finding['kind'], string>> = {
   suspect_link: 'The link is correct — dismiss',
   undetected_dependency: 'Not a dependency — dismiss',
   aging: 'It is fine where it is — dismiss',
+  unlinked_commitment: 'Wrong ticket — dismiss',
+  dropped_commitment: 'It was handled elsewhere — dismiss',
 };
 
 /**

@@ -186,6 +186,37 @@ function primaryProposal(f: Finding, note: Note | undefined): Proposal | undefin
         { dedupeKey: f.dedupeKey, confidence: 0.9 },
       );
 
+    /**
+     * The ticket exists; the connection does not. So the write is a LINK, not
+     * another `create_issue` — offering to create one here would file a
+     * duplicate of the thing the alert has just identified.
+     *
+     * The key comes off the claim rather than the payload because the
+     * reconstruction is recomputed each pass and deliberately never stored:
+     * the vault is the asserted layer and a derived guess must not accumulate
+     * in it. `claimKey` reads it back out of the sentence a person just read,
+     * which is also the only version anybody has agreed to.
+     */
+    case 'unlinked_commitment': {
+      const key = claimKey(f);
+      if (!key || !note) return undefined;
+      return propose(
+        'link_commitment',
+        `Promised in ${note.container?.replace(/^sprint:/, '') ?? 'a closed container'}, and ${key} is almost certainly the ticket. ${f.impact}`,
+        evidence,
+        { noteId: note.id, key, why: f.claim },
+        { dedupeKey: f.dedupeKey, confidence: 0.7 },
+      );
+    }
+
+    /**
+     * A promise nobody has mentioned since has no correct write either — the
+     * only useful act is to ask the person who took it. Same shape as a cycle
+     * or a disagreement: the alert states the fact and drafts the question.
+     */
+    case 'dropped_commitment':
+      return askProposal(f);
+
     case 'undetected_dependency':
       return propose(
         'link_issues',
@@ -213,12 +244,33 @@ function askProposal(f: Finding): Proposal {
     .map((e) => `> ${e.quote ?? e.label}${e.quote ? ` — ${e.label}` : ''}`)
     .join('\n');
 
+  /**
+   * The channel comes from the EVIDENCE, and it used to be `'eng-payments'`
+   * hardcoded.
+   *
+   * That is the fixture's own channel name. Pointed at any other programme it
+   * drafts a message addressed to a channel that does not exist — an invented
+   * destination, on a product whose whole argument is that it invents nothing,
+   * on the one proposal kind a person is most likely to accept without reading
+   * the payload.
+   *
+   * A Slack evidence label is `#channel — author`, so the channel is already in
+   * front of us on any alert built from a Slack record. When nothing resolves,
+   * the field is OMITTED rather than guessed, and the draft says who to ask
+   * instead of pretending to know where.
+   */
+  const channel = f.evidence
+    .map((e) => (e.surface === 'slack' ? /^#([^\s—]+)/.exec(e.label)?.[1] : undefined))
+    .find((ch): ch is string => !!ch);
+
   return propose(
     'post_message',
-    `Asks the people involved, quoting both records with their dates and asking only which is current. It does not say which is right — that is the one thing this cannot know.`,
+    channel
+      ? `Asks the people involved in #${channel}, quoting both records with their dates and asking only which is current. It does not say which is right — that is the one thing this cannot know.`
+      : `Drafts the question, with no channel — nothing in the evidence says where this was discussed, and guessing a channel would be inventing a destination. Pick one before sending.`,
     f.evidence,
     {
-      channel: 'eng-payments',
+      ...(channel ? { channel } : {}),
       text: [`${f.claim}.`, '', quoted, '', 'Which of these is current?'].join('\n'),
     },
     { dedupeKey: `ask:${f.dedupeKey}`, confidence: 0.6 },
@@ -227,6 +279,18 @@ function askProposal(f: Finding): Proposal {
 
 const subjectKey = (f: Finding): string =>
   f.subject.kind === 'workitem' ? f.subject.key : '';
+
+/**
+ * The ticket named in an `unlinked_commitment`'s own claim.
+ *
+ * Read back out of the sentence rather than recomputed, so the key somebody is
+ * about to link is exactly the key they were shown. A second call to the
+ * reconstruction could disagree with the page — the graph may have been
+ * replaced by a collector run in between — and linking a different ticket from
+ * the one on the button is the worst version of this feature.
+ */
+const claimKey = (f: Finding): string | undefined =>
+  /\b([A-Z][A-Z0-9]+-\d+)\b/.exec(f.claim)?.[1];
 
 /** The other end of a two-key finding, read back out of its id. */
 const otherKey = (f: Finding): string => f.id.split(':').pop()?.replace(/^issue:/, '') ?? '';
@@ -260,7 +324,7 @@ export type ApplyProposal = (proposalId: string) => Promise<Record<string, unkno
  * provider, and `/api/findings/:id/act` is not a tool, so no model can reach
  * either path.
  */
-const APPLIES = new Set(['create_issue', 'link_issues']);
+const APPLIES = new Set(['create_issue', 'link_issues', 'link_commitment']);
 
 export async function actOnFinding(
   f: Finding,
@@ -279,12 +343,21 @@ export async function actOnFinding(
           const out = await apply(p.id);
           if (typeof out.error === 'string') throw new Error(out.error);
           const created = typeof out.created === 'string' ? out.created : undefined;
+          const linked = typeof out.linked === 'string' ? out.linked : undefined;
           return {
             proposal: p,
             outcome: created
               ? `${created} created, carrying a comment that names the meeting, the rationale and ` +
                 `every citation above. The commitment now points at it, so this alert will not fire again.`
-              : 'Done. The tracker now records it, so this alert will not fire again.',
+              : linked
+                ? typeof out.provenanceFailed === 'string'
+                  ? `Linked to ${linked}. The promise records the key as confirmed rather than ` +
+                    `guessed, so this alert will not fire again — but the provenance comment could ` +
+                    `not be posted: ${out.provenanceFailed}`
+                  : `Linked to ${linked}, which now carries a comment naming the meeting and every ` +
+                    `citation above. The promise records the key as confirmed rather than guessed, so ` +
+                    `this alert will not fire again.`
+                : 'Done. The tracker now records it, so this alert will not fire again.',
           };
         } catch (err) {
           /**

@@ -32,7 +32,7 @@ import { agentStatus, createAgent } from './agent.js';
 import { APP_URL, transports } from './notify.js';
 import { eventLog } from './events.js';
 import { boardArrows, buildDossier, forgetBoardArrows } from './issue.js';
-import { buildWorkLane } from './work.js';
+import { buildWorkLane, workOpts } from './work.js';
 import { createSummaries, createSummariser } from './summary.js';
 import { createExtractor } from './extract.js';
 import { createRelationizer, startInference } from './infer.js';
@@ -198,7 +198,12 @@ async function main(): Promise<void> {
    * Null when nothing can answer, and then the graph is exactly what it was
    * before this existed.
    */
-  const inference = startInference(connectors, vault, await createRelationizer(await providerCaps()));
+  const inference = startInference(
+    connectors,
+    vault,
+    await createRelationizer(await providerCaps()),
+    currentGraph,
+  );
   // Inference is handed to the tools as a getter rather than a snapshot: it is
   // filled in by a background pass that has almost certainly not finished yet,
   // and a snapshot taken here would be empty for the life of the process.
@@ -608,7 +613,7 @@ async function main(): Promise<void> {
     const who = typeof req.query.assignee === 'string' ? req.query.assignee : undefined;
     // The same reconciled arrows the findings pass uses, so the lane and the
     // alert list cannot disagree about what is in a cycle.
-    return res.json(await buildWorkLane(who, connectors, vault, projectArrows(currentGraph().graph)));
+    return res.json(await buildWorkLane(who, connectors, vault, workOpts(currentGraph())));
   });
 
   /**
