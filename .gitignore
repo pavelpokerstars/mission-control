@@ -63,3 +63,18 @@ docs/html/
 /live-graph/
 /live-vault/
 /live-status-map.json
+
+# THE RE-IDENTIFICATION KEY for a sanitised export. It maps every invented name,
+# ticket key and channel back to the real one, which makes it the single file
+# that would undo the entire export. It is deliberately written OUTSIDE the
+# export directory so that copying the export cannot pick it up by accident.
+# It never leaves this machine and it is never committed.
+/.demo-map.json
+
+# The sanitised export itself. It is *designed* to be safe to copy — prose is
+# invented and `export-demo-graph.mts` refuses to finish if a real token
+# survives — but it is ignored by default anyway, because the failure mode of
+# `git add -A` sweeping up a directory derived from live data is bad enough
+# that opting in should be a deliberate edit rather than an omission.
+/demo-graph/
+/demo-vault/

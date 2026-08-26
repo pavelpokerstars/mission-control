@@ -291,6 +291,58 @@ is a contract violation.
 project prefixes Confluence and GitHub filter against, and the people Slack
 enriches with `handles.slack`.
 
+## Taking the graph off the machine
+
+**`scripts/export-demo-graph.mts` writes a second graph directory with the same
+structure and none of the prose.** It is how work happens somewhere the live
+data may not go — another machine, another model, a colleague's laptop.
+
+```bash
+npx tsx scripts/export-demo-graph.mts            # live-graph + live-vault → demo-graph
+MC_GRAPH_DIR=./demo-graph MC_VAULT_DIR=./demo-vault npm run dev
+```
+
+**The rule is that no free text is carried over — regenerated, not redacted.** A
+name regex over prose is the tempting version and it does not work: it misses
+nicknames, initials and misspellings, and it leaves the business content itself
+intact, which is the part a policy is actually about. So every body, title,
+quote and excerpt is invented.
+
+**What makes the invented text useful is that it is generated to the CLASS of
+what it replaces.** A line claiming a ticket was done emits a line claiming a
+ticket is done, against the same remapped key — it calls the real
+`classifySignalFor`, so `findContradictions` still fires on the same pair,
+`extractKeys` still joins the same records, and a record that joined to nothing
+still joins to nothing. Measured on the live graph: 847 nodes, 357 edges, 18
+findings and 19 resolving citations, in and out.
+
+**Dates are kept**, deliberately — a sprint's close is the trigger and the age
+of a promise is the severity, so shifting them makes every detector's output
+untestable against the thing it mirrors. Statuses are kept too, because
+`MC_STATUS_MAP` is exactly what is worth tuning off-machine; the run prints the
+workflow words it kept verbatim so somebody reads that list once.
+
+**The leak scan is the only reason to trust any of it.** It re-reads every byte
+written and fails the run on anything real: the values it aliased, every
+distinctive word from a real title, a foreign email domain or host, a vendor
+account id, and any ticket key whose prefix it did not mint. That last one is an
+**allow-list**, which is the stronger form — asking "did a real prefix survive"
+passes for a project that was never registered, and asking "is every prefix one
+of ours" cannot. Schema vocabulary, this script's own invented pools and the
+kept workflow words are exempt by name, because a scan that flags its own output
+is one somebody switches off.
+
+**`.demo-map.json` is the re-identification key and never travels.** It is
+written outside the export directory precisely so copying the export cannot pick
+it up, and it is gitignored. Keeping it is what makes a re-export stable as the
+programme grows — a new joiner does not reshuffle everybody else's alias.
+
+Two things it exposed about the live collectors, both real: `import-github-prs`
+names a PR record after its number alone, so PR 214 in two repos is one file
+(485 nodes shared 475 records), and seven Zoom citations point at meeting labels
+that were never nodes. The export reproduces the second faithfully and gives
+every node its own record file to fix the first.
+
 Four verifiers in `npm run verify`, and none needs a running gateway:
 
 ```bash
