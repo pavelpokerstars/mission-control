@@ -60,10 +60,9 @@
  * inferred edges", "the regexes are the whole answer" rather than a dead route.
  */
 
-import { createSdkMcpServer, query, tool } from '@anthropic-ai/claude-agent-sdk';
-import Anthropic from '@anthropic-ai/sdk';
 import { claudeCliAvailable, zodShape } from './claude-cli.js';
 import { askCopilotStructured, copilotAvailable } from './copilot.js';
+import { askOpenRouterStructured } from './openrouter.js';
 
 /** One request for a typed answer, in the form every caller already had. */
 export interface StructuredAsk {
@@ -89,7 +88,7 @@ export interface StructuredAsk {
   model: string;
 }
 
-export type StructuredBackend = 'sdk-mcp' | 'messages-api' | 'copilot' | 'prompt-json';
+export type StructuredBackend = 'sdk-mcp' | 'messages-api' | 'copilot' | 'prompt-json' | 'openrouter';
 
 /**
  * What this machine can actually reach, probed once at boot rather than here.
@@ -125,6 +124,15 @@ let caps: Promise<ProviderCaps> | undefined;
 
 export function providerCaps(): Promise<ProviderCaps> {
   caps ??= (async () => {
+    // On the judge-demo path every model call goes through OpenRouter, so the
+    // Copilot and Claude-CLI runtimes are never touched — and never imported,
+    // which is what keeps the gateway from crashing on hosts where their native
+    // dependencies fail to install. Probing them would spawn a process for
+    // nothing and, worse, would statically load the SDK at typecheck/runtime.
+    if (process.env.MC_MODE === 'openrouter') {
+      console.log('[structured] providers — openrouter (claude-cli/copilot skipped)');
+      return { claudeCli: false, copilot: false };
+    }
     const [claudeCli, copilot] = await Promise.all([
       claudeCliAvailable().catch(() => false),
       copilotAvailable().catch(() => false),
@@ -165,7 +173,7 @@ function requestedBackend(): StructuredBackend | 'auto' {
   return (process.env.MC_STRUCTURED ?? 'auto').trim() as StructuredBackend | 'auto';
 }
 
-const BACKENDS: readonly StructuredBackend[] = ['sdk-mcp', 'messages-api', 'copilot', 'prompt-json'];
+const BACKENDS: readonly StructuredBackend[] = ['sdk-mcp', 'messages-api', 'copilot', 'prompt-json', 'openrouter'];
 
 // ---------------------------------------------------------------------------
 // The backends
@@ -180,6 +188,10 @@ const BACKENDS: readonly StructuredBackend[] = ['sdk-mcp', 'messages-api', 'copi
  * untrusted text — a Slack line, a transcript segment, a note somebody wrote.
  */
 async function viaSdkMcp(req: StructuredAsk): Promise<unknown> {
+  // `@anthropic-ai/claude-agent-sdk` pulls a native `koffi` module whose install
+  // script is blocked on some hosts (e.g. Railway), so it is imported lazily
+  // here, only when this backend is actually selected.
+  const { createSdkMcpServer, query, tool } = await import('@anthropic-ai/claude-agent-sdk');
   let captured: unknown;
   const serverName = `mission-control-${req.name}`;
   const server = createSdkMcpServer({
@@ -212,6 +224,7 @@ async function viaSdkMcp(req: StructuredAsk): Promise<unknown> {
 
 /** Forced `tool_choice`, so the reply is the record rather than a paragraph. */
 async function viaMessagesApi(req: StructuredAsk, apiKey: string): Promise<unknown> {
+  const { default: Anthropic } = await import('@anthropic-ai/sdk');
   const client = new Anthropic({ apiKey });
   const res = await client.beta.messages.create({
     model: req.model,
@@ -249,6 +262,7 @@ async function viaPromptJson(req: StructuredAsk): Promise<unknown> {
   ].join('\n');
 
   let text = '';
+  const { query } = (await import('@anthropic-ai/claude-agent-sdk')) as typeof import('@anthropic-ai/claude-agent-sdk');
   const q = query({
     prompt: instruction,
     options: {
@@ -336,6 +350,9 @@ function available(backend: StructuredBackend, caps: ProviderCaps): boolean {
       return !!process.env.ANTHROPIC_API_KEY;
     case 'copilot':
       return caps.copilot;
+    case 'openrouter':
+      // The judge-demo path: free models via the shared OPENROUTER_API_KEY.
+      return !!(process.env.OPENROUTER_API_KEY || process.env.OPENROUTER_KEY);
   }
 }
 
@@ -348,6 +365,30 @@ function available(backend: StructuredBackend, caps: ProviderCaps): boolean {
  * round trip and `main.ts` already pays for each once at boot.
  */
 export function createStructured(caps: ProviderCaps, label: string): Structured | null {
+  // The judge-demo path: every structured pass goes through OpenRouter on free
+  // models, using the shared OPENROUTER_API_KEY. No Copilot, no Anthropic key,
+  // and — critically — the anthropic/claude-agent SDKs are never imported, which
+  // is what keeps the gateway from crashing on hosts where their native
+  // dependencies fail to install (Railway blocks the install scripts).
+  if (process.env.MC_MODE === 'openrouter') {
+    if (!(process.env.OPENROUTER_API_KEY || process.env.OPENROUTER_KEY)) {
+      console.warn(`[${label}] MC_MODE=openrouter but OPENROUTER_API_KEY is unset — structured pass off.`);
+      return null;
+    }
+    return {
+      backend: 'openrouter',
+      provider: 'openrouter',
+      ask: (req) =>
+        askOpenRouterStructured({
+          name: req.name,
+          description: req.description,
+          schema: req.schema,
+          system: req.system,
+          prompt: req.prompt,
+        }),
+    };
+  }
+
   const requested = requestedBackend();
   const wanted: StructuredBackend[] =
     requested === 'auto'
@@ -390,6 +431,14 @@ export function createStructured(caps: ProviderCaps, label: string): Structured 
           });
         case 'prompt-json':
           return viaPromptJson(req);
+        case 'openrouter':
+          return askOpenRouterStructured({
+            name: req.name,
+            description: req.description,
+            schema: req.schema,
+            system: req.system,
+            prompt: req.prompt,
+          });
       }
     },
   };

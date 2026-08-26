@@ -131,3 +131,78 @@ export async function createOpenRouterAgent(cfg: ProviderConfig): Promise<Agent>
 function jsonErr(e: unknown): boolean {
   return e instanceof SyntaxError ? false : e instanceof Error;
 }
+
+/**
+ * Structured (typed) answer over OpenRouter for the inference / extract /
+ * summary passes.
+ *
+ * These three need a `tool_choice`-style forced JSON reply. OpenRouter is
+ * OpenAI-compatible, so we ask for `response_format: { type: 'json_object' }`
+ * and parse the object out of the reply. Free models honour `json_object`, and
+ * a malformed reply just returns `undefined` — every caller already degrades to
+ * its deterministic pass on `undefined`, so a weak free-model answer never
+ * takes the gateway down.
+ *
+ * Only used when `MC_MODE=openrouter`, so the shared `OPENROUTER_API_KEY` is
+ * the sole credential for every model call on the Railway judge deploy — no
+ * Copilot, no Anthropic key.
+ */
+export async function askOpenRouterStructured(req: {
+  name: string;
+  description: string;
+  schema: { type: 'object'; properties: Record<string, unknown>; required?: string[] };
+  system: string;
+  prompt: string;
+}): Promise<unknown> {
+  const key = apiKey();
+  if (!key) return undefined;
+
+  const res = await fetch(OPENROUTER_URL, {
+    method: 'POST',
+    headers: {
+      authorization: `Bearer ${key}`,
+      'content-type': 'application/json',
+      'HTTP-Referer': 'https://mission-control.demo',
+      'X-Title': 'Mission Control Judge Demo',
+    },
+    body: JSON.stringify({
+      model: OPENROUTER_MODEL,
+      stream: false,
+      response_format: { type: 'json_object' },
+      messages: [
+        {
+          role: 'system',
+          content:
+            `${req.system}\n\nYou MUST reply with a single JSON object matching this schema and nothing else:\n${JSON.stringify(req.schema, null, 2)}`,
+        },
+        { role: 'user', content: req.prompt },
+      ],
+      max_tokens: 1500,
+      temperature: 0.2,
+    }),
+  });
+
+  if (!res.ok) {
+    const detail = await res.text().catch(() => '');
+    console.warn(`[openrouter] structured ${res.status}: ${detail.slice(0, 200)}`);
+    return undefined;
+  }
+  const json = (await res.json()) as { choices?: { message?: { content?: string } }[] };
+  const text = json.choices?.[0]?.message?.content;
+  if (!text) return undefined;
+  try {
+    return JSON.parse(text);
+  } catch {
+    // Some free models wrap the object in prose; let the caller's parser/validate
+    // path have a go, but here we only return a real object or undefined.
+    const fenced = /```(?:json)?\s*\n([\s\S]*?)\n?```/.exec(text);
+    if (fenced?.[1]) {
+      try {
+        return JSON.parse(fenced[1]);
+      } catch {
+        return undefined;
+      }
+    }
+    return undefined;
+  }
+}

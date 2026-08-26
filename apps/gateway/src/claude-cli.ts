@@ -36,7 +36,10 @@
 
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
-import { createSdkMcpServer, query, tool } from '@anthropic-ai/claude-agent-sdk';
+// `@anthropic-ai/claude-agent-sdk` pulls a native `koffi` module whose install
+// script Railway blocks, so it is imported lazily inside `toolServer` and
+// `createClaudeCliAgent`, never at module load. `zodShape` is exported below and
+// used by `structured.ts`; it does NOT depend on the SDK, so it stays exported.
 import { VAULT_DIR } from './vault.js';
 import { z, type ZodRawShape, type ZodTypeAny } from 'zod';
 import { renderContext, type ChatThread, type ContextEnvelope } from '@mc/domain';
@@ -133,7 +136,8 @@ export function zodShape(parameters: Record<string, unknown>): ZodRawShape {
 }
 
 /** Our tools, as an in-process MCP server. */
-function toolServer(tools: AgentTool[]) {
+async function toolServer(tools: AgentTool[]) {
+  const { createSdkMcpServer, tool } = (await import('@anthropic-ai/claude-agent-sdk')) as typeof import('@anthropic-ai/claude-agent-sdk');
   return createSdkMcpServer({
     name: 'mission-control',
     version: '1.0.0',
@@ -156,7 +160,7 @@ function toolServer(tools: AgentTool[]) {
  * provider.
  */
 export async function createClaudeCliAgent(cfg: ProviderConfig): Promise<Agent | null> {
-  const server = toolServer(cfg.tools);
+  const server = await toolServer(cfg.tools);
 
   // One CLI session per conversation, resumed by id. A single session
   // shared across the history list would let an old thread bleed into a new one
@@ -173,6 +177,7 @@ export async function createClaudeCliAgent(cfg: ProviderConfig): Promise<Agent |
       // how an agent starts answering about the alert you left ten minutes ago.
       const prompt = `<context>\n${renderContext(cfg.withMemory(message, env))}\n</context>\n\n${message}`;
 
+      const { query } = (await import('@anthropic-ai/claude-agent-sdk')) as typeof import('@anthropic-ai/claude-agent-sdk');
       const q = query({
         prompt,
         options: {
@@ -260,6 +265,7 @@ export async function claudeCliAvailable(): Promise<boolean> {
 
   let ok = false;
   try {
+    const { query } = (await import('@anthropic-ai/claude-agent-sdk')) as typeof import('@anthropic-ai/claude-agent-sdk');
     const q = query({
       prompt: 'Reply with exactly: OK',
       options: { maxTurns: 1, permissionMode: 'bypassPermissions', allowedTools: [] },
