@@ -60,7 +60,8 @@ function parseListItem(raw: string): string | Record<string, unknown> {
 }
 
 export function parse(source: string): ParsedDocument {
-  const text = source.replace(/^﻿/, '');
+  // [judge-local patch] strip CR so key:value regexes match on Windows checkouts
+  const text = source.replace(/^\uFEFF/, '').split('\r').join('');
   if (!text.startsWith(FENCE)) return { data: {}, body: text.trim() };
 
   const end = text.indexOf(`\n${FENCE}`, FENCE.length);

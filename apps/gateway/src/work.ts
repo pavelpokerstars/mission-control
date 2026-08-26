@@ -342,7 +342,9 @@ export async function gatherWorkFacts(
       signals.push({
         kind: 'aging',
         tone: 'warn',
-        text: `${Math.round(ageDays)} days in ${item.status.replace('_', ' ')}`,
+        // [judge-local patch] status words like `in_review` already begin with
+        // "in"; dropping the literal stops the lane rendering "7 days in in review".
+        text: `${Math.round(ageDays)} days in ${item.status.replace('_', ' ').replace(/^in\s+/i, '')}`,
         // The newest thing anybody said about it, or the status itself when
         // nobody has. Silence IS the finding here, so an empty citation list
         // would be the honest answer and a confusing one.
