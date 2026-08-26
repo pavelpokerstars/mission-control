@@ -337,11 +337,15 @@ written outside the export directory precisely so copying the export cannot pick
 it up, and it is gitignored. Keeping it is what makes a re-export stable as the
 programme grows — a new joiner does not reshuffle everybody else's alias.
 
-Two things it exposed about the live collectors, both real: `import-github-prs`
-names a PR record after its number alone, so PR 214 in two repos is one file
-(485 nodes shared 475 records), and seven Zoom citations point at meeting labels
-that were never nodes. The export reproduces the second faithfully and gives
-every node its own record file to fix the first.
+Three things it exposed, all real and all now fixed. `import-github-prs` named a
+PR record after its number alone, so PR 214 in two repos was one file (485 nodes
+sharing 475 records) — the repo is in the filename now. Every zoom citation was
+built by hand with a quote and **no `ref`**, so the flagship alert could not open
+the meeting it cited; `zoomEvidence` in `format.ts` is the one place that builds
+one now. And the export's own first cut flattened node ids to `message:mes0001`,
+which silently emptied the app: every record projection recovers its key from the
+id by *shape*, so nothing joined and the trail went from 13 entries to 1 with
+nothing failing. Ids keep their structure and only their values are aliased.
 
 Four verifiers in `npm run verify`, and none needs a running gateway:
 

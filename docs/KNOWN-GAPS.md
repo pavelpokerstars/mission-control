@@ -11,6 +11,29 @@ than a defect it is in the last section, because the difference matters.
 
 ## 1. Correctness and data integrity
 
+### A commitment note written before `zoomEvidence` cites without linking
+
+**The fix is forward-looking, and the notes already in the vault do not get it
+retroactively.** `Evidence.ref` is what makes a citation a link — `quote` is
+not — and five sites in `skills.ts` and `tools.ts` built zoom evidence by hand
+with a quote and no ref. So the flagship alert named a meeting, showed the
+sentence somebody said, and clicking it did nothing.
+
+It is one helper now (`zoomEvidence` in `format.ts`), so a sixth citation cannot
+reintroduce it. But a note is a *stored* record: measured on the live vault,
+**all 18 missing-ticket alerts are backed by notes written before the fix and
+still carry no ref**, while the 8 notes written after it do — and those 8 will
+not fire until their sprint closes, which is the trigger working as designed.
+
+There is no migration and deliberately so. A ref is `{surface, id, at}` where
+`at` is a paragraph index into a specific recording, and the only thing that
+knows it is the extraction run that produced the note — reconstructing one from
+the stored `label` means parsing prose, which is the thing `ref` exists to avoid.
+The honest options are to leave them (they degrade to a sentence, which the
+interface already has a meaning for) or to delete and re-run those ceremonies,
+which mints new note ids and therefore new finding ids. Neither is free; pick
+per note rather than in bulk.
+
 ### `typecheck:all` skipped `@mc/vault` entirely, and nothing said so
 
 **Fixed, and worth knowing because the mechanism is invisible.** `.gitignore`

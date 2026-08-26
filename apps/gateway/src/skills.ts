@@ -47,7 +47,7 @@ import { dirname, join } from 'node:path';
 import type { ConfluencePage, Connectors } from '@mc/connectors';
 import type { VaultStore } from '@mc/vault';
 import type { StoredContainer } from '@mc/domain';
-import { days, pct, stripHtml } from './format.js';
+import { days, pct, stripHtml, zoomEvidence } from './format.js';
 import { propose } from './tools.js';
 import { emitVaultEvent, VAULT_DIR } from './vault.js';
 
@@ -1111,7 +1111,7 @@ const workshop: Skill = {
     for (const seg of t.segments) {
       for (const line of sentences(seg.text)) {
         const cite: Evidence[] = [
-          { surface: 'zoom', label: `${t.meetingTopic} — ${seg.speaker}`, at: seg.start, quote: line },
+          zoomEvidence(t, { speaker: seg.speaker, at: seg.start, quote: line }),
         ];
         // Action wins when both cues fire, and the sentence that forced this is
         // "Riya, can you take the decision record in Confluence?" — an action
@@ -1146,12 +1146,12 @@ const workshop: Skill = {
       candidate(
         a.text,
         [
-          {
-            surface: 'zoom',
-            label: `${t.meetingTopic}${a.speaker ? ` — ${a.speaker}` : ''} (read by the model)`,
+          zoomEvidence(t, {
+            speaker: a.speaker,
             at: a.at,
             quote: a.text,
-          },
+            suffix: ' (read by the model)',
+          }),
         ],
         'model',
         // The precision gate rides along. Only this path can supply it — a cue
@@ -1446,7 +1446,7 @@ const workshop: Skill = {
     // an edited pack because a sticky moved is unforgivable. Delete it to get a
     // fresh one.
     const packEvidence: Evidence[] = [
-      { surface: 'zoom', label: `${t.meetingTopic} — full recording` },
+      zoomEvidence(t, { suffix: ' — full recording' }),
       // Also the board pairing, which `resolveBoard` reads back on the next run.
       { surface: 'miro', label: `board ${boardId}` },
     ];

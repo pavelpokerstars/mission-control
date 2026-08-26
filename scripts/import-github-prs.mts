@@ -185,6 +185,19 @@ const issues = new Set(
 );
 const taken = new Set(graph.nodes.map((n) => String(n.id)));
 
+/**
+ * The record filename, which must carry the REPO and not only the number.
+ *
+ * The node id already does (`pr:github/<owner>/<name>/<number>`), so ids never
+ * collide and the duplicate-id guard below never fires — but the record was
+ * written to `records/pr/<number>.json`, and PR 214 exists in every repo a
+ * programme owns. Two repos meant one file, second write wins, and the count
+ * was the only visible trace: 485 nodes sharing 475 records. Nothing failed,
+ * because nothing projects a PR record yet; the day one is cited it would have
+ * shown another repo's pull request under this one's number.
+ */
+const recordName = (number: number): string => `${repo.replace(/[^\w.-]+/g, '-')}-${number}`;
+
 let written = 0;
 let edges = 0;
 const dropped: string[] = [];
@@ -209,7 +222,7 @@ for (const p of prs) {
     label: p.title,
     at: p.at,
     ...(p.url ? { url: p.url } : {}),
-    recordRef: `records/pr/${p.number}.json`,
+    recordRef: `records/pr/${recordName(p.number)}.json`,
   });
 
   for (const key of real) {
@@ -227,7 +240,7 @@ for (const p of prs) {
   }
 
   await writeFile(
-    join(outDir, 'records', 'pr', `${p.number}.json`),
+    join(outDir, 'records', 'pr', `${recordName(p.number)}.json`),
     `${JSON.stringify(
       { number: p.number, title: p.title, branch: p.branch, author: p.author, at: p.at, merged: p.merged },
       null,

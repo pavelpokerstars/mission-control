@@ -20,6 +20,7 @@
  * prose for briefs and questions; `@mc/domain` is imported by the browser and
  * holds models, not the gateway's phrasing.
  */
+import type { Evidence } from '@mc/domain';
 
 /**
  * How wide the unit is allowed to be.
@@ -74,4 +75,35 @@ export function pct(n: number): string {
  */
 export function stripHtml(html: string): string {
   return html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+/**
+ * A citation into a recording — the label a person reads AND the ref that opens it.
+ *
+ * WHY IT IS A FUNCTION. Five call sites in `skills.ts` and `tools.ts` built this
+ * object by hand, every one of them carried a `quote`, and not one of them set
+ * `ref` — so the flagship alert cited a meeting, showed the sentence, and could
+ * not open it. `Evidence.ref` is what makes a row a link (`quote` is not), and
+ * the transcript id was in scope at all five. A missing optional field is
+ * invisible: nothing fails, the row just quietly renders as prose, which is the
+ * difference between citing and asserting that this product is built on.
+ *
+ * The label stays the caller's phrasing because the three shapes genuinely
+ * differ — a speaker, a model reading, the whole recording — but the ref is
+ * derived here, so adding a sixth citation cannot reintroduce the bug.
+ *
+ * `at` is seconds into the recording; omitted it opens at the top, which is the
+ * honest answer for a citation of the recording as a whole.
+ */
+export function zoomEvidence(
+  t: { id: string; meetingTopic?: string },
+  o: { speaker?: string; at?: number; quote?: string; suffix?: string } = {},
+): Evidence {
+  return {
+    surface: 'zoom',
+    label: `${t.meetingTopic ?? 'recording'}${o.speaker ? ` — ${o.speaker}` : ''}${o.suffix ?? ''}`,
+    ...(o.at === undefined ? {} : { at: o.at }),
+    ...(o.quote === undefined ? {} : { quote: o.quote }),
+    ref: { surface: 'zoom', id: t.id, ...(o.at === undefined ? {} : { at: o.at }) },
+  };
 }

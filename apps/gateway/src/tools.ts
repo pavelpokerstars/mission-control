@@ -34,7 +34,7 @@ import type { Connectors, GraphSource } from '@mc/connectors';
 import { recall, type VaultStore } from '@mc/vault';
 import { eventLog, type EventLog } from './events.js';
 import { runFindings } from './findings.js';
-import { stripHtml } from './format.js';
+import { stripHtml, zoomEvidence } from './format.js';
 import { buildDossier } from './issue.js';
 import { emitVaultEvent, journalProposal } from './vault.js';
 
@@ -332,12 +332,7 @@ export function buildCrossSurfaceTools(
         for (const meta of await c.zoom.listTranscripts()) {
           const t = await c.zoom.getTranscript(meta.id);
           for (const seg of (t?.segments ?? []).filter((s) => s.mentions.includes(key))) {
-            evidence.push({
-              surface: 'zoom',
-              label: `${meta.meetingTopic} — ${seg.speaker}`,
-              at: seg.start,
-              quote: seg.text,
-            });
+            evidence.push(zoomEvidence(meta, { speaker: seg.speaker, at: seg.start, quote: seg.text }));
           }
         }
 
@@ -453,7 +448,7 @@ export function buildCrossSurfaceTools(
           if (!isAction && !isDecision) continue;
 
           const evidence: Evidence[] = [
-            { surface: 'zoom', label: `${t.meetingTopic} — ${seg.speaker}`, at: seg.start, quote: seg.text },
+            zoomEvidence(t, { speaker: seg.speaker, at: seg.start, quote: seg.text }),
           ];
 
           // `${transcript}:${offset}` dedupes on the thing that actually

@@ -311,21 +311,99 @@ assignAll('meeting', graph.nodes.filter(isNodeKind('meeting')).map((n) => n.labe
 assignAll('repo', graph.nodes.filter(isNodeKind('pr'))
   .map((n) => n.id.split('/').slice(1, -1).join('/')).filter(Boolean));
 
-// Node ids last: they carry channel names, doc ids, repo paths and ticket keys.
+/**
+ * Node ids last: they carry channel names, doc ids, repo paths and ticket keys.
+ *
+ * THE STRUCTURE OF AN ID IS LOAD-BEARING, not decoration, and flattening it to
+ * `message:mes0001` silently emptied the app. Every record projection recovers
+ * its record key from the id by *shape* — `projectMessages` takes the last `/`
+ * segment, `projectPages` and `projectTranscripts` strip a literal
+ * `page:confluence/` and `meeting:zoom/` — so an id with no surface segment
+ * matches none of them, every `records.get` misses, and `continue` skips the
+ * record. Nothing throws. The alert list still worked (it is built from vault
+ * notes), which is exactly why this survived a first pass: measured against the
+ * same ticket, live showed a trail of 13 and the export showed 1.
+ *
+ * So the shape is preserved and only the *values* are aliased: the surface
+ * segment is kept verbatim, container segments (a channel, a repo) are aliased,
+ * and the final segment — the vendor's own record id — becomes a sequence.
+ */
 const idMap = new Map<string, string>();
+/** Original node id → the `records/<kind>/<name>.json` basename. */
+const fileOf = new Map<string, string>();
 const seq = new Map<string, number>();
 for (const n of [...graph.nodes].sort((a, b) => (h(a.id) < h(b.id) ? -1 : 1))) {
   const next = (seq.get(n.kind) ?? 0) + 1;
   seq.set(n.kind, next);
-  const tail =
-    n.kind === 'issue' ? keyAlias((n as Extract<StoredNode, { kind: 'issue' }>).key)
-    : n.kind === 'person' ? personEmail(aliasOf('person', (n as Extract<StoredNode, { kind: 'person' }>).email))
-    : n.kind === 'sprint' ? aliasOf('sprint', n.label)
-    : `${n.kind.slice(0, 3)}${String(next).padStart(4, '0')}`;
-  idMap.set(n.id, `${n.kind}:${tail}`);
+  const short = `${n.kind.slice(0, 3)}${String(next).padStart(4, '0')}`;
+  fileOf.set(n.id, short);
+
+  if (n.kind === 'issue') idMap.set(n.id, `issue:${keyAlias(n.key)}`);
+  else if (n.kind === 'person') idMap.set(n.id, `person:${personEmail(aliasOf('person', n.email))}`);
+  else if (n.kind === 'sprint' || n.kind === 'release') idMap.set(n.id, `${n.kind}:${aliasOf('sprint', n.label)}`);
+  else {
+    const parts = n.id.slice(n.kind.length + 1).split('/');
+    if (parts.length === 1) idMap.set(n.id, `${n.kind}:${short}`);
+    else {
+      const middleRaw = parts.slice(1, -1).join('/');
+      const middle = !middleRaw ? ''
+        : n.kind === 'message' ? aliasOf('channel', ('container' in n && n.container) || middleRaw)
+        : n.kind === 'pr' ? aliasOf('repo', middleRaw)
+        : middleRaw;
+      idMap.set(n.id, `${n.kind}:${[parts[0], ...(middle ? [middle] : []), short].join('/')}`);
+    }
+  }
   realTokens.add(n.id);
 }
 const mapId = (id: string): string => idMap.get(id) ?? `unmapped:${h(id).slice(0, 10)}`;
+const recordName = (id: string): string => fileOf.get(id) ?? h(id).slice(0, 10);
+
+/**
+ * A citation's `ref` is the vendor's own record id, and it must be aliased too.
+ *
+ * `Evidence.ref` is what makes a citation a link, so it holds a raw Zoom
+ * document id, Slack `ts` or Confluence page id — every one of them a real
+ * identifier. It reaches here as an opaque object on a note, and the obvious
+ * `{...ev}` spread carries it through untouched; the leak scan caught exactly
+ * that within minutes of the field being introduced upstream.
+ *
+ * A ref that cannot be mapped is DROPPED rather than passed through. The row
+ * degrades to a sentence, which is a state the interface already has a meaning
+ * for — "our own observation, deliberately not a link" — and is the safe side
+ * to fail on.
+ */
+const projectionId = new Map<string, string>();
+for (const n of graph.nodes) {
+  const rest = n.id.slice(n.kind.length + 1);
+  const orig =
+    n.kind === 'message' ? rest.split('/').pop()!
+    : n.kind === 'meeting' ? rest.replace(/^zoom\//, '')
+    : n.kind === 'page' ? rest.replace(/^confluence\//, '')
+    : undefined;
+  if (orig) projectionId.set(`${n.kind}:${orig}`, recordName(n.id));
+}
+
+const REF_KIND: Record<string, string> = { zoom: 'meeting', slack: 'message', confluence: 'page' };
+
+function mapRef(ref: unknown, at?: number): Record<string, unknown> | undefined {
+  if (!ref || typeof ref !== 'object') return undefined;
+  const r = ref as { surface?: string; id?: string; parentId?: string; at?: number };
+  if (!r.surface || !r.id) return undefined;
+  if (r.surface === 'jira') return { ...r, id: keyAlias(r.id) };
+  const kind = REF_KIND[r.surface];
+  const mapped = kind && projectionId.get(`${kind}:${r.id}`);
+  if (!mapped) return undefined;
+  // The offset comes from the CALLER, because a promise whose line was taken
+  // has been moved and the ref has to move with it. Reading `r.at` here leaves
+  // the label pointing at one line and the link opening another.
+  const offset = at ?? r.at;
+  return {
+    surface: r.surface,
+    id: mapped,
+    ...(r.parentId ? { parentId: `slack-${aliasOf('channel', r.parentId.replace(/^slack-/, ''))}` } : {}),
+    ...(offset === undefined ? {} : { at: offset }),
+  };
+}
 
 // ---------------------------------------------------------------------------
 // Invented text, generated to the class of what it replaces
@@ -349,10 +427,6 @@ function synthLine(real: string, seed: string): string {
     return `${k} ${pick(pool, seed + k)}`;
   });
   return `${claim.join('. ')}.`;
-}
-
-function synthBody(real: string, seed: string): string {
-  return real.split('\n').map((line, i) => (line.trim() ? synthLine(line, `${seed}:${i}`) : '')).join('\n');
 }
 
 const synthTitle = (real: string, seed: string): string => {
@@ -388,14 +462,14 @@ const outNodes: StoredNode[] = graph.nodes.map((n) => {
   }
   if (n.kind === 'meeting') {
     return { ...base, label: aliasOf('meeting', n.label),
-      recordRef: n.recordRef && `records/meeting/${mapId(n.id).split(':')[1]}.json` } as StoredNode;
+      recordRef: n.recordRef && `records/meeting/${recordName(n.id)}.json` } as StoredNode;
   }
   if (n.kind === 'message' || n.kind === 'page' || n.kind === 'pr' || n.kind === 'sticky') {
     const container = n.container
       ? (nodeById.has(n.container) ? mapId(n.container) : aliasOf('channel', n.container))
       : undefined;
     return { ...base, label: synthTitle(n.label, n.id), container,
-      recordRef: n.recordRef && `records/${n.kind}/${mapId(n.id).split(':')[1]}.json` } as StoredNode;
+      recordRef: n.recordRef && `records/${n.kind}/${recordName(n.id)}.json` } as StoredNode;
   }
   return { ...base, label: synthTitle(n.label, n.id) } as StoredNode;
 });
@@ -419,6 +493,10 @@ const outLinks = graph.links.map((e) => ({
 /** Which promise line a meeting record must carry, and at which paragraph. */
 const plantedLines = new Map<string, Map<number, string>>();
 const meetingByLabel = new Map(graph.nodes.filter(isNodeKind('meeting')).map((n) => [n.label, n.id]));
+const meetingByRecordId = new Map(
+  graph.nodes.filter(isNodeKind('meeting'))
+    .map((n) => [n.id.slice('meeting:'.length).replace(/^zoom\//, ''), n.id] as const),
+);
 
 const outRecords = new Map<string, Map<string, RecordFile>>();
 for (const [kind, bucket] of records) outRecords.set(kind, new Map());
@@ -435,15 +513,23 @@ const outNotes: Note[] = notes.map((note, idx) => {
     const label = String(ev.label ?? '');
     const bare = label.replace(/\s*\(read by the model\)\s*$/, '');
     const suffix = label === bare ? '' : ' (read by the model)';
-    // Aliased through the meeting bucket whether or not the graph holds a node
-    // for it. A citation to a meeting that was never collected is dangling on
-    // the way in and stays dangling — but it has to still read as a meeting,
-    // and `synthTitle` gives it a ticket-shaped label, which is a different
-    // and more confusing kind of wrong.
-    const meetingId = meetingByLabel.get(bare);
+    /**
+     * Resolved by REF first, and by label only as a fallback.
+     *
+     * A label is written for a person and routinely carries a decoration the
+     * node does not have — `… — unattributed`, `… — full recording` — so
+     * matching on it misses exactly the citations carrying the best evidence.
+     * Measured: all nine ref-carrying notes resolved by id and none by label,
+     * so the promise was never planted and all nine citations opened on filler.
+     * `Evidence.ref` exists for this reason and the codebase already says so.
+     */
+    const refIn = (ev as { ref?: { surface?: string; id?: string } }).ref;
+    const meetingId =
+      (refIn?.surface === 'zoom' && refIn.id ? meetingByRecordId.get(refIn.id) : undefined)
+      ?? meetingByLabel.get(bare);
     let at = typeof ev.at === 'number' ? ev.at : undefined;
     if (meetingId && at !== undefined) {
-      const file = mapId(meetingId).split(':')[1]!;
+      const file = recordName(meetingId);
       if (!plantedLines.has(file)) plantedLines.set(file, new Map());
       const slots = plantedLines.get(file)!;
       // Two promises out of one paragraph is normal, and the second must not
@@ -452,7 +538,12 @@ const outNotes: Note[] = notes.map((note, idx) => {
       while (slots.has(at)) at++;
       slots.set(at, promise);
     }
-    return { ...ev, at, label: `${aliasOf('meeting', bare)}${suffix}`, quote: ev.quote ? promise : undefined };
+    // Titled from the resolved NODE where there is one, so a citation and the
+    // record it opens can never carry different names.
+    const titleSource = meetingId ? (nodeById.get(meetingId)?.label ?? bare) : bare;
+    return { ...ev, at, label: `${aliasOf('meeting', titleSource)}${suffix}`,
+      quote: ev.quote ? promise : undefined,
+      ref: mapRef(refIn, at) };
   });
 
   const slug = promise.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40);
@@ -495,7 +586,7 @@ for (const n of graph.nodes) {
   if (usedSources.has(`${n.kind}/${base}`)) shared.push(`${n.kind}/${base}`);
   usedSources.add(`${n.kind}/${base}`);
 
-  const newFile = mapId(n.id).split(':')[1]!;
+  const newFile = recordName(n.id);
   const seed = n.id;
   const out: RecordFile = { ...rec, id: mapId(n.id) };
 
@@ -513,12 +604,23 @@ for (const n of graph.nodes) {
     out.participants = (rec.participants as string[]).map((p) => personAlias(String(p)));
   }
   if (typeof rec.body === 'string') {
-    const lines = synthBody(rec.body, seed).split('\n');
+    /**
+     * `at` is a PARAGRAPH index, not a line number.
+     *
+     * `annotateTranscript` turns a body into segments with
+     * `split(/\n{2,}/).map(trim).filter(Boolean)` and numbers what survives, so
+     * the index counts NON-EMPTY paragraphs. Planting by line put every promise
+     * on a filler sentence and the citation opened on "Morning all." Rebuilding
+     * as non-empty paragraphs joined by a blank line is what makes the offset
+     * mean the same thing on both sides.
+     */
+    const paras = rec.body.split(/\n{2,}/).map((p) => p.trim()).filter(Boolean)
+      .map((p, i) => synthLine(p, `${seed}:${i}`));
     for (const [at, line] of plantedLines.get(newFile) ?? []) {
-      while (lines.length <= at) lines.push(pick(CHATTER, `${seed}:pad:${lines.length}`));
-      lines[at] = line;
+      while (paras.length <= at) paras.push(pick(CHATTER, `${seed}:pad:${paras.length}`));
+      paras[at] = line;
     }
-    out.body = lines.join('\n');
+    out.body = paras.join('\n\n');
   }
   if (Array.isArray(rec.segments)) {
     out.segments = (rec.segments as Record<string, unknown>[]).map((s, i) => ({
