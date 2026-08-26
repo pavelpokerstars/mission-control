@@ -1,0 +1,8 @@
+{
+  "number": 277,
+  "title": "Fix the migration job",
+  "branch": "chore/session-store",
+  "author": "gh-moss",
+  "at": "2026-07-01T13:48:00.000Z",
+  "merged": true
+}

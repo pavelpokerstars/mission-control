@@ -1,0 +1,8 @@
+{
+  "number": 397,
+  "title": "Harden the settlement feed",
+  "branch": "chore/webhook-fan-out",
+  "author": "gh-calder",
+  "at": "2026-08-02T13:48:00.000Z",
+  "merged": true
+}

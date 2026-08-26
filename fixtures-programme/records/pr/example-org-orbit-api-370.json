@@ -1,0 +1,8 @@
+{
+  "number": 370,
+  "title": "Fix the settlement feed",
+  "branch": "feature/ORB-1382-search-index",
+  "author": "hugo.hart",
+  "at": "2026-07-26T13:00:00.000Z",
+  "merged": true
+}

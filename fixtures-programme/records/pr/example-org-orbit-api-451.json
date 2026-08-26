@@ -1,0 +1,8 @@
+{
+  "number": 451,
+  "title": "Remove the pricing table",
+  "branch": "chore/webhook-fan-out",
+  "author": "gh-moss",
+  "at": "2026-08-16T13:24:00.000Z",
+  "merged": true
+}

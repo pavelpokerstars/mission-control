@@ -1,0 +1,8 @@
+{
+  "number": 232,
+  "title": "Fix the checkout retry",
+  "branch": "chore/session-store",
+  "author": "gh-ash",
+  "at": "2026-06-19T13:48:00.000Z",
+  "merged": true
+}

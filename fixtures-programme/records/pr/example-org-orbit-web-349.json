@@ -1,0 +1,8 @@
+{
+  "number": 349,
+  "title": "Split the export pipeline",
+  "branch": "chore/webhook-fan-out",
+  "author": "gh-ellis",
+  "at": "2026-07-20T13:36:00.000Z",
+  "merged": true
+}

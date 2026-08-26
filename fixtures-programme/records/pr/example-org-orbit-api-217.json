@@ -1,0 +1,8 @@
+{
+  "number": 217,
+  "title": "Rework the checkout retry",
+  "branch": "chore/session-store",
+  "author": "gh-gale",
+  "at": "2026-06-15T13:48:00.000Z",
+  "merged": true
+}

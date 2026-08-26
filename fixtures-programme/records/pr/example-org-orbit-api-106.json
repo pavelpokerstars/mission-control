@@ -1,0 +1,8 @@
+{
+  "number": 106,
+  "title": "Fix the rate limiter",
+  "branch": "chore/checkout-retry",
+  "author": "gh-dunne",
+  "at": "2026-05-16T13:24:00.000Z",
+  "merged": true
+}

@@ -1,0 +1,8 @@
+{
+  "number": 382,
+  "title": "Split the pricing table",
+  "branch": "chore/webhook-fan-out",
+  "author": "gh-kerr",
+  "at": "2026-07-29T13:48:00.000Z",
+  "merged": true
+}

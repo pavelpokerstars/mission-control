@@ -1,0 +1,8 @@
+{
+  "number": 298,
+  "title": "Remove the rate limiter",
+  "branch": "chore/checkout-retry",
+  "author": "ada.ash",
+  "at": "2026-07-07T13:12:00.000Z",
+  "merged": true
+}

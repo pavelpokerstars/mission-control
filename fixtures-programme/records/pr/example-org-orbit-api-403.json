@@ -1,0 +1,8 @@
+{
+  "number": 403,
+  "title": "Batch the checkout retry",
+  "branch": "chore/audit-log",
+  "author": "gh-bright",
+  "at": "2026-08-04T13:12:00.000Z",
+  "merged": true
+}

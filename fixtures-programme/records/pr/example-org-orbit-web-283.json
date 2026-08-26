@@ -1,0 +1,8 @@
+{
+  "number": 283,
+  "title": "Remove the settlement feed",
+  "branch": "chore/rate-limiter",
+  "author": "gh-bright",
+  "at": "2026-07-03T13:12:00.000Z",
+  "merged": true
+}

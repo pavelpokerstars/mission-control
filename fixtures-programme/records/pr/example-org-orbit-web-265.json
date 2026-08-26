@@ -1,0 +1,8 @@
+{
+  "number": 265,
+  "title": "Add the session store",
+  "branch": "feature/ORB-1361-session-store",
+  "author": "gh-jost",
+  "at": "2026-06-28T13:00:00.000Z",
+  "merged": true
+}

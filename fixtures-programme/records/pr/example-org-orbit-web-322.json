@@ -1,0 +1,8 @@
+{
+  "number": 322,
+  "title": "Batch the session store",
+  "branch": "chore/webhook-fan-out",
+  "author": "gh-frost",
+  "at": "2026-07-13T13:48:00.000Z",
+  "merged": true
+}

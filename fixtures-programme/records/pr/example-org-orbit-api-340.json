@@ -1,0 +1,8 @@
+{
+  "number": 340,
+  "title": "Retry the migration job",
+  "branch": "feature/ORB-1256-checkout-retry",
+  "author": "gh-bright",
+  "at": "2026-07-18T13:00:00.000Z",
+  "merged": true
+}

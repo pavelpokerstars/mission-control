@@ -1,0 +1,9 @@
+{
+  "id": "page-0043",
+  "title": "Remove the search index — notes",
+  "at": "2026-07-01T14:48:00.000Z",
+  "body": "Written up after the review of the rate limiter.\n\nThe work is tracked as ORB-1536.\n\nLet us take that offline.",
+  "keys": [
+    "ORB-1536"
+  ]
+}

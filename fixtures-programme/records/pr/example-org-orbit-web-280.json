@@ -1,0 +1,8 @@
+{
+  "number": 280,
+  "title": "Retry the search index",
+  "branch": "feature/ORB-1277-export-pipeline",
+  "author": "esme.ellis",
+  "at": "2026-07-02T13:00:00.000Z",
+  "merged": true
+}

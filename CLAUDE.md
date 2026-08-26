@@ -799,6 +799,45 @@ the unjoined commitment leaves a demo where the hero alert never fires with
 nothing failing anywhere. The cases are listed in `GRAPH-SCHEMA.md` §8 and marked
 `⟨CASE⟩` in `scripts/fixture/records.ts`.
 
+**There are TWO committed fixtures, and they answer different questions.**
+`npm run fixture` writes both and `npm run verify` asserts both regenerate
+byte-identically and satisfy `verify-collector`.
+
+| | `fixtures/` | `fixtures-programme/` |
+|---|---|---|
+| what it is | the demo narrative | what the five collectors actually emit |
+| nodes | 70 | 398 |
+| edges per node | 2.26 — dense | **0.69 — sparse** |
+| node kinds | 14 | **7** |
+| relations | 16 | **5** |
+| records naming a ticket | most | **59 of 296** |
+
+**Develop a reader against the second one.** `fixtures/` carries `squad`,
+`tribe`, `goal`, `board`, `frame` and `sticky` nodes and `owned_by` /
+`member_of` / `attended` / `authored_by` edges, and **no collector in this repo
+emits any of them** — it is a picture of the design, not of the input. Worse, it
+is dense: everything joins to something, so the single largest gap in the
+product (a regex join that fires only when somebody typed a key, which on real
+prose is a minority of records) is invisible in it. That gap is why `infer.ts`
+exists.
+
+`fixtures-programme/` reproduces the failure modes as well as the shape, because
+those are the part a fixture usually flatters away: an **unmapped status word**
+(`Pending Review`, so `inspect statuses` and `verify-collector` have something to
+catch), **GitHub logins that are not people** (the live import reported 126 such
+references, all from PRs), Zoom as **notes rather than transcripts** — a `body`
+with no speakers and no timing, where `at` is a paragraph index — and a PR
+population that dwarfs everything else. Both warnings it raises are the same two
+a real import raises.
+
+The planted cases live on the **active sprint**, and they have to: `gatherWorkFacts`
+builds the lane from work still in play, so a cycle on a closed resolved ticket
+is invisible and the detector is right to ignore it. And the future sprint holds
+**no work at all**, because `activeSprintOf` reads the sprint *names* on items and
+sorts them naturally — it never sees a node's `state`. Twelve items filed against
+the highest-numbered sprint silently moved the whole lane onto work nobody had
+started, and the front door showed the flagship alert and nothing else.
+
 **`Note` gained `owner`, `dueAt`, `container` and `joins`.** The first two are
 `DIRECTION.md` §5's precision gate — a promise with a named owner and a date is
 trackable and "someone should look at that" is not — and `container` is which

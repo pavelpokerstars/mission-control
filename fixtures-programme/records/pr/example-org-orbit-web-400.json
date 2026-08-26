@@ -1,0 +1,8 @@
+{
+  "number": 400,
+  "title": "Instrument the nav rewrite",
+  "branch": "feature/ORB-1368-rate-limiter",
+  "author": "gh-lund",
+  "at": "2026-08-03T13:00:00.000Z",
+  "merged": true
+}

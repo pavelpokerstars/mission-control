@@ -1,0 +1,8 @@
+{
+  "number": 118,
+  "title": "Rework the webhook fan-out",
+  "branch": "chore/session-store",
+  "author": "esme.ellis",
+  "at": "2026-05-20T13:12:00.000Z",
+  "merged": true
+}

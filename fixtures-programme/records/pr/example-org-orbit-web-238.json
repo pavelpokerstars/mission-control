@@ -1,0 +1,8 @@
+{
+  "number": 238,
+  "title": "Harden the audit log",
+  "branch": "chore/rate-limiter",
+  "author": "gh-moss",
+  "at": "2026-06-21T13:12:00.000Z",
+  "merged": true
+}

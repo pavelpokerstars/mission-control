@@ -1,0 +1,8 @@
+{
+  "number": 139,
+  "title": "Add the rate limiter",
+  "branch": "chore/webhook-fan-out",
+  "author": "gh-gale",
+  "at": "2026-05-25T13:36:00.000Z",
+  "merged": true
+}

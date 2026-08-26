@@ -1,0 +1,8 @@
+{
+  "number": 121,
+  "title": "Investigate the webhook fan-out",
+  "branch": "chore/checkout-retry",
+  "author": "gh-moss",
+  "at": "2026-05-20T13:24:00.000Z",
+  "merged": false
+}

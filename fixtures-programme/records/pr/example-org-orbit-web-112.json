@@ -1,0 +1,8 @@
+{
+  "number": 112,
+  "title": "Harden the rate limiter",
+  "branch": "chore/checkout-retry",
+  "author": "gh-jost",
+  "at": "2026-05-18T13:48:00.000Z",
+  "merged": true
+}

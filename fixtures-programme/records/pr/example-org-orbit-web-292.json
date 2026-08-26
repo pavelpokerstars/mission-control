@@ -1,0 +1,8 @@
+{
+  "number": 292,
+  "title": "Split the session store",
+  "branch": "chore/rate-limiter",
+  "author": "gh-oakes",
+  "at": "2026-07-05T13:48:00.000Z",
+  "merged": true
+}

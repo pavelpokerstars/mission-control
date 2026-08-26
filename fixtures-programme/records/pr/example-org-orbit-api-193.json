@@ -1,0 +1,8 @@
+{
+  "number": 193,
+  "title": "Fix the rate limiter",
+  "branch": "chore/audit-log",
+  "author": "gh-kerr",
+  "at": "2026-06-09T13:12:00.000Z",
+  "merged": true
+}

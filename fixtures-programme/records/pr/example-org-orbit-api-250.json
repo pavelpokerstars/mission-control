@@ -1,0 +1,8 @@
+{
+  "number": 250,
+  "title": "Rework the checkout retry",
+  "branch": "feature/ORB-1550-rate-limiter",
+  "author": "gh-dunne",
+  "at": "2026-06-24T13:00:00.000Z",
+  "merged": true
+}

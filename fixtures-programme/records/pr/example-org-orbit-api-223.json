@@ -1,0 +1,8 @@
+{
+  "number": 223,
+  "title": "Remove the rate limiter",
+  "branch": "chore/audit-log",
+  "author": "gh-moss",
+  "at": "2026-06-17T13:12:00.000Z",
+  "merged": true
+}

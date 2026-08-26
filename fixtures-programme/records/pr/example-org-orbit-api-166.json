@@ -1,0 +1,8 @@
+{
+  "number": 166,
+  "title": "Retry the session store",
+  "branch": "chore/migration-job",
+  "author": "gh-lund",
+  "at": "2026-06-01T13:24:00.000Z",
+  "merged": true
+}

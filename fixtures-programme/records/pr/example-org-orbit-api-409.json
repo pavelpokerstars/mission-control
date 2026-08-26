@@ -1,0 +1,8 @@
+{
+  "number": 409,
+  "title": "Batch the search index",
+  "branch": "chore/rate-limiter",
+  "author": "gh-calder",
+  "at": "2026-08-05T13:36:00.000Z",
+  "merged": true
+}

@@ -1,0 +1,8 @@
+{
+  "number": 130,
+  "title": "Investigate the rate limiter",
+  "branch": "feature/ORB-1501-session-store",
+  "author": "gh-lund",
+  "at": "2026-05-23T13:00:00.000Z",
+  "merged": true
+}

@@ -93,6 +93,25 @@ step('the fixture regenerates deterministically', () => {
   }
 });
 
+/**
+ * The same rule for the programme-scale fixture, which is committed for the same
+ * reason and drifts the same way. It is a second directory rather than a bigger
+ * `fixtures/` because the two answer different questions: `fixtures/` is the
+ * demo narrative, this is what the five collectors actually emit — sparse, seven
+ * node kinds, five relations, and most records naming no ticket at all.
+ */
+step('the programme fixture regenerates deterministically', () => {
+  const before = digest(join(root, 'fixtures-programme'));
+  run('npx', ['tsx', 'scripts/generate-programme-fixture.mts']);
+  const after = digest(join(root, 'fixtures-programme'));
+  if (before !== after) {
+    throw new Error(
+      'regenerating fixtures-programme/ changed it.\n' +
+        'Run `git diff fixtures-programme/`.',
+    );
+  }
+});
+
 step('the graph contract holds, and the detectors find what was planted', () =>
   run('npx', ['tsx', 'scripts/verify-graph.mts']),
 );
@@ -128,6 +147,10 @@ step('the app matches DIRECTION.md and DESIGN.md', () => {
  */
 step('the fixture reads as a collector\'s output should', () =>
   run('npx', ['tsx', 'scripts/verify-collector.mts']),
+);
+
+step('the programme fixture does too', () =>
+  run('npx', ['tsx', 'scripts/verify-collector.mts', 'fixtures-programme']),
 );
 
 step('the shell builds', () => run('npx', ['vite', 'build', '--config', 'apps/shell/vite.config.mts']));

@@ -12,7 +12,7 @@
     "dev:gateway": "tsx watch apps/gateway/src/main.ts",
     "dev:shell": "vite --config apps/shell/vite.config.mts",
     "docs": "node scripts/render-docs.mjs",
-    "fixture": "tsx scripts/generate-fixture.mts",
+    "fixture": "tsx scripts/generate-fixture.mts && tsx scripts/generate-programme-fixture.mts",
     "graph": "nx graph",
     "prebuild": "node -e \"try{require('node:fs').rmSync('apps/shell/dist',{recursive:true,force:true})}catch(e){console.warn('[prebuild] left dist in place:',e.message)}\"",
     "typecheck": "tsc -b --pretty",

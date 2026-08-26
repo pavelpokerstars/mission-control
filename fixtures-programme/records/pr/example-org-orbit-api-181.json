@@ -1,0 +1,8 @@
+{
+  "number": 181,
+  "title": "Split the rate limiter",
+  "branch": "chore/checkout-retry",
+  "author": "gh-calder",
+  "at": "2026-06-05T13:24:00.000Z",
+  "merged": true
+}

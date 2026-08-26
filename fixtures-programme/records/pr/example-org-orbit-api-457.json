@@ -1,0 +1,8 @@
+{
+  "number": 457,
+  "title": "Split the webhook fan-out",
+  "branch": "chore/rate-limiter",
+  "author": "gh-dunne",
+  "at": "2026-08-18T13:48:00.000Z",
+  "merged": false
+}

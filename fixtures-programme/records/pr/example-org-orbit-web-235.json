@@ -1,0 +1,8 @@
+{
+  "number": 235,
+  "title": "Fix the pricing table",
+  "branch": "feature/ORB-1277-settlement-feed",
+  "author": "gh-bright",
+  "at": "2026-06-20T13:00:00.000Z",
+  "merged": true
+}
