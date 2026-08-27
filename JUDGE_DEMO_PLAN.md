@@ -2,7 +2,8 @@
 
 **Last reviewed:** 27 August 2026
 **Working copy:** `C:\dev\scratch\mc-clone`
-**Demo branch:** `judge-demo`
+**Demo branch:** `judge-demo` (deployed)
+**Usability / offline-AI branch:** `demo-v2` (local, not deployed)
 **Main baseline merged locally:** `origin/main` at `4a4ed31`
 **Local merge commit:** `aba5371`
 **Deployed application commit:** `dc64af5`
@@ -10,6 +11,8 @@
 **Detailed experience review:** `JUDGE_JOURNEY_REVIEW.md`
 
 This is the shared progress record for the demo. It deliberately separates temporary demo work from changes that improve Mission Control itself, so core product changes can be proposed to `main` as focused PRs.
+
+The `demo-v2` branch carries the work-in-progress for the usability pass that came out of the JUDGE_JOURNEY_REVIEW feedback. Items below are tagged `(demo-v2)` once committed; deploy of those commits is a separate step that needs Pavel's GitHub App access.
 
 ## Status key
 
@@ -40,6 +43,51 @@ Changes that exist to stage, explain, isolate, or reliably host the judge experi
 
 Changes that improve comprehension, provenance, AI grounding, or reliability for every user. These should be implemented provider-agnostically and proposed to `main` in focused PRs.
 
+
+## `demo-v2` usability pass (local; not deployed)
+
+The reviewer feedback on `judge-demo` identified specific copy and structure
+issues on the alert pages that did not depend on data or tools. Those landed
+on a fresh `demo-v2` branch off `judge-demo`, in five reviewable commits.
+
+**Done in demo-v2 (commits `359ffdb` .. `d350688`):**
+
+- **Offline AI honesty** (`359ffdb`) -- `JUDGE_SYSTEM_PROMPT` for the judge path;
+  intro screen tells judges the chat reads the alert text only, not live sources.
+- **Alert page headings** (`7503d7e`) -- `Sprint 12 commitments . 3 tracked . 2 missing`
+  replaces `What PAY Sprint 12 said would happen`; `Why this alert fired` replaces
+  `Why we think this was promised`; `Mission Control's note` replaces `The note
+  it was recorded in`; checklist `PAY-XXXX` refs are links to `/record/jira/<key>`;
+  back link says `Back to all alerts`.
+- **Action button labels** (`0756808`) -- `Ask someone` becomes `Draft a message
+  to #<channel>` on the disagreement page (channel read off the Slack evidence
+  label); `Not now` becomes `Park it` (matches the form submit and the Later
+  tab); cycle dismiss copy trimmed to a noun-phrase.
+- **Alert list prominence** (`77e175e`) -- claim is the row headline; chip,
+  source dots and `fired N days ago` sit underneath on one line; chip is
+  smaller on the list than on the alert page.
+- **Cycle as a node graph** (`d350688`) -- four ticket-key pills above the
+  edges list, with `X waits on Y` lines under them; the evidence block
+  underneath now reads as where the arrows were drawn rather than as the loop.
+
+**Open in demo-v2 (not yet committed):**
+
+- Date stamps on each Slack/Zoom evidence row so the disagreement's `1 day
+  apart` claim is checkable on the page itself, not by opening the record.
+- Inline `Create the ticket` per missing row in the checklist (the global
+  `Create the ticket` button still sits below the checklist for now).
+- Inline `Draft a message to @<author>` beside the evidence row that named
+  them, where applicable.
+
+**Not done in demo-v2; still on the judge-demo backlog:**
+
+- D4 -- the guided three-minute path (steps 4-8 of the new guide).
+- D5 -- storyboard refresh, clean-session walkthrough, cold-model
+  rehearsal, source-mimic CSS, banner contrast.
+
+**Out of scope by agreement:** the M1-M5 items belong to a separate
+core-Mission-Control track.
+
 # A. Demo changes
 
 ## D0 — Synchronise and establish the baseline
@@ -66,7 +114,7 @@ Changes that improve comprehension, provenance, AI grounding, or reliability for
 - [x] Change Railway `OPENROUTER_MODEL` to `openrouter/free`; redeployment succeeded on 27 August.
 - [~] Retest the exact suggested alert question: the live route responds and no longer exposes its thinking trace, but it still reasons from unrelated vault memory. Complete M1 before calling the answer trustworthy or demo-ready.
 - [x] Add bounded 429 retry/backoff, ported from the Toolbelt router (`C:\dev\toolbelt` — `src/toolbelt/llm_router.py` / `js/llm-router.mjs`). Three attempts, `Retry-After` header then prose-regex fallback, exponential backoff capped at 30s, never waiting past `MAX_WAIT_MS` (120s). Verified against a local 429-then-success stub.
-- [x] Ensure errors shown to judges are short, helpful UI states rather than raw provider JSON. `openrouter.ts` maps 401/403/404/429/5xx to one-line words; `/api/chat` no longer prefixes them with `Error:`.
+- [x] Ensure errors shown to judges are short, helpful UI states rather than raw provider JSON. `openrouter.ts` maps 401/403/404/429/5xx to one-line words; `/api/chat` no longer prefixes them with `Error:`. **(demo-v2)** Split `SYSTEM_PROMPT` so the judge-demo path hands the model `JUDGE_SYSTEM_PROMPT` (no tool verbs, names the constraint). Stops the free model emitting tool-call JSON it cannot honour.
 
 **Ownership:** OpenRouter transport and Railway configuration are demo-only today. The context-grounding change in M1 benefits core Mission Control.
 
