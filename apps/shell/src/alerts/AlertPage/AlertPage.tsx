@@ -81,7 +81,11 @@ function Checklist({ detail }: { detail: FindingDetail }): JSX.Element | null {
                 {refIsKey ? (
                   <a href={`/record/jira/${encodeURIComponent(i.ref)}`}>{i.ref}</a>
                 ) : (
-                  i.ref
+                  i.ref === 'no ticket' && detail.finding.kind === 'missing_ticket' ? (
+                    <span className="missing-tag">not filed — use Create below</span>
+                  ) : (
+                    i.ref
+                  )
                 )}
               </span>
             </li>

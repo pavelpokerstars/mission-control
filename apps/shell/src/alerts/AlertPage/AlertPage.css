@@ -101,3 +101,4 @@
   background:var(--sunk); padding:2px 7px; border-radius:5px;
 }
 .cycle-edge .arr { color:var(--ink-3); }
+.missing-tag { font-style:italic; color:var(--ink-3); font-size:.8rem; letter-spacing:.02em; }
