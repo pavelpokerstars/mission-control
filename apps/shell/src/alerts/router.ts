@@ -8,16 +8,28 @@
  *
  * WHY IT IS ONE FILE AND NOT A LIBRARY. Eight routes — four pages, a note, the
  * Ask index, a record and Sources — no nesting, no
- * loaders, no data router. `hashchange` is already a browser event and
- * `location.hash` is already the state — a router here would be a dependency
+ * loaders, no data router. `popstate` is already a browser event and
+ * `location.pathname` is already the state — a router here would be a dependency
  * wrapping two primitives. (`verify-design.mts` enumerates the sanctioned
  * destinations and fails on a ninth, so this count is checked rather than
  * remembered.)
  *
- * WHY HASH AND NOT PATH. The gateway serves nothing and vite's dev server would
- * need a history fallback for every deep link; a hash route works from a file://
- * open, from a static host and behind any path. The demo is a repo somebody
- * clones, so "it works however you serve it" is worth more than a clean URL.
+ * WHY PATHS AND NOT A HASH. The address is part of the product: an alert is
+ * something you paste to a colleague, and `#/alert/…` reads as an artefact of
+ * the demo rather than as a place. So the address bar shows `/alert/…`, which
+ * costs exactly one thing and it is worth naming: **every deep link now needs
+ * the server to answer with `index.html`**. Vite's dev server does it by
+ * default; `spaFallback` in `vite.config.mts` widens it to the record ids that
+ * contain a dot, which its own rule would otherwise mistake for a filename.
+ * Anything else serving `dist/` needs the same rewrite.
+ *
+ * WHY A CLICK LISTENER. Rows and citations are `<a>` elements on purpose —
+ * middle-click, copy-link and the browser's own affordances come free — and
+ * with a hash those navigated without a reload. With a path they would fetch
+ * the whole app again, so `useRoute` installs one document-level listener that
+ * turns a plain left-click on an internal link into a `pushState`. Modified
+ * clicks and anything with a target are left to the browser, which is what
+ * keeps "open in a new tab" working.
  */
 
 import type { Evidence } from '@mc/domain';
@@ -79,15 +91,20 @@ export type Route =
     }
 ;
 
-function parseRoute(hash: string): Route {
+/** The address as the app reads it: everything after the origin. */
+function here(): string {
+  return `${window.location.pathname}${window.location.search}`;
+}
+
+function parseRoute(url: string): Route {
   // The query is kept for `record`, which carries `from` and the ref's own
   // parameters; every other route splits it off.
-  const path = hash.replace(/^#\/?/, '').split('?')[0] ?? '';
+  const path = (url.split('?')[0] ?? '').replace(/^\/+/, '');
   const [head, ...rest] = path.split('/');
   switch (head) {
     case 'alert':
       // Decoded, because a finding id carries `:` — `missing_ticket:<note>` —
-      // and an encoded colon in a hash is common enough to matter.
+      // and it is percent-encoded on the way into the path.
       return rest.length ? { name: 'alert', id: decodeURIComponent(rest.join('/')) } : { name: 'alerts' };
     case 'record': {
       const ref = rest.join('/');
@@ -100,7 +117,7 @@ function parseRoute(hash: string): Route {
        * the top with nothing marked, which is precisely the failure this whole
        * feature exists to avoid, and it looked like a working page.
        */
-      const q = new URLSearchParams(hash.split('?')[1] ?? '');
+      const q = new URLSearchParams(url.split('?')[1] ?? '');
       const at = Number(q.get('at'));
       return {
         name: 'record',
@@ -117,7 +134,7 @@ function parseRoute(hash: string): Route {
       // parked from one.
       return rest.length ? { name: 'note', id: decodeURIComponent(rest.join('/')) } : { name: 'later' };
     case 'ask': {
-      const q = new URLSearchParams(hash.split('?')[1] ?? '');
+      const q = new URLSearchParams(url.split('?')[1] ?? '');
       const about = q.get('about');
       return about ? { name: 'ask', about } : { name: 'ask' };
     }
@@ -135,38 +152,82 @@ function parseRoute(hash: string): Route {
 export function hrefFor(route: Route): string {
   switch (route.name) {
     case 'alerts':
-      return '#/';
+      return '/';
     case 'alert':
-      return `#/alert/${encodeURIComponent(route.id)}`;
+      return `/alert/${encodeURIComponent(route.id)}`;
     case 'note':
-      return `#/note/${encodeURIComponent(route.id)}`;
+      return `/note/${encodeURIComponent(route.id)}`;
     case 'conversation':
-      return `#/conversation/${encodeURIComponent(route.id)}`;
+      return `/conversation/${encodeURIComponent(route.id)}`;
     case 'ask':
-      return route.about ? `#/ask?about=${encodeURIComponent(route.about)}` : '#/ask';
+      return route.about ? `/ask?about=${encodeURIComponent(route.about)}` : '/ask';
     case 'record': {
       const q = new URLSearchParams();
       if (route.parentId) q.set('parentId', route.parentId);
       if (route.at !== undefined) q.set('at', String(route.at));
       if (route.from) q.set('from', route.from);
       const query = q.toString();
-      return `#/record/${route.ref}${query ? `?${query}` : ''}`;
+      return `/record/${route.ref}${query ? `?${query}` : ''}`;
     }
     default:
-      return `#/${route.name}`;
+      return `/${route.name}`;
   }
 }
 
+/**
+ * The one event the app navigates on.
+ *
+ * `pushState` deliberately fires nothing — the platform assumes the caller knows
+ * it just navigated — so this is what tells every mounted `useRoute` that the
+ * address moved. `popstate` covers the back button; between them the two are
+ * the whole of it.
+ */
+const MOVED = 'mc:navigated';
+
+/** Go to an address, without fetching the application again. */
+export function navigate(href: string): void {
+  if (href === here()) return;
+  window.history.pushState(null, '', href);
+  window.dispatchEvent(new Event(MOVED));
+}
+
 export function go(route: Route): void {
-  window.location.hash = hrefFor(route);
+  navigate(hrefFor(route));
+}
+
+/**
+ * A left-click on an internal link, without the browser reloading everything.
+ *
+ * Everything this declines to handle it declines on purpose. A modified click is
+ * the reader asking for a new tab or a download; a `target` says the same out
+ * loud; another origin is not ours to intercept; and `defaultPrevented` means a
+ * component already decided. In every one of those cases doing nothing is the
+ * correct behaviour, which is why rows can stay anchors.
+ */
+function interceptLink(e: MouseEvent): void {
+  if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+  const a = (e.target as Element | null)?.closest?.('a');
+  if (!a || a.target || a.hasAttribute('download')) return;
+  const raw = a.getAttribute('href');
+  if (!raw || raw.startsWith('#') || /^[a-z]+:/i.test(raw)) return;
+  const url = new URL(a.href);
+  if (url.origin !== window.location.origin) return;
+  e.preventDefault();
+  navigate(`${url.pathname}${url.search}`);
 }
 
 export function useRoute(): Route {
-  const [route, setRoute] = useState<Route>(() => parseRoute(window.location.hash));
+  const [route, setRoute] = useState<Route>(() => parseRoute(here()));
   useEffect(() => {
-    const on = (): void => setRoute(parseRoute(window.location.hash));
-    window.addEventListener('hashchange', on);
-    return () => window.removeEventListener('hashchange', on);
+    const on = (): void => setRoute(parseRoute(here()));
+    window.addEventListener('popstate', on);
+    window.addEventListener(MOVED, on);
+    document.addEventListener('click', interceptLink);
+    return () => {
+      window.removeEventListener('popstate', on);
+      window.removeEventListener(MOVED, on);
+      document.removeEventListener('click', interceptLink);
+    };
   }, []);
   return route;
 }
@@ -187,5 +248,5 @@ export function recordHref(e: Evidence, from: string): string {
   if (r.parentId) q.set('parentId', r.parentId);
   if (r.at !== undefined) q.set('at', String(r.at));
   q.set('from', from);
-  return `#/record/${r.surface}/${encodeURIComponent(r.id)}?${q.toString()}`;
+  return `/record/${r.surface}/${encodeURIComponent(r.id)}?${q.toString()}`;
 }

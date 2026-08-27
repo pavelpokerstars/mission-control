@@ -101,7 +101,8 @@ only via the removed queue.
 
 **5 · Then run it.** `npm run verify` includes `scripts/verify-design.mts`, which
 enforces the checkable part of the above — the route set, the toolbar cap, the
-retired vocabulary, the component list, one stylesheet. It is not a substitute
+retired vocabulary, the component list, the stylesheets and how they layer. It
+is not a substitute
 for 1–4; it is what catches you when 1–4 did not.
 
 And curling the gateway is not using the app. The dead "accept it in the queue"
@@ -398,7 +399,9 @@ are well-formed graphs — and reading four sentences settles it in ten seconds.
 The third is the newest and the least obvious. It asserts that the shipped app
 still has the destinations the direction lists and no others, that the toolbar is
 still capped at three, that nothing in the interface is named for a concept the
-direction deleted, and that `app.css` has not started a second design system. It
+direction deleted, that the stylesheet has not started a second design system,
+that every component stylesheet is imported by its component, and that no two of
+them claim one scoping class. It
 exists because documents alone did not prevent exactly that — see the section at
 the top of this file.
 
@@ -1125,10 +1128,35 @@ values and nothing is wrong. Compare *comparable* elements.
 ## The interface — alert-first
 
 **`apps/shell/src/alerts/` is the application.** `ls apps/shell/src/` returns
-`alerts/`, `app.css`, `main.tsx`, `vite-env.d.ts` and nothing else. `AlertApp`
-routes on the hash, the alert list is the front door, and an alert page is what
-a row opens. `main.tsx` mounts it, and Ask is built from `conversations.ts` and
-the SSE loop in `chat.ts`.
+`alerts/`, `app.css`, `fonts.css`, `main.tsx`, `vite-env.d.ts` and nothing else.
+Inside `alerts/`, **a component is a folder**: `AlertList/AlertList.tsx` beside
+`AlertList/AlertList.css`, fifteen of them. `AlertApp` routes on the path, the
+alert list is the front door, and an alert page is what a row opens.
+
+**The name is repeated rather than an `index.tsx`, deliberately.** `index.tsx`
+would keep the import specifiers shorter (`./AlertList` rather than
+`./AlertList/AlertList`) and it costs fifteen editor tabs all called `index` and
+a stack trace that names none of them. It also costs the verifier: every check
+here is name-based — the sanctioned-component list, "is this stylesheet imported
+by its component", "does any folder hold a `.tsx` not named after it" — and each
+would have to reconstruct the identity from the parent directory.
+
+**Only a PAIR gets a folder.** `api.ts`, `chat.ts`, `conversations.ts` and
+`router.ts` draw nothing, have no stylesheet to pair with, and stay flat beside
+the folders; so does `shared.css`, which is a layer rather than anybody's.
+`main.tsx` mounts `AlertApp`, and Ask is built from `conversations.ts` and the
+SSE loop in `chat.ts`.
+
+**A folder holds exactly its pair, and `verify-design.mts` asserts it** — one
+`.tsx` and one `.css`, both named for the folder. A third file there is
+invisible: the sanctioned-component list reads folder NAMES now and
+`SHELL_FILES` is written by hand, so a `.tsx` dropped inside an existing folder
+escapes that list, the retired-vocabulary scan and the inline-style check all at
+once. Measured before the check existed: `AlertPage/Queue.tsx`, exporting
+`Queue`, heading "Proposals", inline style, the literal sentence "accept them in
+the queue" — the whole verifier green. A second `.css` is the same hole and
+tidier-looking: `STYLESHEETS` globs every one, so its rules count as present
+while nothing imports the file and the screen renders without them.
 
 **There is no proposal queue, and one was built and removed.** `act.ts` and
 `Actions.tsx` both said accepting was "a separate act somebody performs in the
@@ -1158,27 +1186,158 @@ count was read from the collection, and then the collection was never read
 again. The effect is keyed on the route, and `reload` is held in a ref because
 it is a fresh closure every render and naming it in the deps re-runs forever.
 
-**The stylesheet is `docs/design-preview.html`'s, copied verbatim into
-`apps/shell/src/app.css`.** `DESIGN.md` says the preview wins where the two
-disagree — it is the version tested in a browser — so a design change belongs in
-the preview first and here second. Its preview-only rules (`.screen`,
-`.caption`, `.notes`, `.switch`) are still in the file and match nothing: it
-looked worth stripping them and that is exactly the trap `DESIGN.md` §8 records,
-where a regex removes a selector, leaves its block, keeps the brace count even
-and silently swallows the next rule. Dead CSS is harmless; a stylesheet that lost
-a rule is invisible until one screen renders with browser defaults.
+**The app is full-bleed, and it is the ONE place it deliberately differs from
+the preview.** The preview draws each screen as a floating window — a border, a
+radius and a shadow on `.appwin`, inset in a `--ground` margin — because it is a
+documentation page showing pictures of an app. Shipped as drawn, the real thing
+reads as itself running inside a picture of itself. So `.app-shell` fills the
+viewport and three rules under it flatten `.appwin`; `.appwin` itself is
+untouched, which is what keeps the preview the reference `DESIGN.md` says it is.
+Every band still pads with `var(--gutter)`, so §8's single-x check holds
+unchanged — widening the window moves where that x falls and must not split it
+into several. `verify-design.mts` allows these because they are scoped under
+`.app-shell`, which exists nowhere but the app.
 
-**One stylesheet, one design system.** `app.css` is the whole of it: no
-component library, no second reset, no second set of colour tokens. That is what
-keeps the shell build at ~231 kB of JS and ~28 kB of CSS, and a library pulled in
-to draw one screen costs more than the screen.
+**The stylesheet is `docs/design-preview.html`'s, copied verbatim** — and it is
+now seventeen files rather than one. `DESIGN.md` says the preview wins where the
+two disagree, it being the version tested in a browser, so a design change
+belongs in the preview first and here second. Which FILE a rule lives in changed;
+no rule did. Its preview-only rules (`.screen`, `.caption`, `.notes`, `.switch`)
+are still there and match nothing: stripping them looked worth doing and is
+exactly the trap `DESIGN.md` §8 records, where a regex removes a selector, leaves
+its block, keeps the brace count even and silently swallows the next rule. Dead
+CSS is harmless; a stylesheet that lost a rule is invisible until one screen
+renders with browser defaults.
 
-**Routing is a hash router in one file, not a library.** Eight *routes* — four
-pages, a note, the Ask index, a record and Sources — no nesting.
-Hash rather than path because the gateway serves nothing, vite would need a
-history fallback for every deep link, and the demo is a repo somebody clones —
-"it works however you serve it" beats a clean URL. A finding id carries `:`, so
+**The connector strip carries SIX dots, and GitHub was missing from more than the
+strip.** There was no `--s-github` token and no `.github` rule anywhere, so
+`dotClass('github')` produced a class matching nothing and every GitHub dot
+rendered transparent — on Sources, which lists it as a connected source with its
+pull-request count, and on any evidence row citing a PR. The token is GitHub's
+own merged-PR purple (`#6E40C9` / `#A371F7`), which is the one hue the five
+existing surfaces leave open: jira blue, slack magenta, zoom cyan, confluence
+green, miro amber.
+
+**Six dots is not the same number as five collectors.** The collectors are Jira,
+Zoom, Confluence, Slack and GitHub; Miro is the sixth *surface* and the one read
+live rather than out of `MC_GRAPH_DIR`. Do not quote one count as the other.
+
+**The two typefaces are self-hosted, and the app used to render in neither.**
+`app.css`'s `--sans` and `--mono` name Instrument Sans and IBM Plex Mono;
+`docs/design-preview.html` loads both from Google Fonts in its `<head>` and
+`apps/shell/index.html` loaded nothing, so the browser fell silently through to
+`ui-sans-serif` and `ui-monospace`. Every size, weight, line-height and
+letter-spacing already matched the preview — measured side by side, the only
+things that differed were the glyphs. That is the failure a font stack is
+designed to hide: nothing errors, nothing logs, the page renders, and it is the
+wrong typeface.
+
+`apps/shell/src/fonts.css` declares the faces the preview asks for — Instrument
+Sans 400/500/600/700 plus italic 400, IBM Plex Mono 400/500/600 — from
+`@fontsource`, and `main.tsx` imports it **first**, before `app.css`. Two
+choices in it are worth not undoing:
+
+- **Self-hosted, not the preview's `<link>`.** The preview is a document you open
+  once; the app is the product, and its standing promise is that it runs on
+  committed fixtures with no credentials, no network and no server. Behind a
+  proxy a CDN link renders the fallback again, which is the bug this closes.
+- **The static package, not `@fontsource-variable`.** The variable one is one
+  file instead of five and declares its family as `Instrument Sans Variable` —
+  a name that would have to be added to `--sans`, which lives in the file that
+  is the preview's copied verbatim. The static package declares
+  `Instrument Sans`, so nothing in `app.css` moved.
+
+**Check it with widths, never with `document.fonts.check()`** — that returns
+true for a family with no `@font-face` at all. Measure a string in
+`"Instrument Sans", monospace` against `monospace`; equal means the webfont is
+absent.
+
+**One design system, one file per component.**
+
+| | |
+|---|---|
+| `apps/shell/src/app.css` | the tokens, the reset, the breakpoint, and the preview's own document chrome the app never renders |
+| `alerts/shared.css` | what more than one screen draws — the chip, the greeting, the block, the composer, the thread, the select — plus the atoms whose class is interpolated (`dot ${surface}`) and so appears as a literal nowhere |
+| `alerts/<Name>/<Name>.css` | what only that component draws, imported by the `.tsx` beside it |
+
+Still no component library, no second reset and no second set of colour tokens:
+~238 kB of JS and ~38 kB of CSS, the CSS grown by the vendored `@font-face`
+blocks rather than by rules.
+
+**THE ORDER IS A CONTRACT AND `main.tsx` STATES IT**: `fonts.css`, `app.css`,
+`alerts/shared.css`, then each component's own file as the module graph reaches
+it. Everything in the first two is a token, a reset or an element selector, so
+they must come first; every component file loads after `shared.css` and can
+therefore override it at equal specificity.
+
+**`.claude/launch.json` has a third entry, `mission-control-built`, and it is
+there for exactly this.** `npx vite preview` on port 4300 serves `dist/`, which
+is the only way to look at the real bundle in a browser — the split's cascade,
+the emitted `@font-face` blocks and the SPA fallback all behave slightly
+differently there than under the dev server's module graph. Checked when the
+split landed: identical computed styles on every screen, dev against built.
+
+**Those three lines must sit ABOVE `import AlertApp`, and this is the same hazard
+`env.ts` has in the gateway.** CSS is emitted in module-*evaluation* order, which
+is depth-first: with the component import first, every component stylesheet in
+its subtree arrives before the three, `shared.css` lands last, and it beats the
+files it is supposed to lose to. Measured on the first build after the split —
+`.appwin` at byte 0 of the stylesheet and the tokens at 26056. **The dev server
+does the same**, Vite evaluating the ESM graph depth-first too, so it is visible
+in a browser either way. `verify-design.mts` asserts the four lines rather than
+trusting them: deleting the `shared.css` import outright — the chip, the
+greeting, the block, the composer, the thread and the select — was green
+before it did.
+
+**Between component files, order must not matter — and that is a rule, not a
+hope.** Nothing pins the module graph's order, so a class rendered by two
+components goes in `shared.css`. `verify-design.mts` asserts it
+(*no scoping class is claimed by two component stylesheets*), and asserts the
+other thing neither typecheck can see: **every component stylesheet is imported
+by its own component.** A `.css` file is invisible to `tsc` — orphan one and its
+rules simply stop arriving, on one screen, with nothing failing anywhere.
+
+**The phone breakpoint is split on purpose.** `:root { --gutter:18px }` is a
+token and stays in `app.css`; `.row`'s single-column override went to
+`AlertList.css`, beside the `.row` it overrides. Left in `app.css` it would load
+*before* that file and lose to it — the mobile layout silently reverting to the
+desktop grid, with every check still green.
+
+**How the split was done, because doing it by hand is how a rule disappears.**
+A brace-walking parser read the file into rules, each was assigned to a file by
+its scoping class, and the result was asserted to be a **permutation**: 313 rules
+in, 313 rules out, none lost, none gained, compared as normalised
+selector-plus-declarations rather than as text. Then every screen was measured in
+the browser — 757 elements across nine routes, thirty-six computed properties and
+the box each — against a capture taken before the split. Zero differences. Do it
+that way again if it is ever redone; a `diff` cannot check a reordering and a
+brace count cannot check a rule.
+
+**Routing is one file, not a library.** Eight *routes* — four pages, a note, the
+Ask index, a record and Sources — no nesting. `popstate` is already a browser
+event and `location.pathname` is already the state. A finding id carries `:`, so
 the route encodes and decodes it.
+
+**It routes on the PATH, and the hash is gone.** The address is part of the
+product — an alert is something you paste to a colleague — and `#/alert/…` reads
+as an artefact of a demo rather than as a place. It costs exactly one thing and
+it is worth naming: **every deep link now needs the server to answer with
+`index.html`**. `spaFallback` in `apps/shell/vite.config.mts` is that, for the
+dev server and for `vite preview`; anything else serving `dist/` needs the same
+rewrite. It is deliberately wider than vite's own fallback, which declines when
+the last segment looks like a filename — a Slack `ts` is `1755950400.001`, so
+`/record/slack/1755950400.001` would have 404'd on reload while every other page
+worked.
+
+**Two things follow from that and both were live defects the moment the hash
+went.** `notify.ts` built its link as `${APP_URL}/#/alert/<id>`, which now
+resolves to the front door — every notification would open the list instead of
+the one alert it was sent about. And a row is an `<a>` on purpose, so with a
+path every click would fetch the whole application again: `useRoute` installs one
+document-level listener that turns a plain left-click on an internal link into a
+`pushState`. Modified clicks, a `target`, another origin and anything already
+`defaultPrevented` are left to the browser, which is what keeps middle-click and
+copy-link — the reason rows are anchors at all — working.
 
 **The list counts what needs a person, not what was found.** An `ok` finding is a
 note in the margin, and counting it as a thing that "needs you" is how a list
@@ -1199,8 +1358,8 @@ inside `TopBar`, so a badge and the list it counts cannot disagree.
 
 **A row is an `<a>`, not a `<button>`.** The whole row navigates, and an anchor
 gets middle-click, copy-link and the browser's own affordances for free. The
-preview's `.row` rules are written against a button, so `app.css` restates the
-two declarations that differ rather than editing the copied block.
+preview's `.row` rules are written against a button, so `alerts/shared.css`
+restates the two declarations that differ rather than editing the copied block.
 
 **The checklist is the alert's argument, and it needs its ticks.** Three ✓ and a
 ✕ reads in a second; one ✕ alone is a sentence with extra steps. It sorts ticks
@@ -1256,7 +1415,7 @@ vault. It touches no vendor and is deliberately not cached: `/api/work` pays for
 a five-surface gather, and this is the screen the app opens on and the one a
 notification links into.
 
-**All six kinds fire, and four of them reach the front door.**
+**All EIGHT kinds fire, and six of them reach the front door.**
 `undetected_dependency` and `suspect_link` are `COVERAGE_KINDS`: they fall out of
 the graph's tiers **one per edge**, so a real programme produces them by the
 hundred (measured: 840 and 268 on a 5,000-issue import) and an alert list whose
@@ -1279,6 +1438,27 @@ and `buildTimeline` stay the single definition, so a row saying "two sources
 disagree" and the alert saying the same cannot come from two ideas of
 disagreement. `gatherWorkFacts` in `work.ts` is the shared gather; `buildWorkLane`
 is one shaping of it and `runFindings` is another.
+
+**The programme fixture carries a realistic `updatedAt` spread and a carry
+chain, and both were missing.** Every one of its eighty issues used to be
+stamped `day(sprint.end, 12)` — one instant for the whole sprint — so the
+bounded basis computed correctly for every row and every row read the same 2.6
+days, crossing no threshold. And no issue had more than one `in_sprint` edge, so
+`carriedFrom` was empty for all eighty and the carry evidence row was
+unreachable. `sprintNames()` on a real board returns a LIST and
+`import-jira-issues.mts` emits one edge per name, so carryover is the normal
+case live and was the impossible case here. `IDLE` in
+`generate-programme-fixture.mts` is the weighted table — ten entries inside a
+working week, four in the tail — because uniform scatter flagged twelve of the
+twenty active-sprint tickets, which is the dashboard the front door may not
+become.
+
+**`projectWorkItems` used to collapse carryover to whichever `in_sprint` edge
+came last**, possibly a *closed* sprint — and `gatherWorkFacts` filters on
+`i.sprint === activeSprintOf(items)`, so the carried tickets, the ones in play
+longest and exactly what the lane exists to surface, dropped out of the sprint
+entirely and silently. The active sprint wins now, then the one ending latest,
+so the answer is stable rather than dependent on edge order.
 
 **`blocked_by`, `unwritten` and `activity` are deliberately NOT findings.** They
 are true, useful on a row you are already reading, and not reasons to interrupt
@@ -1323,6 +1503,123 @@ Severity is `crit` / `warn` / `ok`, matching `DESIGN.md` §1 rather than
 `WorkSignal.tone`'s `alarm`/`warn`/`info` — translating between two severity
 scales on one screen is how a row and the page it opens disagree about how bad
 something is.
+
+**A promise nobody typed a key into now produces one of TWO alerts, and they
+are different claims rather than one softened.** Measured on the fixture shaped
+like real collector output, **zero of twenty-four meetings names a Jira key** —
+which is the shape of the real thing, because nobody says a ticket number aloud
+in a stand-up. So every promise made in a meeting reached the vault with
+`relatedKeys: []` and the flagship alert reported it as *never filed*, including
+when it was plainly the ticket everybody in the room was looking at.
+
+| | fires when | claim | button |
+|---|---|---|---|
+| `missing_ticket` | no filed key **and** no reconstruction | *"… was never filed"* | Create the ticket |
+| `unlinked_commitment` | no filed key **and** exactly one reconstruction | *"… is probably ORB-1585, and nothing says so"* | Link it to the ticket |
+
+**Both keep the `missing_ticket:<noteId>` id, and that is not cosmetic.** Three
+things key on `Finding.id`: `suppressedIds` and `answeredFindingIds` in `act.ts`
+— so every deferral and dismissal already made would come straight back — and
+`notifiedIds` in `notify.ts`, which reads `mc.memory_surfaced` off the durable
+log. That last one is the expensive one: the first pass after a rename
+re-announces every alert the user was already told about. A note produces
+exactly one of the two kinds, so uniqueness still holds.
+
+**`libs/domain/src/joins.ts` is the reconstruction, and it is deterministic
+code.** `infer.ts` is the right instrument for *"this page is about the same
+outage"* and the wrong one here, for the reason `skills.ts` is deterministic:
+this feeds a DETECTOR, and an alert list that changes between two runs over the
+same data is worthless. The pipeline is `scope ∩ owner ∩ words`:
+
+- **scope** — issues in the promise's own container. NEVER the programme. The
+  worked example is `PLT-4412 "Provision the payments settled topic"`, which
+  matches the flagship promise beautifully and is in no sprint at all.
+- **owner** — the assignee resolves to the same person, through
+  `buildIdentities`. This is the filter doing the real work.
+- **words** — the titles clear `JOIN_MATCH` (0.4) *and* share `MIN_SHARED_WORDS`
+  (2). Two floors, because the coefficient alone runs high for two tiny sets
+  sharing one word.
+
+**It mints only when EXACTLY ONE candidate clears, and that refusal is the
+design.** Not "highest score, breaking ties" — measured on `fixtures/` for
+*"Dana takes the settled event end to end"*, the leader is **PAY-9033 at 0.50
+and it is the wrong ticket**, with PAY-9031 and PAY-9032 tied behind at 0.40.
+A tie-break by score would mint a confident wrong link with a plausible reason
+attached. Two survivors mint nothing and the alert stays `missing_ticket`.
+
+**Nothing writes a reconstruction into the vault.** The vault is the asserted
+layer — it accumulates and is never rebuilt — so a stored guess would outlive
+any threshold change and could not be undone by switching this off. It runs in
+the pass, every time. What a person confirms on the alert *is* written, as
+`EXTRACTED`, which is what stops it firing again.
+
+**`Note.joins` was fully built and had no consumer.** It is persisted,
+round-tripped through the frontmatter and asserted by `verify-graph.mts`, and
+nothing read its tier to decide anything: `findMissingTickets` gated on
+`relatedKeys.length > 0` regardless of provenance. So the moment anything
+reconstructs a key, the flagship alert goes quiet on promises that genuinely
+were never filed — silently. `filedKeys` is the one definition now, and the
+checklist reads it too, because a guessed key rendered beside an unticked box
+reads as a filed ticket with a broken tick.
+
+**`dropped_commitment` is the other new one: promised out loud, its sprint still
+RUNNING, and nothing since has named it.** `missing_ticket` fires when a
+container closes and says the tracker never got this; this fires while the
+container is open and says the *conversation* dropped it. Mutually exclusive by
+construction on `container.state` — `active` here, `closed` there — so neither
+detector knows the other exists. `active` and not `!== 'closed'`, because
+`future` admits a sprint that has not started and nagging about next sprint is
+exactly what the trigger question was settled to avoid.
+
+- **The question is asked from `lastHeardOf`, not from when the promise was
+  made.** "Was it ever acknowledged" is a one-shot test that a promise
+  acknowledged once the next morning and dropped for two months passes for
+  ever — which is the failure this exists to catch.
+- **The meeting the promise was made in does not count as hearing of it again.**
+  A Zoom note becomes one corpus entry per paragraph, so the paragraphs after
+  the promise are all stamped later than it: without this, a promise glanced off
+  two lines below itself reads as followed up.
+- **The trigger is a meeting having run since**, not a day count. A stand-up is
+  where this should have come up, so a stand-up passing it over is the event.
+- **`DF_MAX_SHARE` is raised when in doubt, never lowered.** A missed follow-up
+  fires at somebody who has been chasing daily; a spurious one only keeps us
+  quiet. It is tuned to prefer silence — and it does not discriminate as well as
+  it looks: on the fixture, "chase the vendor sandbox" reads as followed up
+  because eight records say *"ORB-XXXX is still blocked on the vendor sandbox"*
+  about eight unrelated tickets. It failed SAFE, which is the design, and it
+  must not be quoted as evidence the rule is precise.
+- **`MIN_LIVE_SURFACES` is the "we do not know" guard.** Without it the detector
+  fires hardest on a programme whose collectors have stopped running — nothing
+  has been said since because nothing has been *read* since.
+- **The corpus is opt-in** (`GatherOpts.corpus`). The gather already reads every
+  Slack message, transcript paragraph and Confluence page and indexes only the
+  keyed minority; `/api/work` must not start paying to materialise the rest.
+  `CorpusEntry` keeps tokens, not bodies.
+- **The DF index is memoised on `graph.generatedAt` ALONE.** The corpus is the
+  derived tier and only a collector run changes it. Keying it on the event log
+  would tear it down every thirty seconds under the canvas poll — the documented
+  anti-pattern that once left a screen on "Loading…" for ever.
+
+**`vault.create()` used to stamp `createdAt: now`, discarding the draft's own.**
+`seedNotes` copies the fixture's claims through that path, so a promise made in
+June arrived in the vault dated the moment the gateway booted — and
+`dropped_commitment` measures from `createdAt`, so on a freshly seeded vault
+every promise had been made "just now" and the detector could not fire at all.
+A supplied date wins now; `now` is still the default for a note written by hand.
+
+**`accept_proposal` is a chain of `if` blocks with NO default**, so
+`link_commitment` needed a branch or accepting it would settle `accepted`, write
+nothing and report success — the failure `update_issue`, `link_issues` and
+`post_message` already shipped with. Its Jira comment is provenance rather than
+the effect, so a comment failure is reported as such: the vault write has
+already happened, and saying *"nothing was written"* when the alert has stopped
+firing is the same class of lie as claiming a success that did not happen.
+
+**`askProposal` no longer hardcodes `channel: 'eng-payments'`.** That is the
+fixture's own channel; pointed at any other programme it drafted a message to a
+channel that does not exist. The channel comes off a Slack evidence label
+(`#channel — author`), and when nothing resolves the field is **omitted** rather
+than guessed.
 
 **`findMissingTickets` gates on four things and every one is load-bearing:** an
 open `commitment`, **no** `relatedKeys`, an `owner` **and** a `dueAt`, and a
@@ -1446,15 +1743,70 @@ cross-surface join, which is the only thing here a Jira tab cannot do.
 - **Unassigned sprint work is always shown.** It is nobody's row and therefore
   everybody's problem; the reason it is unassigned is that no personal lane has
   ever shown it.
-- **"Days in this status" is measured, never `updatedAt`.** One `buildTimeline`
-  over the durable log, indexed by key, over the same `TRAIL_DAYS` window the
-  dossier uses — which is why `issue.ts` exports it. `updatedAt` means "last
-  touched anything" (a comment, a field edit, and in mock mode a value stamped at
-  boot) and reading a status age out of it was wrong on every row in both
-  directions: the lane said MC-103 had sat 0 days while the dossier said 14, so
-  the aging signal never fired on the ticket the lane exists to surface.
-  A ticket with no transitions in the window gets no `ageDays` and claims no
-  aging signal — "we do not know" beats a fabricated zero.
+- **"Days in this status" has TWO bases, and `statusAgeOf` owns the choice.**
+  `measured` comes from one `buildTimeline` over the durable log, indexed by
+  key, over the same `TRAIL_DAYS` window the dossier uses — which is why
+  `issue.ts` exports it. `bounded` comes from `StoredIssue.updatedAt` and reads
+  *"at least 31 days in development — last touched 2026-07-26"*.
+
+  **The second basis exists because the first is structurally dead on live
+  data.** No collector writes an `events.jsonl` — `import-programme-graph.mts`
+  writes `graph.json` and nothing else — so `buildTimeline` has nothing to
+  measure until the Jira webhook and the scheduled re-derive have been running
+  for weeks. Measured: `fixtures-programme` yields 16 findings, and the same
+  directory with `events.jsonl` removed (which IS the live shape) yielded **7,
+  with every `aging` row gone**. The detector was not degraded, it could not
+  fire at all, and nothing anywhere failed.
+
+  **`updatedAt` was correctly rejected as an ESTIMATE and is honest as a
+  BOUND**, and the distinction is the whole of it. Every event that moves
+  `updatedAt` — a comment, a field edit, a rank — moves it *forward*, which
+  makes `now - updatedAt` *smaller*; a status change necessarily touches the
+  issue, so nothing can have left its status since. The error is
+  one-directional: it can understate the wait and cannot overstate it. That is
+  what makes "at least" sayable, and **the qualifier and the date must survive
+  to the reader** — `statusAgeText` is the one place either is worded.
+
+  **A lane that disagrees with the graph is discarded, not preferred.** The
+  collector re-read the ticket this morning; the log stopped at whatever webhook
+  last arrived. Five of twenty-seven lanes disagreed on `fixtures-programme` and
+  two shipped as findings naming a status the ticket was not in — `HLX-1704`
+  read *"16 days in backlog"* against a last transition into `In Development`.
+
+  **`buildTimeline` takes a `mapStatus` and abandons a lane it cannot read.**
+  An event payload carries the workflow's own word and no `statusCategory`, and
+  this used to cast it straight to `WorkItemStatus`. Pass `lookupStatusWord`
+  (exported from `@mc/connectors`, the map lookup alone — no category fallback,
+  no `'todo'` default) at every call site; `workOpts` does it for the two that
+  matter. The *whole lane* is dropped rather than the one event, because
+  skipping it silently merges the segments either side and overstates the age.
+
+  **`DEFAULT_AGING_DAYS` is per column, and `null` means never.** This is
+  `aging`'s precision gate, as `owner && dueAt` is `missing_ticket`'s. A single
+  `AGING_DAYS = 7` shipped *"16 days in backlog"* as a live alert — a backlog
+  item ageing is what a backlog IS. `MC_AGING_DAYS` replaces the table, loaded
+  by `loadAgingDays` in `graph-source.ts` on exactly the `MC_STATUS_MAP` rules:
+  merged over the defaults, unknown key rejected loudly, unreadable file refuses
+  to boot, and deliberately not inside `MC_GRAPH_DIR`.
+
+  A ticket with neither basis gets no `ageDays` and claims no aging signal —
+  "we do not know" beats a fabricated zero.
+
+- **`flowEfficiency` is `null` when the log cannot express waiting.** It divides
+  active by active-plus-waiting, so a workflow that never records a review or
+  blocked transition yields 1.0 — *"100% of its measured life was active work"* —
+  about a programme nobody measured. `fixtures-programme`'s log moves between
+  `Backlog`, `In Development` and `Closed` only, so all twenty-seven lanes would
+  have claimed perfect flow. Asked once over the whole timeline, because it is a
+  property of the LOG'S VOCABULARY and not of any one ticket.
+
+- **`firedAt` on an aging finding is when it crossed its threshold.** The
+  generic `row.lastActivity ?? Date.now()` is wrong here in a way that disables
+  ranking entirely: `lastActivity` is the newest thing anybody *said*, and a
+  ticket nobody has mentioned is precisely the aging case — so it was
+  `undefined` for all seven findings and every one carried the same
+  `Date.now()`. `rankFindings` sorts oldest-first inside a severity, so a
+  41-day ticket could not outrank a 16-day one.
 
 **A ticket picked — `GET /api/issue/:key`.** The whole context, in the order
 somebody actually needs it: the disagreements, then *where it came from*, then
@@ -1469,8 +1821,69 @@ nothing, which is what one definition prevents.
 Check it with `curl -s localhost:8787/api/issue/PAY-9031 | jq '.contradictions'`
 and `curl -s 'localhost:8787/api/work?assignee=sam' | jq '.rows[].signals'`.
 
+**When the answer is a shape, the chat draws it — and the reason it usually did
+not was that the agent was never told the shape.** `Answer.tsx` renders a
+```chain fence as the preview's `.inline-graph`, the CSS has been there all
+along and `agent.ts` asks for the fence. But `ContextEnvelope.finding` was
+`{id, kind, claim}`, so on a cycle alert the model was told *"4 tickets are
+waiting on each other"* and not **which four or in what order** — while
+`Finding.impact` had carried the ordered walk the whole time
+(`in a dependency cycle — A → B → C → D → A`, built once in `work.ts` and copied
+by `findings.ts`). It could go and look with a tool call, and against a prompt
+saying *"be concise, lead with the answer"* it mostly did not. `impact` rides in
+the envelope now, filled by the browser — `AskInline` was handed that exact
+`Finding` by the gateway, so there is no second source for it to disagree with,
+and filling it server-side would mean a findings pass on every alert-scoped turn
+that the `if (!env.finding)` guard exists to skip.
+
+**The fence parser was strict in ways that failed silently, and each one turned a
+diagram into a sentence.** Four backticks — which models emit to nest a fence —
+matched the *closing* test, opened nothing, and both marker lines vanished, so
+the chain fell through as a paragraph reading `A -> B -> C`. `-->`, `=>` and the
+en-dash arrow each collapsed the whole walk into one node. `[MISSING]` and
+`[at risk]`, had they been accepted verbatim, would have produced
+`class="node MISSING"` and `class="node at risk"` — matching nothing, with the
+tag stripped out of the label as well, so the one node worth looking at rendered
+identically to the others; the tag is lower-cased, hyphenated and checked against
+the two classes the stylesheet actually draws. A caption is line one **only when
+it has no arrow and a later line does** — both halves matter, because "no arrow
+here" alone turns a one-line chain into a caption with zero nodes and an empty
+box. And a node is trimmed of a trailing separator: asked for `key · state
+[tag]`, a model with no state writes `ORB-1620 · [at-risk]`, and taking the tag
+off leaves punctuation promising a word that is not coming.
+
+**The reader's own turn is on the right, in the composer's box.** `.turn.you`
+swaps the grid template and places both children on row one — `direction:rtl`
+gets the columns right and reorders the bidi run with them, putting a question
+mark and a ticket key in the wrong place, and placing only the badge leaves
+auto-placement to drop the body to row two so the turn doubles in height instead
+of moving. `justify-self:end` is what makes a short message hug the right and a
+long one stop at its measure.
+
+The box carries `--app`, and the fill is not optional: `.cited` and
+`.inline-graph` are both `--sunk`, and the inline thread sits inside `.ask`,
+which is `--sunk` too — an unfilled box there puts a `--sunk` citation pill on a
+`--sunk` ground and the citation disappears. **Never `text-align:right`**: the
+block is right-aligned and the text inside it is not, or every wrapped message
+ragged-lefts and the list markers `padding-left:18px` puts on the left hang out
+into the margin.
+
+**`<code>` in an answer needed a rule and did not have one.** The preview has
+`.quiet code` and nothing else, because none of its fixture answers use a
+backtick; the app's agent quotes field names and ids in them constantly, and
+every one rendered in the UA's `monospace` at full size — a different typeface
+from every other mono thing on the page, one size too big, mid-sentence.
+
+**Every inline node is keyed on its offset in the WHOLE answer.** It used to be
+the offset within whatever substring the recursion was looking at, and the tail
+restarts at zero, so siblings collided: React logged *"two children with the same
+key"* on essentially every answer and warned they "may be duplicated and/or
+omitted". An absolute offset is unique by construction and stable across the
+re-render each SSE frame causes, so a streaming answer reconciles instead of
+remounting text somebody is part-way through reading.
+
 **A ticket key is a link to its record, and never to a vendor.** `Answer.tsx`
-holds the rule: a key in an agent's answer links to `#/record/jira/<key>`, which
+holds the rule: a key in an agent's answer links to `/record/jira/<key>`, which
 is ours and carries the join, not Atlassian's. Sending somebody to Jira sends
 them where they would have gone without this.
 
@@ -2100,8 +2513,8 @@ just makes a gesture feel broken.
 And one about reading rather than mechanics: **an unused margin has to look
 deliberate.** A single column jammed against the left edge with a third of the
 screen empty beside it reads as a layout that broke; centred at a capped measure,
-it reads as room to breathe. `app.css` keeps one reading width across every
-screen for that reason.
+it reads as room to breathe. The `ch` measures in `app.css` and its component
+files keep one reading width across every screen for that reason.
 
 ---
 

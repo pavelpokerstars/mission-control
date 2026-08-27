@@ -58,7 +58,12 @@ import {
   type GraphSource,
   type StatusMapReport,
 } from '@mc/connectors';
-import type { StoredContainer, StoredGraph } from '@mc/domain';
+import {
+  DEFAULT_AGING_DAYS,
+  type AgingDays,
+  type StoredContainer,
+  type StoredGraph,
+} from '@mc/domain';
 import { guardConnectors } from './safe-mode.js';
 
 /** Where the graph lives. The fixture by default; a collector's output later. */
@@ -119,6 +124,83 @@ export async function loadStatusWords(path = STATUS_MAP_PATH): Promise<StatusMap
     );
   }
   return report;
+}
+
+/**
+ * Where the per-column patience lives, if it is configured.
+ *
+ * Same reasoning as `STATUS_MAP_PATH`, and deliberately NOT inside
+ * `MC_GRAPH_DIR` for the same reason: how long is too long in review is a fact
+ * about one team's cadence, and the derived layer is rebuilt in full on every
+ * collector run.
+ */
+export const AGING_DAYS_PATH = process.env.MC_AGING_DAYS ?? null;
+
+/** Live, replaceable. Starts as the defaults so nothing has to configure it. */
+let AGING: AgingDays = { ...DEFAULT_AGING_DAYS };
+
+export function agingDays(): AgingDays {
+  return AGING;
+}
+
+/**
+ * Load the per-column aging thresholds, if configured.
+ *
+ * Fails loudly for exactly the reason `loadStatusWords` does: somebody writes
+ * this file because the defaults nag them, and silently falling back to the
+ * defaults restores the nagging they wrote it to stop.
+ *
+ * `null` is a legal value and means "this column never ages" — it is how
+ * `backlog` is expressed, and a deployment may want `todo` there too. It is
+ * distinct from omitting the key, which keeps the default.
+ */
+export async function loadAgingDays(path = AGING_DAYS_PATH): Promise<AgingDays | null> {
+  if (!path) return null;
+  let raw: string;
+  try {
+    raw = await readFile(path, 'utf8');
+  } catch (err) {
+    throw new Error(
+      `Cannot read the aging thresholds at ${path} (MC_AGING_DAYS). ` +
+        `Unset MC_AGING_DAYS to use the built-in defaults. ` +
+        `Underlying error: ${err instanceof Error ? err.message : String(err)}`,
+    );
+  }
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch (err) {
+    throw new Error(
+      `${path} is not valid JSON. It should be a flat object of our status names to ` +
+        `a number of days or null, e.g. { "in_review": 2, "todo": null }. ` +
+        `Underlying error: ${err instanceof Error ? err.message : String(err)}`,
+    );
+  }
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    throw new Error(`${path} must be a flat object of status name → days or null.`);
+  }
+
+  const next: AgingDays = { ...DEFAULT_AGING_DAYS };
+  const rejected: string[] = [];
+  for (const [word, value] of Object.entries(parsed as Record<string, unknown>)) {
+    if (!(word in DEFAULT_AGING_DAYS)) {
+      rejected.push(`"${word}" is not one of ${Object.keys(DEFAULT_AGING_DAYS).join(', ')}`);
+      continue;
+    }
+    if (value !== null && (typeof value !== 'number' || !Number.isFinite(value) || value < 0)) {
+      rejected.push(`"${word}" → ${JSON.stringify(value)} (want a number of days, or null for never)`);
+      continue;
+    }
+    next[word as keyof AgingDays] = value as number | null;
+  }
+  if (rejected.length) {
+    throw new Error(
+      `${path} has ${rejected.length} unusable entr${rejected.length === 1 ? 'y' : 'ies'}:\n` +
+        rejected.map((r) => `  ${r}`).join('\n'),
+    );
+  }
+  AGING = next;
+  return next;
 }
 
 /**

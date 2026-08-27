@@ -30,8 +30,10 @@
 
 import { useState, type JSX } from 'react';
 import type { Finding } from '@mc/domain';
-import { act, type ActionResult } from './api';
-import { DatePicker, fmtDay, isoDay, nextWeekday, plusDays } from './DatePicker';
+import { act, type ActionResult } from '../api';
+import { DatePicker, fmtDay, isoDay, nextWeekday, plusDays } from '../DatePicker/DatePicker';
+
+import './Actions.css';
 
 /** The primary action per alert type. The label is a promise about the effect. */
 const PRIMARY: Partial<Record<Finding['kind'], string>> = {
@@ -41,6 +43,12 @@ const PRIMARY: Partial<Record<Finding['kind'], string>> = {
   suspect_link: 'Ask whether it still holds',
   undetected_dependency: 'Add the link',
   aging: 'Ask the owner',
+  // "Link it", not "Create it": the ticket already exists and the missing thing
+  // is the connection. Offering to create one here would file a duplicate.
+  unlinked_commitment: 'Link it to the ticket',
+  // Static, because `PRIMARY` is looked up with no finding in scope — so it
+  // cannot name the owner, however much better "Ask Esme" would read.
+  dropped_commitment: 'Ask the owner where this got to',
 };
 
 /**
@@ -58,6 +66,8 @@ const DISMISS: Partial<Record<Finding['kind'], string>> = {
   suspect_link: 'The link is correct — dismiss',
   undetected_dependency: 'Not a dependency — dismiss',
   aging: 'It is fine where it is — dismiss',
+  unlinked_commitment: 'Wrong ticket — dismiss',
+  dropped_commitment: 'It was handled elsewhere — dismiss',
 };
 
 /**

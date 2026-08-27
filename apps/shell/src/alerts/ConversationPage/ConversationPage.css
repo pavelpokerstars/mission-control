@@ -1,0 +1,25 @@
+/*
+ * ConversationPage — its own stylesheet.
+ *
+ * The pair to `ConversationPage.tsx`, imported by it. These 3 rules are scoped to a
+ * class that no other component renders, so nothing else can be changed by
+ * editing them and nothing else needs reading to understand them.
+ *
+ * A rule that a SECOND component starts rendering moves to `shared.css` — two
+ * files claiming one selector is the one thing the split can break silently,
+ * because which of them wins is then the order the module graph happens to
+ * import them in.
+ *
+ * EVERY RULE HERE IS `docs/design-preview.html`'s, verbatim. The preview is the
+ * design and it wins where the two disagree, so a change belongs there first
+ * and is copied here second — the split changed which FILE a rule lives in and
+ * nothing about the rule. `scripts/verify-design.mts` concatenates every
+ * stylesheet under `apps/shell/src/` and asserts both directions: no selector
+ * appears that the preview does not have, and none of the preview's has gone
+ * missing — a rule can now fall out of one of seventeen files and fail on a
+ * single screen with nothing erroring.
+ */
+
+.emptychat { padding:40px var(--gutter); max-width:52ch; }
+.emptychat h3 { font-family:var(--sans); font-size:1.15rem; font-weight:600; margin:0 0 8px; }
+.emptychat p { margin:0 0 18px; color:var(--ink-2); font-size:.96rem; }

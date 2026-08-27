@@ -15,11 +15,13 @@
  */
 
 import { Fragment, useState, type JSX } from 'react';
-import { ask } from './chat';
-import { historyOf, relativeTime, useConversations, type Conversation } from './conversations';
-import { AppWindow, BackLink, UndoStrip, type Counts } from './Chrome';
-import { Composer } from './Thread';
-import { go, hrefFor, type Route } from './router';
+import { ask } from '../chat';
+import { historyOf, relativeTime, useConversations, type Conversation } from '../conversations';
+import { AppWindow, BackLink, UndoStrip, type Counts } from '../Chrome/Chrome';
+import { Composer } from '../Thread/Thread';
+import { go, hrefFor, type Route } from '../router';
+
+import './Ask.css';
 
 /**
  * The preview's own structure: a `.convrow` container holding a `.rowmain`

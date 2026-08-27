@@ -19,10 +19,12 @@
 
 import { useEffect, useState, type JSX } from 'react';
 import type { Finding } from '@mc/domain';
-import { ask, suggestions, type Starter, type Subject } from './chat';
-import { conversationsFor, openFullLabel, useConversations } from './conversations';
-import { Composer, Suggestions, Turns } from './Thread';
-import { go } from './router';
+import { ask, suggestions, type Starter, type Subject } from '../chat';
+import { conversationsFor, openFullLabel, useConversations } from '../conversations';
+import { Composer, Suggestions, Turns } from '../Thread/Thread';
+import { go } from '../router';
+
+import './AskInline.css';
 
 /** Two exchanges — a question and its answer, twice. §8 suggests exactly this. */
 const TAIL_TURNS = 4;
@@ -61,6 +63,9 @@ export function AskInline({ finding }: { finding: Finding }): JSX.Element {
     id: finding.id,
     kind: finding.kind,
     claim: finding.claim,
+    // For a cycle this is the ordered walk. See `Subject.impact` — without it
+    // the agent is told four tickets wait on each other and not which four.
+    impact: finding.impact,
     ...(finding.subject.kind === 'workitem' ? { key: finding.subject.key } : {}),
   };
 

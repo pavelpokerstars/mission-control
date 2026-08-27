@@ -157,7 +157,7 @@ for (const s of SPRINTS) {
 const WORKED = SPRINTS.filter((s) => s.state !== 'future');
 
 const ISSUE_COUNT = 80;
-interface Issue { key: string; level: string; status: string; cat: string; sprint: number; assignee?: string; }
+interface Issue { key: string; level: string; status: string; cat: string; sprint: number; assignee?: string; label: string; handle?: string; }
 const issues: Issue[] = [];
 
 /**
@@ -171,6 +171,66 @@ const issues: Issue[] = [];
 const CYCLE = [60, 62, 64, 66];
 const DISPUTED = 61;
 const STALE = 63;
+
+/**
+ * ⟨CASE: aging, bounded⟩ Work CARRIED out of a closed sprint into the active one.
+ *
+ * Two things in the live shape were missing here and each disabled a detector
+ * silently.
+ *
+ * **Every issue carried the same `updatedAt`** — `day(sprint.end, 12)` — so all
+ * twenty issues in the active sprint were last touched at the same instant. A
+ * real Jira spreads `updated` across the sprint, and the spread IS the signal:
+ * with no event log to measure from, `now - updatedAt` is the only honest
+ * account of how long a ticket has sat, and a fixture where it is constant is a
+ * fixture in which `aging` cannot fire on the live shape at all. Measured
+ * before this: the bounded basis computed correctly for all six lane rows and
+ * every one of them read 2.6 days, so nothing crossed any threshold.
+ *
+ * **No issue had more than one `in_sprint` edge**, so `carriedFrom` was empty
+ * for all eighty and the carry evidence row was unreachable. `sprintNames()` on
+ * a real board returns a LIST and `import-jira-issues.mts` emits one edge per
+ * name, so carryover is the normal case live and was the impossible case here.
+ *
+ * These indices are on the active sprint, are not otherwise planted, and each
+ * gets an extra `in_sprint` edge to the sprint before plus an `updatedAt` from
+ * that sprint — which is what a ticket nobody has touched since actually looks
+ * like.
+ */
+const CARRIED = [65, 67, 69];
+
+/**
+ * ⟨CASE: unlinked_commitment, NEGATIVE⟩ Two tickets one person could plausibly
+ * mean.
+ *
+ * `TWIN` is given the same assignee as `TWIN_OF` and a title that overlaps it,
+ * both in the same sprint — so a promise phrased about either clears every
+ * floor against BOTH, and `reconstructCommitmentJoin` must mint nothing.
+ *
+ * Without this the refusal path is code nothing exercises, and the refusal is
+ * the part of the design that matters: measured on `fixtures/`, the
+ * highest-scoring candidate for a real promise was the WRONG ticket, so a rule
+ * that broke ties by score would confidently invent a link and attach a
+ * plausible reason to it. Ambiguity has to stay a refusal, and a refusal needs
+ * a fixture that provokes it.
+ */
+const TWIN_OF = 57;
+const TWIN = 59;
+
+/**
+ * Days since a live ticket was last touched, drawn from a WEIGHTED table.
+ *
+ * Uniform `h % 12` was the first version and it is not what a sprint looks
+ * like: it flagged twelve of the twenty tickets in the active sprint, which is
+ * the dashboard the front door may not become. Real work clusters — most of it
+ * was touched in the last few days, and the interesting minority is the tail.
+ *
+ * A literal table rather than a distribution because it is readable, it is
+ * trivially tunable, and it is deterministic by construction — which the
+ * byte-identical regenerate check requires. Fourteen entries: ten inside a
+ * working week, four in the tail that `aging` exists to surface.
+ */
+const IDLE = [0, 0, 1, 1, 2, 2, 3, 3, 4, 5, 8, 11, 13, 16];
 const PLANTED = new Set([...CYCLE, DISPUTED, STALE]);
 
 for (let i = 0; i < ISSUE_COUNT; i++) {
@@ -184,25 +244,58 @@ for (let i = 0; i < ISSUE_COUNT; i++) {
   // programme where nothing ever finishes, which makes every age meaningless.
   const settled = sprint.state === 'closed' && i % 9 !== 0;
   const planted = PLANTED.has(i);
-  const person = i % 13 === 0 && !planted ? undefined : people[h(`as${i}`) % people.length]!;
+  const person =
+    i === TWIN && issues[TWIN_OF]?.assignee
+      ? people.find((q) => q.email === issues[TWIN_OF]!.assignee)!
+      : i % 13 === 0 && !planted
+        ? undefined
+        : people[h(`as${i}`) % people.length]!;
+  /**
+   * The twin borrows the other one's topic and owner, so the pair is
+   * indistinguishable to a rule that only reads titles and assignees.
+   */
+  const twinOf = i === TWIN ? issues[TWIN_OF] : undefined;
+  const label = twinOf
+    ? `${pick(VERB, `v${i}`)} ${twinOf.label.replace(/^\w+ /, '')}`
+    : `${pick(VERB, `v${i}`)} ${pick(TOPIC, `t${i}`)}`;
   const issue: Issue = {
-    key, level,
+    key, level, label,
     status: planted ? 'In Development' : settled ? 'Closed' : status,
     cat: planted ? 'doing' : settled ? 'done' : cat,
     sprint: sprint.n,
     assignee: person?.email,
+    ...(person ? { handle: person.handle } : {}),
   };
   issues.push(issue);
 
   const created = day(sprint.start - 3, 9);
+  const carried = CARRIED.includes(i) && !planted;
+  const previous = WORKED[WORKED.indexOf(sprint) - 1];
+
+  /**
+   * When Jira last saw this ticket touched, and it must VARY.
+   *
+   * Settled work stops moving at its resolution. Live work is touched somewhere
+   * inside its sprint — deterministically scattered by the same hash everything
+   * else here uses, so a re-run is byte-identical. A carried ticket keeps the
+   * date it stopped being touched, which is the whole case: it is the ticket
+   * nobody has looked at since the sprint before, and it is the one a person
+   * needs to see.
+   */
+  const lastTouched = settled
+    ? day(sprint.end - 1, 16)
+    : carried && previous
+      ? day(previous.start + (h(`up${i}`) % 4), 11)
+      : day(sprint.end - IDLE[h(`up${i}`) % IDLE.length]!, 11);
+
   nodes.push({
     id: `issue:${key}`, kind: 'issue', source: 'jira',
-    label: `${pick(VERB, `v${i}`)} ${pick(TOPIC, `t${i}`)}`,
+    label,
     key, level: level as never, status: issue.status, statusCategory: issue.cat as never,
     ...(person ? { assignee: person.handle } : {}),
     createdAt: created,
     ...(issue.cat === 'done' ? { resolvedAt: day(sprint.end - 1, 16) } : {}),
-    updatedAt: day(sprint.end, 12),
+    updatedAt: lastTouched,
     url: `https://example.com/browse/${key}`,
   });
 
@@ -210,6 +303,13 @@ for (let i = 0; i < ISSUE_COUNT; i++) {
     source: `issue:${key}`, target: `sprint:Orbit ${sprint.n}`, relation: 'in_sprint',
     tier: 'EXTRACTED', origin: 'structural', evidence: [],
   });
+  // The carry: still in the sprint it did not finish in, and in this one too.
+  if (carried && previous) {
+    edges.push({
+      source: `issue:${key}`, target: `sprint:Orbit ${previous.n}`, relation: 'in_sprint',
+      tier: 'EXTRACTED', origin: 'structural', evidence: [],
+    });
+  }
   if (person) {
     edges.push({
       source: `issue:${key}`, target: `person:${person.email}`, relation: 'assigned_to',
@@ -447,12 +547,56 @@ const PROMISES = [
   { meeting: 9, para: 5, owner: 1, sprint: 30 },
   { meeting: 12, para: 4, owner: 11, sprint: 31 },
   { meeting: 16, para: 2, owner: 3, sprint: 32 },
+  /**
+   * ⟨CASE: unlinked_commitment⟩ A promise that IS about a ticket, said in the
+   * way people actually say it — by subject, never by key.
+   *
+   * `about` builds the promise text out of an issue's own title and takes that
+   * issue's assignee as the owner, which is exactly the shape a stand-up
+   * produces: everybody in the room knows which ticket is meant and nobody says
+   * the number. Without a case like this the reconstruction is code nothing
+   * exercises, and the flagship alert goes on reporting *"never filed"* about
+   * work that is plainly on the board.
+   */
+  { meeting: 18, para: 4, sprint: 32, about: 55 },
+  /**
+   * ⟨CASE: unlinked_commitment, NEGATIVE⟩ Two candidates clear both floors, so
+   * the rule mints nothing and the alert stays `missing_ticket`.
+   *
+   * This is the case that decides the whole design. Measured on `fixtures/`,
+   * the HIGHEST-scoring candidate for a promise was the wrong ticket, so a
+   * "best score wins" rule would confidently invent a link. Ambiguity has to be
+   * a refusal, and a refusal needs a fixture that provokes it.
+   */
+  { meeting: 20, para: 3, sprint: 32, about: 57, ambiguous: true },
+  /**
+   * ⟨CASE: dropped_commitment⟩ Promised inside the sprint that is STILL
+   * RUNNING, and three stand-ups have gone by without it coming up.
+   *
+   * Every other promise here sits in a closed sprint, which is
+   * `missing_ticket`'s trigger and structurally excludes this detector — so
+   * without an active-sprint promise the whole rule is unreachable.
+   */
+  { meeting: 21, para: 2, owner: 6, sprint: 33 },
 ] as const;
 
 for (const [i, p] of PROMISES.entries()) {
   const m = meetings[p.meeting]!;
-  const owner = people[p.owner]!;
-  const text = `${owner.name} to ${pick(TASK, `pr${i}`)}.`;
+  /**
+   * A promise built FROM an issue, or one built from the task pool.
+   *
+   * The `about` form takes the issue's assignee as the owner and its title as
+   * the subject, which is what makes the owner filter and the word overlap both
+   * fire. The pool form names no real work, which is what keeps the other five
+   * as genuine `missing_ticket` cases.
+   */
+  const target = 'about' in p ? issues[(p as { about: number }).about]! : undefined;
+  const owner = target
+    ? people.find((q) => q.email === target.assignee)!
+    : people[(p as { owner: number }).owner]!;
+  const text = target
+    ? `${owner.name} to finish ${target.label.toLowerCase().replace(/^\w+ /, '')}.`
+    : `${owner.name} to ${pick(TASK, `pr${i}`)}.`;
   m.paras[p.para] = text;
   const sprint = SPRINTS.find((s) => s.n === p.sprint)!;
   const created = m.at;
@@ -472,12 +616,21 @@ for (const [i, p] of PROMISES.entries()) {
     owner: owner.name,
     dueAt: day(sprint.end, 17),
     container: `sprint:Orbit ${p.sprint}`,
-    // The ref is what makes the citation a LINK — `quote` alone renders as
-    // prose. `at` is the paragraph index, matching `annotateTranscript`.
+    /**
+     * The ref is what makes the citation a LINK — `quote` alone renders as
+     * prose.
+     *
+     * `ref.at` is the PARAGRAPH INDEX, matching `annotateTranscript` on an
+     * untimed record, and it is deliberately not repeated on the evidence body.
+     * `Evidence.at` means seconds into a recording and the alert page renders
+     * it as `Math.floor(at / 60)`, so paragraph 3 displayed as "0m in" — a
+     * moment nobody recorded, printed beside a quotation. The citation still
+     * opens the note at the right paragraph; it just does not claim a clock a
+     * Zoom Doc does not have. See `zoomEvidence` in `apps/gateway/src/format.ts`.
+     */
     evidence: [{
       surface: 'zoom',
       label: `${m.title} (read by the model)`,
-      at: p.para,
       quote: text,
       ref: { surface: 'zoom', id: m.id, at: p.para },
     }],

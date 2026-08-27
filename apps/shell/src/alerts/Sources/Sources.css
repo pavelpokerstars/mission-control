@@ -1,0 +1,52 @@
+/*
+ * Sources — its own stylesheet.
+ *
+ * The pair to `Sources.tsx`, imported by it. These 14 rules are scoped to a
+ * class that no other component renders, so nothing else can be changed by
+ * editing them and nothing else needs reading to understand them.
+ *
+ * A rule that a SECOND component starts rendering moves to `shared.css` — two
+ * files claiming one selector is the one thing the split can break silently,
+ * because which of them wins is then the order the module graph happens to
+ * import them in.
+ *
+ * EVERY RULE HERE IS `docs/design-preview.html`'s, verbatim. The preview is the
+ * design and it wins where the two disagree, so a change belongs there first
+ * and is copied here second — the split changed which FILE a rule lives in and
+ * nothing about the rule. `scripts/verify-design.mts` concatenates every
+ * stylesheet under `apps/shell/src/` and asserts both directions: no selector
+ * appears that the preview does not have, and none of the preview's has gone
+ * missing — a rule can now fall out of one of seventeen files and fail on a
+ * single screen with nothing erroring.
+ */
+
+.failbox { border:1px solid var(--line); border-radius:8px; overflow:hidden; }
+.failbox .conn-row:not(:last-child) { border-bottom:1px solid var(--line); }
+.failbox .conn-row:last-child { border-bottom:0; }
+/* ---------- 7 · sources ---------- */
+.conn { display:grid; gap:0; }
+.conn-row {
+    display:grid; grid-template-columns:16px minmax(0,1fr) auto auto; gap:0 14px;
+    align-items:center; padding:15px var(--gutter); border-bottom:1px solid var(--line);
+  }
+.conn-row .nm { font-weight:600; font-size:.98rem; }
+.conn-row .nm small { display:block; font-weight:400; font-size:.85rem; color:var(--ink-2); margin-top:2px; }
+.conn-row .nm small.scope { font-family:var(--mono); font-size:.75rem; letter-spacing:.01em; color:var(--ink-3); }
+.conn-row .nm small.scope b { color:var(--ink-2); font-weight:600; }
+.conn-row .count {
+    font-family:var(--mono); font-size:11px; color:var(--ink-3);
+    font-variant-numeric:tabular-nums; text-align:right; white-space:nowrap;
+  }
+.stat-strip {
+    display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:1px;
+    background:var(--line); border-bottom:1px solid var(--line);
+  }
+.stat { background:var(--app); padding:20px var(--gutter); }
+.stat .n {
+    font-size:1.9rem; font-weight:600; letter-spacing:-.03em; font-variant-numeric:tabular-nums;
+    display:block; line-height:1.1;
+  }
+.stat .l {
+    font-family:var(--mono); font-size:10px; letter-spacing:.1em; text-transform:uppercase;
+    color:var(--ink-3); margin-top:5px; display:block;
+  }

@@ -21,6 +21,12 @@
  * projects. See `docs/GRAPH-SCHEMA.md` for the prose version.
  */
 export * from './graph.js';
+/**
+ * Reconstructing a join nobody typed. Its own file for the same reason
+ * `graph.ts` is: a self-contained rule with one job, re-exported here so the
+ * package surface is unchanged.
+ */
+export * from './joins.js';
 // Imported as well as re-exported: `Note.joins` below is typed with it, and a
 // bare `export *` does not bring a name into this module's own scope.
 import type { ConfidenceTier } from './graph.js';
@@ -453,7 +459,21 @@ export interface Proposal<T = unknown> {
      */
     | 'resolve_note'
     | 'promote_to_pattern'
-    | 'reverify_note';
+    | 'reverify_note'
+    /**
+     * Attach a reconstructed ticket to the promise it belongs to.
+     *
+     * In the vault half because that is where the durable effect lands: the
+     * key is appended to `Note.relatedKeys` with an `EXTRACTED` join, so the
+     * alert stops firing and `/tidy` can retire the note once the work moves.
+     * A Jira comment rides along for provenance — a comment is not a field, so
+     * `FIELD_OWNER` is untouched, exactly as `create_issue`'s provenance
+     * comment already works.
+     *
+     * A human presses this in front of the claim, the reason and the citation.
+     * That is the whole reason the reconstruction is allowed to be a guess.
+     */
+    | 'link_commitment';
   /** Why the agent thinks this. Always show it. */
   rationale: string;
   /** Where the evidence came from, so the human can verify before accepting. */
@@ -1462,7 +1482,35 @@ function daysBetween(from: string, to: string): number {
  */
 export function buildTimeline(
   events: McEvent[],
-  opts: { items?: WorkItem[]; notes?: Note[]; now?: string; defaultDays?: number } = {},
+  opts: {
+    items?: WorkItem[];
+    notes?: Note[];
+    now?: string;
+    defaultDays?: number;
+    /**
+     * The vendor's own status word to one of ours, or `undefined` when nothing
+     * maps it.
+     *
+     * WHY THIS EXISTS. An event payload carries the workflow's word — `In
+     * Development`, `Code review`, `Closed` — and this function used to cast it
+     * straight to `WorkItemStatus`. On a log written in domain words (the demo
+     * fixture) that is invisibly fine; on one written in vendor words (every
+     * real Jira, and `fixtures-programme`) it produces a lane whose `status` is
+     * a string no consumer can match, and the failure is silent in the worst
+     * way: `aging` still reports a duration, labelled with a status the ticket
+     * is not in.
+     *
+     * Measured on `fixtures-programme`: five of twenty-seven lanes disagreed
+     * with the graph after mapping, and two shipped as findings — `HLX-1704`
+     * read *"16 days in backlog"* while the ticket's last recorded transition
+     * was into `In Development`, and `HLX-1746` the same for `Code review`.
+     *
+     * A function rather than a table because the map is CONFIGURATION — see
+     * `MC_STATUS_MAP`. `@mc/domain` may not own it, and must not grow a second
+     * copy of it that drifts from the one the connectors read.
+     */
+    mapStatus?: (vendor: string) => WorkItemStatus | undefined;
+  } = {},
 ): Timeline {
   const now = opts.now ?? new Date().toISOString();
   const ordered = [...events].sort((a, b) => a.ts.localeCompare(b.ts));
@@ -1483,11 +1531,50 @@ export function buildTimeline(
     return created;
   };
 
+  /**
+   * The word reader, and it defaults to STRICT rather than to a cast.
+   *
+   * `w in STATUS_FLOW` is the membership test because that record is exhaustive
+   * over `WorkItemStatus` by its own type — a seventh status cannot be added
+   * without the compiler naming this check's table, which a hand-written array
+   * of the six would not give.
+   *
+   * The default accepts a log already written in our words, which is what the
+   * demo fixture ships and what the webhook path writes. Anything else is
+   * `undefined`, and `undefined` drops the lane rather than guessing.
+   */
+  const readStatus =
+    opts.mapStatus ?? ((w: string): WorkItemStatus | undefined =>
+      w in STATUS_FLOW ? (w as WorkItemStatus) : undefined);
+
+  /**
+   * Keys whose lane was abandoned because a status word did not map.
+   *
+   * THE WHOLE LANE GOES, NOT THE ONE EVENT. Skipping the unreadable event and
+   * carrying on looks tidier and is much worse: the segment either side of it
+   * silently merges into one, so a ticket that went `In Development → Code
+   * review → In Development` reads as a single unbroken stretch and `ageDays`
+   * overstates by however long the middle status lasted. A lane we cannot read
+   * in full is a lane we do not have, which is the same "we do not know beats a
+   * fabricated number" rule the rest of this measurement follows.
+   */
+  const dropped = new Set<WorkItemKey>();
+  const abandon = (key: WorkItemKey): void => {
+    dropped.add(key);
+    lanes.delete(key);
+    open.delete(key);
+  };
+
   for (const e of ordered) {
     if (e.type !== 'workitem.status_changed' || !e.entityKey) continue;
+    if (dropped.has(e.entityKey)) continue;
     const p = e.payload as { from?: string; to?: string };
-    const to = p.to as WorkItemStatus | undefined;
-    if (!to) continue;
+    if (!p.to) continue;
+    const to = readStatus(p.to);
+    if (!to) {
+      abandon(e.entityKey);
+      continue;
+    }
 
     const running = open.get(e.entityKey);
     if (running) {
@@ -1501,8 +1588,13 @@ export function buildTimeline(
     } else if (p.from) {
       // First we hear of this ticket is a change *out of* something. It was in
       // that state for at least the whole window before it, so draw it.
+      const was = readStatus(p.from);
+      if (!was) {
+        abandon(e.entityKey);
+        continue;
+      }
       laneFor(e.entityKey).push({
-        status: p.from as WorkItemStatus,
+        status: was,
         from,
         to: e.ts,
         days: daysBetween(from, e.ts),
@@ -1553,6 +1645,29 @@ export function buildTimeline(
   }
   markers.sort((a, b) => a.ts.localeCompare(b.ts));
 
+  /**
+   * Whether this log records waiting AT ALL.
+   *
+   * `flowEfficiency` divides active by active-plus-waiting, so a log whose
+   * vocabulary contains no waiting status yields 1.0 — *"100% of its measured
+   * life was active work"* — about a programme whose workflow simply never
+   * writes a review or a blocked transition. That is a fabricated number, and
+   * it is the shape this repo keeps paying for: confident, plausible, and
+   * derived entirely from an absence.
+   *
+   * `fixtures-programme`'s log moves between `Backlog`, `In Development` and
+   * `Closed` only — one active bucket and two excluded — so every one of its
+   * twenty-seven lanes would otherwise claim perfect flow.
+   *
+   * Asked once over the whole timeline rather than per lane, because it is a
+   * property of the LOG'S VOCABULARY and not of any one ticket: a ticket that
+   * genuinely never waited should still report a real efficiency, but only when
+   * the log is capable of recording waiting in the first place.
+   */
+  const recordsWaiting = [...lanes.values()].some((segs) =>
+    segs.some((seg) => STATUS_FLOW[seg.status] === 'waiting'),
+  );
+
   return {
     from,
     to: now,
@@ -1573,7 +1688,9 @@ export function buildTimeline(
           ageDays: segments.at(-1)?.current ? (segments.at(-1)?.days ?? 0) : 0,
           activeDays,
           waitingDays,
-          flowEfficiency: measured > 0 ? activeDays / measured : null,
+          // `null` is a supported answer at every call site, and it is the
+          // honest one when the log cannot express waiting.
+          flowEfficiency: recordsWaiting && measured > 0 ? activeDays / measured : null,
         };
       })
       .sort((a, b) => a.key.localeCompare(b.key)),
@@ -2581,7 +2698,29 @@ export type FindingKind =
   /** Reconstructed from evidence, and the tracker never recorded it. */
   | 'undetected_dependency'
   /** It has sat in one status long enough to say out loud. */
-  | 'aging';
+  | 'aging'
+  /**
+   * A promise whose ticket we can name, and nothing on any surface says so.
+   *
+   * The other half of `missing_ticket`, and it is a DIFFERENT claim rather than
+   * a softer one. "Nobody filed this" and "this is almost certainly ORB-1438
+   * and no record connects them" want different sentences, different evidence
+   * and different buttons — one creates a ticket, the other links to one.
+   * Collapsing them was the state before this existed, and it made the flagship
+   * alert wrong about every promise discussed in a stand-up under a ticket
+   * nobody said out loud.
+   */
+  | 'unlinked_commitment'
+  /**
+   * Promised out loud, its sprint still running, and nothing has named it
+   * since — through however many meetings have happened in between.
+   *
+   * `missing_ticket` fires when a container CLOSES: the tracker never got it.
+   * This fires while the container is still open: the CONVERSATION dropped it.
+   * The two are mutually exclusive by construction on `container.state`, which
+   * is why neither needs to know about the other.
+   */
+  | 'dropped_commitment';
 
 /**
  * The two kinds that are COVERAGE, not interruptions — they belong on Sources.
@@ -2652,6 +2791,22 @@ export interface Finding {
   dedupeKey: string;
 }
 
+/**
+ * How a time-in-status number was arrived at. There is no third option, and
+ * there must not be a fourth state where a number exists without one of these.
+ *
+ *  - `measured`  the durable event log holds the transition into this status,
+ *                so the number is exact.
+ *  - `bounded`   no transition was ever observed, and the number is a LOWER
+ *                BOUND read off the collector's `updatedAt`.
+ *
+ * The distinction has to survive all the way to the sentence a person reads —
+ * *"41 days in in progress"* and *"at least 30 days in in progress"* are
+ * different claims, and quietly rendering the second as the first is the kind
+ * of confident overstatement that costs a detector its credibility.
+ */
+export type AgeBasis = 'measured' | 'bounded';
+
 export interface WorkRow {
   item: WorkItem;
   /** Most severe first. Empty is a legitimate answer: nothing is wrong here. */
@@ -2660,8 +2815,150 @@ export interface WorkRow {
   counts: Partial<Record<Owner, number>>;
   /** The newest thing anyone said about it, anywhere. */
   lastActivity?: string;
-  /** Days in the status it is in now. */
+  /** Days in the status it is in now. Absent means we do not know. */
   ageDays?: number;
+  /** How `ageDays` was arrived at. Present exactly when `ageDays` is. */
+  ageBasis?: AgeBasis;
+  /** The dated fact `ageDays` counts from. Present exactly when `ageDays` is. */
+  ageSince?: string;
+}
+
+/**
+ * How long in each column before the lane says so out loud, and `null` for the
+ * columns where the question is meaningless.
+ *
+ * THIS IS `aging`'s PRECISION GATE, and it is the same idea as `owner && dueAt`
+ * on `missing_ticket`: the thing that stops a detector nagging about the normal
+ * operation of a team. A single `AGING_DAYS = 7` across every column could not
+ * express the one distinction that matters — `backlog` is the column whose
+ * entire purpose is to hold work that is not moving, so *"16 days in backlog"*
+ * is not a finding, it is a description of a backlog. It shipped as a live
+ * alert on `fixtures-programme` and it was noise.
+ *
+ * The numbers are ordered by how much a person is already implicated. Review is
+ * shortest because somebody has been asked and has not answered; blocked is a
+ * working week, which is when an impediment stops being news and starts being
+ * an escalation; `in_progress` is a fortnight, which is the user's own case —
+ * *"if the ticket spends too long in the development … columns"*; `todo` is
+ * longest because a ticket committed to a sprint and never started is a
+ * planning fact rather than an execution one.
+ *
+ * Defaults, not the rule — `MC_AGING_DAYS` replaces them, for the same reason
+ * `MC_STATUS_MAP` exists: how long is too long is a fact about one team's
+ * cadence, not about this codebase.
+ */
+export type AgingDays = Record<WorkItemStatus, number | null>;
+
+export const DEFAULT_AGING_DAYS: AgingDays = {
+  in_review: 3,
+  blocked: 5,
+  in_progress: 10,
+  todo: 14,
+  /** Never. A backlog item ageing is what a backlog IS. */
+  backlog: null,
+  /** Never. Finished work has no duration worth interrupting somebody about. */
+  done: null,
+};
+
+/**
+ * How long this item has been where it is, and how sure we are of the number.
+ *
+ * ONE FUNCTION, SO A ROW AND ITS ALERT PAGE CANNOT DISAGREE. The lane builds a
+ * `WorkSignal` and the findings pass copies `signal.text` into `Finding.impact`
+ * verbatim, so both already read from one construction site; this sits above it
+ * and makes the precedence a fact about the code rather than a convention two
+ * callers happen to share.
+ *
+ * THE PRECEDENCE, and every rung is load-bearing:
+ *
+ *  1. A lane whose current status MATCHES the item's — `measured`. The log is
+ *     the finer instrument and wins outright.
+ *  2. A lane that DISAGREES with the item's status is discarded, and we fall
+ *     through to the bound. The graph is the newer observation: the collector
+ *     re-read the ticket this morning and the log stopped at whatever webhook
+ *     last arrived. Measured on `fixtures-programme`, five of twenty-seven
+ *     lanes disagreed and two of them shipped as findings that named a status
+ *     the ticket was not in.
+ *  3. `lastVendorUpdate` — `bounded`. See below for why this is honest.
+ *  4. Neither — `undefined`. No number is claimed and no signal is raised.
+ *
+ * WHY `updatedAt` IS AN HONEST LOWER BOUND, having been correctly rejected as
+ * an estimate. `work.ts` rejected it for reading time-in-status *as if* it were
+ * time-since-transition, and that rejection stands. But every event that moves
+ * `updatedAt` — a comment, a label, a rank, a worklog — moves it FORWARD, which
+ * makes `now - updatedAt` SMALLER. A status change necessarily touches the
+ * issue, so nothing can have left its status since `updatedAt`. The error is
+ * one-directional: this can understate the wait and cannot overstate it. That
+ * is precisely the property that makes "at least N days" sayable, and it is why
+ * the wording is not optional.
+ */
+export function statusAgeOf(args: {
+  item: WorkItem;
+  lane?: Pick<TimelineLane, 'segments' | 'ageDays'>;
+  /**
+   * `StoredIssue.updatedAt` — the COLLECTOR'S, never `WorkItem.updatedAt`.
+   *
+   * The projection stamps `new Date().toISOString()` on an item whose collector
+   * wrote no date, so reading it here would turn "we have no idea" into "zero
+   * days", which is the fabrication this whole function is arranged to avoid.
+   */
+  lastVendorUpdate?: string;
+  now: number;
+}): { days: number; basis: AgeBasis; since: string } | undefined {
+  const { item, lane, lastVendorUpdate, now } = args;
+
+  const current = lane?.segments.at(-1);
+  if (current?.current && current.status === item.status) {
+    return { days: current.days, basis: 'measured', since: current.from };
+  }
+
+  if (lastVendorUpdate) {
+    const since = Date.parse(lastVendorUpdate);
+    if (Number.isFinite(since)) {
+      return { days: (now - since) / DAY_MS, basis: 'bounded', since: lastVendorUpdate };
+    }
+  }
+
+  return undefined;
+}
+
+/**
+ * How a column is named in a sentence.
+ *
+ * `status.replace('_', ' ')` is what this used to be, and it produced *"16 days
+ * in in progress"* and *"16 days in in review"* — which shipped. These are
+ * phrases rather than labels precisely so the preposition can vary: `blocked`
+ * does not take one and `backlog` takes an article.
+ *
+ * `in_progress` reads as "in development" because that is the word the workflow
+ * uses and the word a person says out loud about it.
+ */
+export const COLUMN_PHRASE: Record<WorkItemStatus, string> = {
+  in_progress: 'in development',
+  in_review: 'in review',
+  blocked: 'blocked',
+  todo: 'in to-do',
+  backlog: 'in the backlog',
+  done: 'done',
+};
+
+/**
+ * The sentence a row and an alert both use, so neither can word it differently.
+ *
+ * The "at least" is not decoration. A bounded number is a LOWER bound read off
+ * `updatedAt`, and rendering it as a flat duration would claim we watched the
+ * ticket sit there. Whatever else changes here, that qualifier and the date it
+ * is bounded by must survive to the reader.
+ */
+export function statusAgeText(
+  status: WorkItemStatus,
+  age: { days: number; basis: AgeBasis; since: string },
+): string {
+  const n = Math.round(age.days);
+  const where = COLUMN_PHRASE[status];
+  return age.basis === 'measured'
+    ? `${n} days ${where}`
+    : `at least ${n} days ${where} — last touched ${age.since.slice(0, 10)}`;
 }
 
 /**
@@ -2830,7 +3127,26 @@ export interface ContextEnvelope {
    * this field. A finding is not a `WorkItemKey` — the flagship one is about
    * the *absence* of one — so it cannot ride in `focusedKey`.
    */
-  finding?: { id: string; kind: string; claim: string };
+  /**
+   * `impact` rides along because for some kinds it IS the answer's shape.
+   *
+   * A `cycle` finding's impact is the ordered walk —
+   * `in a dependency cycle — A → B → C → D → A` (`work.ts`, copied verbatim by
+   * `findings.ts`) — and without it the agent is told "4 tickets are waiting on
+   * each other" and not *which four* or *in what order*. It could go and find
+   * out with a tool call, and against a prompt that says "be concise, lead with
+   * the answer" it mostly does not. So the one rule the chat has about shapes —
+   * draw it, do not describe it — was asking the model to draw something it had
+   * never been shown.
+   *
+   * The browser fills it, not the gateway. `AskInline` was handed this exact
+   * `Finding` by `GET /api/findings/:id`, so there is no second source for it to
+   * disagree with — unlike `findings` below, where the gateway is the authority
+   * because the list is the gateway's. Filling it server-side would mean a
+   * findings pass on every alert-scoped turn, which the `if (!env.finding)`
+   * guard there exists to skip.
+   */
+  finding?: { id: string; kind: string; claim: string; impact?: string };
   /**
    * The front door, when the conversation is NOT about one alert.
    *
@@ -2911,6 +3227,12 @@ export function renderContext(env: ContextEnvelope): string {
   if (env.finding) {
     lines.push(
       `the alert being discussed: ${env.finding.claim} (${env.finding.kind})`,
+      // The detector's own sentence about why this matters — and for a cycle it
+      // carries the ordered walk, which is the shape the answer is supposed to
+      // draw. Printed under the claim rather than beside it because it
+      // elaborates on the claim; a reader of this prompt should meet them in
+      // that order.
+      ...(env.finding.impact ? [`why it matters: ${env.finding.impact}`] : []),
       'The question is about that alert unless it plainly is not. Do not ask which one.',
     );
   }

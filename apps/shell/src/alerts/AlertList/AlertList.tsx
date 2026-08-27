@@ -12,9 +12,11 @@
 
 import type { JSX } from 'react';
 import type { Finding, FindingKind, FindingSeverity } from '@mc/domain';
-import { dotClass, explain, useFindings } from './api';
-import { AppWindow, type Counts } from './Chrome';
-import { go, hrefFor, type Route } from './router';
+import { dotClass, explain, useFindings } from '../api';
+import { AppWindow, type Counts } from '../Chrome/Chrome';
+import { go, hrefFor, type Route } from '../router';
+
+import './AlertList.css';
 
 /**
  * The alert type, in the words a person would use.
@@ -30,6 +32,8 @@ export const KIND_LABEL: Record<FindingKind, string> = {
   suspect_link: 'Stale link',
   undetected_dependency: 'Unrecorded dependency',
   aging: 'Not moving',
+  unlinked_commitment: 'Probably this ticket',
+  dropped_commitment: 'Raised, then dropped',
 };
 
 const DAY_MS = 86_400_000;

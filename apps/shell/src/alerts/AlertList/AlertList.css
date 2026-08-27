@@ -1,0 +1,45 @@
+/*
+ * AlertList — its own stylesheet.
+ *
+ * The pair to `AlertList.tsx`, imported by it. These 12 rules are scoped to a
+ * class that no other component renders, so nothing else can be changed by
+ * editing them and nothing else needs reading to understand them.
+ *
+ * A rule that a SECOND component starts rendering moves to `shared.css` — two
+ * files claiming one selector is the one thing the split can break silently,
+ * because which of them wins is then the order the module graph happens to
+ * import them in.
+ *
+ * EVERY RULE HERE IS `docs/design-preview.html`'s, verbatim. The preview is the
+ * design and it wins where the two disagree, so a change belongs there first
+ * and is copied here second — the split changed which FILE a rule lives in and
+ * nothing about the rule. `scripts/verify-design.mts` concatenates every
+ * stylesheet under `apps/shell/src/` and asserts both directions: no selector
+ * appears that the preview does not have, and none of the preview's has gone
+ * missing — a rule can now fall out of one of seventeen files and fail on a
+ * single screen with nothing erroring.
+ */
+
+.laterlink {
+    background:transparent; border:0; padding:0; font:inherit; color:var(--ink-2);
+    text-decoration:underline; text-underline-offset:3px;
+  }
+.laterlink:hover { color:var(--ink); }
+.row {
+    display:grid; grid-template-columns:minmax(0,1fr) auto; gap:14px 20px; align-items:center;
+    width:100%; text-align:left; background:transparent; border:0; border-bottom:1px solid var(--line);
+    padding:18px var(--gutter) 18px calc(var(--gutter) - 3px);
+    border-left:3px solid transparent;
+  }
+.row:hover { background:var(--sunk); border-left-color:var(--line-2); }
+.row.crit { border-left-color:var(--crit); }
+.row.warn { border-left-color:var(--warn); }
+.row .meta { display:flex; align-items:center; gap:10px; margin-bottom:7px; flex-wrap:wrap; }
+.row h3 { margin:0 0 5px; font-size:1.02rem; font-weight:600; letter-spacing:-.01em; }
+.row .sub { margin:0; font-size:.9rem; color:var(--ink-2); }
+.row .srcs { display:flex; gap:5px; align-items:center; }
+.row .go { font-family:var(--mono); font-size:11px; color:var(--ink-3); white-space:nowrap; }
+@media (max-width:640px) {
+    .row { grid-template-columns:minmax(0,1fr); }
+    .row .go { display:none; }
+  }

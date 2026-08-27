@@ -15,12 +15,14 @@
 
 import type { JSX } from 'react';
 import type { Evidence } from '@mc/domain';
-import { explain, dotClass, useFinding, type FindingDetail } from './api';
-import { AppWindow, BackLink, type Counts } from './Chrome';
-import { recordHref, type Route } from './router';
-import { Actions } from './Actions';
-import { AskInline } from './AskInline';
-import { KIND_LABEL } from './AlertList';
+import { explain, dotClass, useFinding, type FindingDetail } from '../api';
+import { AppWindow, BackLink, type Counts } from '../Chrome/Chrome';
+import { recordHref, type Route } from '../router';
+import { Actions } from '../Actions/Actions';
+import { AskInline } from '../AskInline/AskInline';
+import { KIND_LABEL } from '../AlertList/AlertList';
+
+import './AlertPage.css';
 
 /**
  * The checklist: what the container said would happen.
@@ -139,7 +141,13 @@ const EVIDENCE_HEADING: Partial<Record<string, string>> = {
   cycle: 'The four links, and who is waiting on whom',
   suspect_link: 'What the tracker declares, and what supports it',
   undetected_dependency: 'Where the dependency was found',
-  aging: 'The last thing that happened to it',
+  // Not "the last thing that happened to it": the rows are now the carry out of
+  // a closed sprint and either the last thing anybody said OR the fact that
+  // nobody has. Silence is the finding here, so the heading has to cover the
+  // case where the evidence is an absence.
+  aging: 'Why we think it has stalled',
+  unlinked_commitment: 'The promise, and the ticket it probably belongs to',
+  dropped_commitment: 'Where it was promised, and the last thing anyone said',
 };
 
 function firedLine(detail: FindingDetail): string {
@@ -148,7 +156,11 @@ function firedLine(detail: FindingDetail): string {
     day: 'numeric',
     month: 'long',
   });
-  return container
+  // On `closedAt`, NOT on `container`. `findingDetail` sets `container` for any
+  // commitment whose `note.container` resolves, and populates `closedAt` only
+  // when the container actually closed — so branching on the container alone
+  // prints "when Orbit 33 closed" about a sprint that is still running.
+  return container?.closedAt
     ? `Fired ${when}, when ${container.label} closed`
     : `Fired ${when}`;
 }

@@ -20,9 +20,11 @@
 
 import { useState, type JSX } from 'react';
 import type { Note } from '@mc/domain';
-import { deleteNote, explain, parkNote, restoreNote, useJson } from './api';
-import { AppWindow, UndoStrip, type Counts } from './Chrome';
-import { hrefFor, type Route } from './router';
+import { deleteNote, explain, parkNote, restoreNote, useJson } from '../api';
+import { AppWindow, UndoStrip, type Counts } from '../Chrome/Chrome';
+import { hrefFor, type Route } from '../router';
+
+import './Later.css';
 
 /**
  * When it comes back, in the words it was chosen with.

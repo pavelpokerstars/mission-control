@@ -110,7 +110,34 @@ export async function seedNotes(vault: VaultStore): Promise<number> {
 
   let files: string[] = [];
   try {
-    files = (await readdir(join(GRAPH_DIR, 'notes'))).filter((f) => f.endsWith('.md'));
+    files = (await readdir(join(GRAPH_DIR, 'notes')))
+      .filter((f) => f.endsWith('.md'))
+      /**
+       * A file-sync conflict copy is NOT a note, and loading one doubles an
+       * alert.
+       *
+       * macOS iCloud Drive, Dropbox and OneDrive all resolve a concurrent write
+       * by leaving `promise-001 2.md` beside `promise-001.md`. `seedNotes`
+       * derives the id from the filename, so that arrives as a second,
+       * distinctly-identified commitment carrying the same promise — and the
+       * front door shows the flagship alert twice, with nothing failing. Seen
+       * on a checkout under `~/Documents`: `npm run fixture` rewrites ~300
+       * records at once and the sync daemon minted 501 copies, one of which was
+       * a vault note.
+       *
+       * Skipped rather than merged, because the original is the file the
+       * generator wrote and the copy is whatever the daemon happened to keep.
+       */
+      .filter((f) => {
+        const isConflictCopy = / \d+\.md$/.test(f);
+        if (isConflictCopy) {
+          console.warn(
+            `[seed] ignoring ${f} — it looks like a file-sync conflict copy, not a note. ` +
+              `Delete it, and consider excluding this checkout from iCloud/Dropbox sync.`,
+          );
+        }
+        return !isConflictCopy;
+      });
   } catch {
     return 0;
   }

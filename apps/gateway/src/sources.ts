@@ -197,6 +197,39 @@ export function findJoinFailures(g: StoredGraph, coverage: Finding[] = []): Join
       count: orphansOf('message'),
     },
     /**
+     * The one this page was silent about, and the largest gap of the lot.
+     *
+     * Zoom reaches Docs NOTES, not recordings, and nobody writes a ticket
+     * number in a stand-up note — measured on the fixture shaped like real
+     * collector output, **zero of twenty-four meetings name a key**. Every one
+     * of those is a conversation we know happened and can say nothing about,
+     * and until now the coverage page did not mention them at all, which reads
+     * as complete coverage of a surface that joins nothing.
+     */
+    {
+      surface: 'zoom',
+      what: 'meetings name no ticket',
+      one: 'meeting names no ticket',
+      why: 'the discussion happened and nothing in it says which work it was about',
+      count: orphansOf('meeting'),
+    },
+    /**
+     * And GitHub, which reaches this page for a node count and nothing else.
+     *
+     * There is no GitHub connector, so a PR is invisible to the trail, the lane
+     * and every detector — but the collector already resolves a share of them
+     * to issues off the BRANCH NAME, which is a join the app has nowhere to
+     * put. Counting the rest is the honest half of that: a merged PR is the
+     * clearest evidence a promise was acted on, and we cannot see one.
+     */
+    {
+      surface: 'github',
+      what: 'pull requests join to no ticket',
+      one: 'pull request joins to no ticket',
+      why: 'the branch name carries no key we recognise, so the work it finished is unknown',
+      count: orphansOf('pr'),
+    },
+    /**
      * The two that are not about a missing key, and the only rows here counted
      * from the DETECTORS rather than from the graph.
      *

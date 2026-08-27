@@ -15,12 +15,14 @@
  */
 
 import { useEffect, useState, type JSX } from 'react';
-import { ask, suggestions, type Starter, type Subject } from './chat';
-import { useConversations } from './conversations';
-import { useJson, type FindingDetail } from './api';
-import { AppWindow, BackLink, type Counts } from './Chrome';
-import { Composer, Suggestions, Turns } from './Thread';
-import { go, hrefFor, recordHref, type Route } from './router';
+import { ask, suggestions, type Starter, type Subject } from '../chat';
+import { useConversations } from '../conversations';
+import { useJson, type FindingDetail } from '../api';
+import { AppWindow, BackLink, type Counts } from '../Chrome/Chrome';
+import { Composer, Suggestions, Turns } from '../Thread/Thread';
+import { go, hrefFor, navigate, recordHref, type Route } from '../router';
+
+import './ConversationPage.css';
 
 export function ConversationPage({
   id,
@@ -51,6 +53,10 @@ export function ConversationPage({
           id: c.alertId,
           kind: detail.data?.finding.kind ?? c.alertId.split(':')[0]!,
           claim: c.alertClaim,
+          // Only once the detail lands — the conversation store keeps the claim
+          // but not the impact, so a turn asked before the fetch resolves goes
+          // without it rather than with a stale one.
+          ...(detail.data?.finding.impact ? { impact: detail.data.finding.impact } : {}),
           ...(detail.data?.finding.subject.kind === 'workitem'
             ? { key: detail.data.finding.subject.key }
             : {}),
@@ -114,7 +120,7 @@ export function ConversationPage({
           <button
             type="button"
             onClick={() => {
-              window.location.hash = recordHref(cite, detail.data!.finding.id).slice(1);
+              navigate(recordHref(cite, detail.data!.finding.id));
             }}
           >
             Show me where this was said

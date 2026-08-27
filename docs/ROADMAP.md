@@ -335,7 +335,7 @@ constraint lives where it fails loudly instead:
 | nothing in the interface is *named* for `proposal`, `queue`, or a retired lens, or renders a wikilink | absent from both documents, therefore not part of the interface |
 | every `.tsx` in `alerts/` is a page the direction lists | the failure arrived as `Queue.tsx` |
 | an action resolves in place, offers four choices and `choose something else` | the preview's own handler |
-| `app.css` adds no selector the preview lacks | one stylesheet, one design system |
+| the stylesheets add no selector the preview lacks, each is imported by its component, and no two claim a scoping class | one design system, and a cascade that does not depend on an import sorter |
 
 Checked against the real thing: reintroducing the queue trips three of them
 independently, each printing the rule and its document section. The narrow
@@ -1304,7 +1304,7 @@ They are numbered so they can be referred to.
 
 ### ~~G1 · `verify-design.mts` only checks one direction~~ — done
 
-It asserted that `app.css` introduces **no selectors the preview does not have**,
+It asserted that the stylesheet introduces **no selectors the preview does not have**,
 which catches a second design system growing, and never asked the opposite
 question: **which preview classes does the app never use?** That set is, almost
 exactly, the design that has not been built — and it is why G2 and G4 passed
@@ -1446,7 +1446,7 @@ the preview's message:
 Good morning. *6 things need you* — one of them since 31 July.
 *Platform to provide the payments settled topic was never filed*
 Agreed by sanjay@example.com, due 2026-08-12 · 11 days past due · …
-[Open Mission Control] → http://localhost:4200/#/alert/missing_ticket%3A…
+[Open Mission Control] → http://localhost:4200/alert/missing_ticket%3A…
 ```
 
 All three delivery paths, through the real `deliver()`:
@@ -1571,7 +1571,7 @@ from the inside; `isParked` was already exported and is now the only test.
 **Verified in the browser, not by reading.** A seeded answer renders caption,
 three nodes with the right variants, two arrows, the `#eng-platform` pill with
 its slack dot, and both follow-ups; clicking the first lands on
-`#/record/zoom/sprint-12-planning?at=852&…` with the quoted line marked. Asked
+`/record/zoom/sprint-12-planning?at=852&…` with the quoted line marked. Asked
 for real, the agent emitted a well-formed fence on the first attempt.
 
 **G1's report went 19 → 8**, with `#scr-list` and `#answers` gone entirely and

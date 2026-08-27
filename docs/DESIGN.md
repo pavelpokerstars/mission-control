@@ -292,8 +292,16 @@ opposite theme — the date input's icon was invisible and its panel opened whit
 **Balanced braces are not a valid stylesheet.** A regex that removed a selector
 but left its declaration block kept the brace count even and silently swallowed
 the next rule, so every conversation row fell back to browser-default button
-styling. The check walks the CSS and flags any block whose selector is empty or
-ends in `;`.
+styling. `verify-design.mts` walks every stylesheet and flags any block whose
+selector is empty or ends in `;` or `}`.
+
+The stylesheet is now one file per component, which multiplies that risk by
+seventeen: a rule lost out of a thirty-line file leaves the file parsing
+perfectly and one screen rendering without it, and no typecheck sees a `.css`
+file at all. Two more checks hold the split — every component stylesheet is
+imported by its own component, and no two of them claim one scoping class, since
+which would win is otherwise the order the module graph happened to import them
+in. A class two components render belongs in `alerts/shared.css`.
 
 **Verify by reading the DOM, not the screenshot.** The preview pane serves stale
 frames often enough to mislead; computed styles and measured rectangles do not.

@@ -25,6 +25,8 @@
 
 import { Fragment, type JSX, type ReactNode } from 'react';
 
+import './Answer.css';
+
 const KEY = /\b([A-Z][A-Z0-9]+-\d+)\b/;
 
 /**
@@ -34,7 +36,7 @@ const KEY = /\b([A-Z][A-Z0-9]+-\d+)\b/;
 const INLINE: { re: RegExp; render: (m: RegExpMatchArray, key: number) => JSX.Element; wraps: boolean }[] = [
   {
     re: /\*\*([^*]+)\*\*/,
-    render: (m, k) => <b key={k}>{inline(m[1]!)}</b>,
+    render: (m, k) => <b key={k}>{inline(m[1]!, 0, k + 2)}</b>,
     wraps: true,
   },
   /**
@@ -51,7 +53,7 @@ const INLINE: { re: RegExp; render: (m: RegExpMatchArray, key: number) => JSX.El
    */
   {
     re: /\*([^*\n]+)\*/,
-    render: (m, k) => <i key={k}>{inline(m[1]!)}</i>,
+    render: (m, k) => <i key={k}>{inline(m[1]!, 0, k + 1)}</i>,
     wraps: true,
   },
   {
@@ -67,7 +69,7 @@ const INLINE: { re: RegExp; render: (m: RegExpMatchArray, key: number) => JSX.El
   {
     re: KEY,
     render: (m, k) => (
-      <a key={k} href={`#/record/jira/${encodeURIComponent(m[1]!)}`}>
+      <a key={k} href={`/record/jira/${encodeURIComponent(m[1]!)}`}>
         {m[1]}
       </a>
     ),
@@ -118,13 +120,59 @@ const INLINE: { re: RegExp; render: (m: RegExpMatchArray, key: number) => JSX.El
  * Kafka topic · no ticket [missing] -> PAY-9031 · done -> PAY-9035 [at-risk]
  * ```
  */
-const NODE_TAG = /\s*\[(missing|at-risk)\]\s*$/;
+/**
+ * Every arrow a model plausibly writes. The prompt asks for `->`; models
+ * produce `-->`, `=>`, `→` and an en-dash variant with no prompting at all, and
+ * each unrecognised one silently collapsed the whole chain into ONE node —
+ * a diagram rendered as a single box containing the sentence.
+ *
+ * The dash class has to come before the bare `>` alternative so `-->` is
+ * consumed whole; otherwise every node but the last keeps a trailing dash.
+ */
+const ARROW = /[-–—]{1,2}>|=>|⇒|→|⟶|➔/;
+
+/**
+ * A node's optional risk tag. `/i` and a space are accepted, and the result is
+ * NORMALISED, because the capture becomes a CSS class name.
+ *
+ * That is the trap here and it fails in the worst direction. `[MISSING]`
+ * captured verbatim yields `class="node MISSING"`, which matches nothing —
+ * `.node.missing` is case-sensitive — and `[at risk]` yields three classes,
+ * `node at risk`. Both are strictly worse than not accepting the spelling at
+ * all: the tag is stripped out of the label AND unstyled, so the one node the
+ * reader is meant to look at renders identically to the others. So the class is
+ * lower-cased, hyphenated, and then checked against the two the stylesheet
+ * actually draws.
+ */
+const NODE_TAG = /\s*\[([a-z][a-z -]*)\]\s*$/i;
+const TAGS = new Set(['missing', 'at-risk']);
+
+function tagClass(raw: string): string | undefined {
+  const m = NODE_TAG.exec(raw);
+  if (!m) return undefined;
+  const cls = m[1]!.toLowerCase().trim().replace(/\s+/g, '-');
+  return TAGS.has(cls) ? cls : undefined;
+}
 
 function Chain({ lines }: { lines: string[] }): JSX.Element {
-  const caption = lines.length > 1 ? lines[0]! : undefined;
-  const chain = (lines.length > 1 ? lines.slice(1) : lines).join(' ');
-  const nodes = chain
-    .split(/->|→/)
+  /**
+   * Line one is a caption only when it is not itself part of the chain.
+   *
+   * Counting lines alone got this wrong in both directions. A chain long enough
+   * to wrap over two lines had its first half rendered as a 10px mono caption
+   * and only its tail drawn — silently, and it looks deliberate. And mid-stream,
+   * the frame where only the caption has arrived is one line, so the caption
+   * flashed up as a node box before flipping.
+   *
+   * The test is "no arrow here, and an arrow later". Both halves matter: `no
+   * arrow here` alone would make a one-line arrowless fence a caption with zero
+   * nodes, which draws an empty box — a different silent failure, not a fix.
+   */
+  const isCaption = lines.length > 1 && !ARROW.test(lines[0]!) && lines.slice(1).some((l) => ARROW.test(l));
+  const caption = isCaption ? lines[0]! : undefined;
+  const nodes = (isCaption ? lines.slice(1) : lines)
+    .join(' ')
+    .split(ARROW)
     .map((n) => n.trim())
     .filter(Boolean);
 
@@ -133,8 +181,16 @@ function Chain({ lines }: { lines: string[] }): JSX.Element {
       {caption ? <span className="cap">{caption}</span> : null}
       <div className="chain">
         {nodes.map((raw, i) => {
-          const tag = NODE_TAG.exec(raw);
-          const label = raw.replace(NODE_TAG, '').trim();
+          const cls = tagClass(raw);
+          // The tag is stripped only when it is one we can draw. An unknown one
+          // stays visible in the label rather than being silently deleted.
+          //
+          // Then the separator, if the tag was standing where the state should
+          // have been: a model asked for "key · state [tag]" and holding no
+          // state writes "ORB-1620 · [at-risk]", and taking the tag off leaves a
+          // node reading "ORB-1620 ·". A dangling separator is punctuation
+          // promising a word that is not coming.
+          const label = (cls ? raw.replace(NODE_TAG, '') : raw).trim().replace(/[·|,:—–-]+$/, '').trim();
           return (
             <Fragment key={i}>
               {i > 0 ? (
@@ -142,7 +198,7 @@ function Chain({ lines }: { lines: string[] }): JSX.Element {
                   →
                 </span>
               ) : null}
-              <span className={tag ? `node ${tag[1]}` : 'node'}>{label}</span>
+              <span className={cls ? `node ${cls}` : 'node'}>{label}</span>
             </Fragment>
           );
         })}
@@ -151,7 +207,21 @@ function Chain({ lines }: { lines: string[] }): JSX.Element {
   );
 }
 
-function inline(text: string, depth = 0): ReactNode[] {
+/**
+ * `base` is what makes a key unique, and it was missing.
+ *
+ * Every node was keyed on `m.index` — its offset within whatever SUBSTRING the
+ * recursion was looking at — and the tail restarts at zero, so two siblings in
+ * one returned array routinely carried the same key. React logged "encountered
+ * two children with the same key" on essentially every agent answer and warned
+ * that children "may be duplicated and/or omitted".
+ *
+ * Threading the offset down makes the key the character position in the WHOLE
+ * answer, which is unique by construction — and stable across the re-render an
+ * SSE frame causes, so a streaming answer reconciles instead of remounting the
+ * text a reader is part-way through.
+ */
+function inline(text: string, depth = 0, base = 0): ReactNode[] {
   // Emphasis recurses; a runaway would be a bug rather than deep markup.
   if (depth > 4) return [text];
   for (const [i, rule] of INLINE.entries()) {
@@ -162,24 +232,24 @@ function inline(text: string, depth = 0): ReactNode[] {
     return [
       // Rules BEFORE this one cannot match what it skipped past — they already
       // ran on the whole string and did not fire.
-      ...(before ? inlineFrom(before, i, depth + 1) : []),
-      rule.render(m, m.index),
-      ...(after ? inline(after, depth) : []),
+      ...(before ? inlineFrom(before, i, depth + 1, base) : []),
+      rule.render(m, base + m.index),
+      ...(after ? inline(after, depth, base + m.index + m[0].length) : []),
     ];
   }
   return [text];
 }
 
 /** Continue from a given rule, so a partial match cannot be re-scanned forever. */
-function inlineFrom(text: string, from: number, depth: number): ReactNode[] {
+function inlineFrom(text: string, from: number, depth: number, base = 0): ReactNode[] {
   for (let i = from; i < INLINE.length; i++) {
     const rule = INLINE[i]!;
     const m = rule.re.exec(text);
     if (!m || m.index === undefined) continue;
     return [
       ...(m.index ? [text.slice(0, m.index)] : []),
-      rule.render(m, m.index),
-      ...inlineFrom(text.slice(m.index + m[0].length), i, depth + 1),
+      rule.render(m, base + m.index),
+      ...inlineFrom(text.slice(m.index + m[0].length), i, depth + 1, base + m.index + m[0].length),
     ];
   }
   return [text];
@@ -224,11 +294,20 @@ export function Answer({ text }: { text: string }): JSX.Element {
   for (const raw of lines) {
     const line = raw.trimEnd();
 
-    if (/^\s*```/.test(line)) {
+    /**
+     * `{3,}` on both, and the two must agree.
+     *
+     * Written as exactly three, a model that emitted ````chain — which they do,
+     * to nest a fence — matched the closing test, was `continue`d, and opened
+     * nothing. Both marker lines then vanished and the chain fell through as a
+     * paragraph reading `A -> B -> C`. The worst available failure: it looks
+     * like the model simply chose not to draw one.
+     */
+    if (/^\s*`{3,}/.test(line)) {
       if (fence) {
         blocks.push(<Chain key={blocks.length} lines={fence} />);
         fence = undefined;
-      } else if (/^\s*```\s*chain\b/i.test(line)) {
+      } else if (/^\s*`{3,}\s*chain\b/i.test(line)) {
         flushPara();
         flushList();
         fence = [];

@@ -13,6 +13,8 @@
 
 import { useEffect, useRef, useState, type JSX } from 'react';
 
+import './DatePicker.css';
+
 /** `2026-08-24`, in local time — `toISOString()` would shift the day west of UTC. */
 export function isoDay(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;

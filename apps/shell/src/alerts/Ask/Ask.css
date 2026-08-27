@@ -1,0 +1,37 @@
+/*
+ * Ask — its own stylesheet.
+ *
+ * The pair to `Ask.tsx`, imported by it. These 11 rules are scoped to a
+ * class that no other component renders, so nothing else can be changed by
+ * editing them and nothing else needs reading to understand them.
+ *
+ * A rule that a SECOND component starts rendering moves to `shared.css` — two
+ * files claiming one selector is the one thing the split can break silently,
+ * because which of them wins is then the order the module graph happens to
+ * import them in.
+ *
+ * EVERY RULE HERE IS `docs/design-preview.html`'s, verbatim. The preview is the
+ * design and it wins where the two disagree, so a change belongs there first
+ * and is copied here second — the split changed which FILE a rule lives in and
+ * nothing about the rule. `scripts/verify-design.mts` concatenates every
+ * stylesheet under `apps/shell/src/` and asserts both directions: no selector
+ * appears that the preview does not have, and none of the preview's has gone
+ * missing — a rule can now fall out of one of seventeen files and fail on a
+ * single screen with nothing erroring.
+ */
+
+.convrow {
+    display:grid; grid-template-columns:minmax(0,1fr) auto auto; gap:8px 16px; align-items:center;
+    border-bottom:1px solid var(--line); border-left:3px solid transparent;
+    padding:16px var(--gutter) 16px calc(var(--gutter) - 3px);
+  }
+.convrow:hover { background:var(--sunk); }
+.convrow.tied    { border-left-color:var(--crit); }
+.convrow.general { border-left-color:var(--line-2); }
+.convrow .top { display:flex; align-items:center; gap:9px; flex-wrap:wrap; margin-bottom:6px; }
+.convrow .m { display:flex; }
+.convrow .t { font-size:1rem; font-weight:600; color:var(--ink); }
+.convrow .m { display:flex; align-items:baseline; gap:9px; flex-wrap:wrap; font-size:.89rem; color:var(--ink-2); }
+.convrow .q { font-style:italic; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.convrow .when { color:var(--ink-3); font-family:var(--mono); font-size:11px; }
+.convrow .n { font-family:var(--mono); font-size:11px; color:var(--ink-3); white-space:nowrap; }

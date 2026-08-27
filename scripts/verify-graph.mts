@@ -17,12 +17,14 @@ import { mkdir, readFile, readdir, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { VaultStore, decodeNote } from '../libs/vault/src/store.js';
-import { findLinkProblems, findMissingTickets } from '../apps/gateway/src/findings.js';
+import { filedKeys, findLinkProblems, findMissingTickets } from '../apps/gateway/src/findings.js';
 import {
   blocksPairOf,
   edgeObservationKey,
+  isNodeKind,
   isRenderableEdge,
   isStructuralDependency,
+  reconstructCommitmentJoin,
   STORED_NODE_KINDS,
   STORED_RELATIONS,
   type StoredEdge,
@@ -326,6 +328,85 @@ console.log('\nthe detectors find what was planted');
     // no record is the uncited assertion this product exists not to be, and it
     // is invisible from the API — the finding is well-formed, just empty.
     check('the missing ticket cites its records', (gaps[0]?.evidence.length ?? 0) >= 2);
+
+    /**
+     * THE FILED/GUESSED SPLIT, which is what stops a reconstruction silencing
+     * the flagship alert.
+     *
+     * `dana-owns-settled-event` carries `relatedKeys: [PAY-9031]` with an
+     * `INFERRED` join — somebody worked that key out, nobody typed it. Before
+     * `filedKeys` existed the gate was `relatedKeys.length > 0`, so the note
+     * read as tracked and the alert stayed silent about a promise no record
+     * connects to anything. It is skipped here for a DIFFERENT reason (its
+     * sprint is still active, which is `missing_ticket`'s trigger), so both
+     * halves have to be asserted or the split looks tested when it is not.
+     */
+    const guessed = notes.find((n) => n.relatedKeys.some((k) => n.joins?.[k]?.tier === 'INFERRED'));
+    check('a note with a reconstructed key exists in the fixture', !!guessed);
+    check(
+      'and a reconstructed key does not count as filed',
+      !!guessed && filedKeys(guessed).length === 0,
+      `filed: ${guessed ? filedKeys(guessed).join(',') : '—'}`,
+    );
+    /**
+     * A key with NO `joins` entry is `EXTRACTED` by default — the text named it
+     * — so every note written before `joins` existed stays correct without
+     * being rewritten. That default is what makes the split free.
+     */
+    /**
+     * A key with NO `joins` entry is `EXTRACTED` by default — the text named it.
+     *
+     * Asserted against a constructed note rather than a fixture one, because
+     * every note in `fixtures/` that carries a key also carries a `joins`
+     * entry: the default is exactly the case the fixture cannot reach, and it
+     * is the one that keeps every note written before `joins` existed working
+     * unchanged. A check that silently could not run is worse than none.
+     */
+    check(
+      'a key with no join entry counts as typed',
+      filedKeys({ ...notes[0]!, relatedKeys: ['PAY-1'], joins: undefined }).length === 1,
+    );
+    check(
+      'and a mixed note keeps only the typed half',
+      filedKeys({
+        ...notes[0]!,
+        relatedKeys: ['PAY-1', 'PAY-2'],
+        joins: { 'PAY-2': { tier: 'INFERRED', why: 'worked out' } },
+      }).join() === 'PAY-1',
+    );
+
+    /**
+     * THE RECONSTRUCTION REFUSES WHEN IT CANNOT TELL, and that refusal is the
+     * load-bearing half of the design.
+     *
+     * Measured on this fixture, the HIGHEST-scoring candidate for "Dana takes
+     * the settled event end to end" is PAY-9033 at 0.50 — the wrong ticket —
+     * with PAY-9031 and PAY-9032 tied behind it at 0.40. A rule that broke the
+     * tie by score would mint a confident, wrong link with a plausible reason
+     * attached. Two survivors must mint nothing.
+     */
+    const sprintIssues = graph.nodes
+      .filter(isNodeKind('issue'))
+      .filter((n) => graph.links.some((e) => e.relation === 'in_sprint' && e.source === n.id))
+      .map((n) => ({ key: n.key, label: n.label, ...(n.assignee ? { assignee: n.assignee } : {}) }));
+
+    check(
+      'an ambiguous scope mints nothing',
+      reconstructCommitmentJoin({
+        title: 'somebody to take the settled event end to end',
+        owner: 'nobody@example.com',
+        scope: sprintIssues,
+        resolve: (h) => h,
+      }) === undefined,
+    );
+    check(
+      'and a promise with no owner mints nothing',
+      reconstructCommitmentJoin({
+        title: 'take the settled event end to end',
+        scope: sprintIssues,
+        resolve: (h) => h,
+      }) === undefined,
+    );
 
     const links = findLinkProblems(graph, new Map());
     check('a dependency nobody recorded is found', links.some((f) => f.kind === 'undetected_dependency'));

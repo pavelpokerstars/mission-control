@@ -13,7 +13,7 @@ owner: Dev Dunne
 dueAt: 2026-08-09T17:00:00.000Z
 container: sprint:Orbit 32
 evidence:
-  - {"surface":"zoom","label":"Orbit Sprint Review 2026-07-30 (read by the model)","at":2,"quote":"Dev Dunne to confirm the migration window.","ref":{"surface":"zoom","id":"mtg-0017","at":2}}
+  - {"surface":"zoom","label":"Orbit Sprint Review 2026-07-30 (read by the model)","quote":"Dev Dunne to confirm the migration window.","ref":{"surface":"zoom","id":"mtg-0017","at":2}}
 ---
 
 Dev Dunne to confirm the migration window.
