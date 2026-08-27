@@ -282,7 +282,8 @@ function firedLine(detail: FindingDetail): string {
  * `quote`, because the point is the WALK, not the specific words.
  */
 function DerivationTimeline({ detail }: { detail: FindingDetail }): JSX.Element | null {
-  const evidence = detail.finding.evidence ?? [];
+  const finding = detail.finding;
+  const evidence = finding.evidence ?? [];
   const kind = detail.finding.kind;
   if (kind === 'cycle') return null; // The cycle has its own loop above.
 
