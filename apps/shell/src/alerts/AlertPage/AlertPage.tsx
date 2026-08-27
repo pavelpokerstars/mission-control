@@ -130,7 +130,13 @@ function EvidenceRow({ e, from }: { e: Evidence; from: string }): JSX.Element {
     <div className="hd">
       <span className="src">{e.surface}</span>
       {e.quote && <span className="src">{e.label}</span>}
-      {e.at !== undefined && <time>{Math.floor(e.at / 60)}m in</time>}
+      {e.at !== undefined ? (
+        <time>{Math.floor(e.at / 60)}m in</time>
+      ) : (
+        e.ref?.id && /^\d{10,}$/.test(String(e.ref.id)) ? (
+          <time>{new Date(Number(e.ref.id) * 1000).toLocaleDateString(undefined, { month: 'numeric', day: 'numeric' })}</time>
+        ) : null
+      )}
       {e.ref && <span className="open">open →</span>}
     </div>
   );
