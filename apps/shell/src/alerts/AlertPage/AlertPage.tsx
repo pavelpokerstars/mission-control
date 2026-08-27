@@ -405,7 +405,7 @@ export function AlertPage({
             <p className="impact">{data.finding.impact}</p>
           </div>
 {data.note?.body && (
-            <div className="block">
+            <div className="block mission-control-note">
               {/*
                 The note is Mission Control's own synthesis of why the
                 commitment mattered, not a citation from a real source.
