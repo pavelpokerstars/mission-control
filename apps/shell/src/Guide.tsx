@@ -16,7 +16,7 @@
  * judge is never told something false about where they are.
  */
 
-import { useEffect, useState, type JSX } from 'react';
+import { useState, type JSX } from 'react';
 import { useRoute } from './alerts/router';
 
 const DISMISS_KEY = 'mc-judge-guide-dismissed';
@@ -60,15 +60,6 @@ export function Guide(): JSX.Element | null {
     }
   });
 
-  useEffect(() => {
-    if (dismissed) return;
-    try {
-      localStorage.setItem(DISMISS_KEY, '1');
-    } catch {
-      /* ignore */
-    }
-  }, [dismissed]);
-
   if (dismissed) return null;
 
   const step = STEPS.find((s) => s.when.includes(route.name));
@@ -81,7 +72,14 @@ export function Guide(): JSX.Element | null {
       <button
         type="button"
         className="dismiss"
-        onClick={() => setDismissed(true)}
+        onClick={() => {
+          setDismissed(true);
+          try {
+            localStorage.setItem(DISMISS_KEY, '1');
+          } catch {
+            /* ignore */
+          }
+        }}
         aria-label="Dismiss guidance"
       >
         Got it
