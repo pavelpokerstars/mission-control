@@ -201,6 +201,48 @@ const EVIDENCE_HEADING: Partial<Record<string, string>> = {
   dropped_commitment: 'Where it was promised, and the last thing anyone said',
 };
 
+/**
+ * The cycle, drawn as a small loop of nodes.
+ *
+ * A cycle alert's evidence is the arrows themselves -- four rows that say
+ * 'PAY-X waits on PAY-Y' on the miro surface, with no quote and no open
+ * link. Rendering them as plain citation rows reads as a list of facts,
+ * not as a loop, and the page invites the question 'how can miro text be
+ * a circular dependency?'. The shape IS the answer; this draws it.
+ *
+ * The label is parsed with a regex rather than recomputed, so the cycle a
+ * reader sees is exactly the one Mission Control raised. A re-derive could
+ * disagree with the page; this cannot.
+ */
+function CycleLoop({ evidence }: { evidence: readonly Evidence[] }): JSX.Element | null {
+  const KEY = /\b([A-Z][A-Z0-9]+-\d+)\b/g;
+  const edges: Array<{ from: string; to: string }> = [];
+  for (const e of evidence) {
+    const matches = [...e.label.matchAll(KEY)].map((m) => m[1]!);
+    if (matches.length >= 2) edges.push({ from: matches[0]!, to: matches[1]! });
+  }
+  if (edges.length < 2) return null;
+  const nodes = [...new Set(edges.flatMap((e) => [e.from, e.to]))];
+  return (
+    <div className="cycle-loop" aria-label="The dependency loop">
+      <ol className="cycle-nodes">
+        {nodes.map((n) => (
+          <li key={n}>
+            <a href={`/record/jira/${encodeURIComponent(n)}`}>{n}</a>
+          </li>
+        ))}
+      </ol>
+      <div className="cycle-arrows">
+        {edges.map((e, i) => (
+          <span key={i} className="cycle-edge">
+            <code>{e.from}</code> <span className="arr">waits on</span> <code>{e.to}</code>
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function firedLine(detail: FindingDetail): string {
   const { finding, container } = detail;
   const when = new Date(finding.firedAt).toLocaleDateString(undefined, {
@@ -266,6 +308,15 @@ export function AlertPage({
           </div>
 
           <Checklist detail={data} />
+
+          {/*
+            The cycle is a shape, not a citation. Render it as a node
+            graph above the evidence block, so the page reads as 'here
+            is the loop; below is where the arrows were drawn'.
+          */}
+          {data.finding.kind === 'cycle' && (
+            <CycleLoop evidence={data.finding.evidence} />
+          )}
 
           <div className="block">
             <h4>{EVIDENCE_HEADING[data.finding.kind] ?? 'The records this stands on'}</h4>

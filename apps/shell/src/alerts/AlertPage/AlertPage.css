@@ -67,3 +67,37 @@
 .ev q::before { content:"“"; }
 .ev q::after { content:"”"; }
 .ev .plain { font-size:.95rem; color:var(--ink); }
+
+/*
+ * The cycle, drawn as a small loop above the evidence block.
+ *
+ * Two parts: a row of ticket-key nodes (each a link), and a list of
+ * 'X waits on Y' edges under it. The edges are the cycle itself --
+ * reading them in order gives the loop. Visual order matches
+ * `finding.evidence` so the cycle reads top-to-bottom the way the
+ * detector walked it.
+ */
+.cycle-loop {
+  padding:20px var(--gutter) 18px;
+  border-bottom:1px solid var(--line);
+}
+.cycle-nodes {
+  list-style:none; display:flex; gap:8px; padding:0; margin:0 0 14px;
+  flex-wrap:wrap;
+}
+.cycle-nodes li a {
+  font-family:var(--mono); font-size:.9rem; padding:6px 11px;
+  border:1px solid var(--line-2); border-radius:99px; color:var(--ink);
+  background:var(--app);
+}
+.cycle-nodes li a:hover { border-color:var(--ink-3); }
+.cycle-arrows { display:flex; flex-direction:column; gap:6px; }
+.cycle-edge {
+  display:flex; align-items:center; gap:10px;
+  font-family:var(--mono); font-size:.82rem; color:var(--ink-2);
+}
+.cycle-edge code {
+  font-family:inherit; font-weight:600; color:var(--ink);
+  background:var(--sunk); padding:2px 7px; border-radius:5px;
+}
+.cycle-edge .arr { color:var(--ink-3); }
