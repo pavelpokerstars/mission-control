@@ -268,6 +268,73 @@ function firedLine(detail: FindingDetail): string {
     : `Fired ${when}`;
 }
 
+
+/**
+ * Derivation timeline for an alert: the argument in order, not citations.
+ *
+ * The claim says 'a Sprint 12 commitment never made it to Jira'. This
+ * timeline says how we got there: the meeting that promised it (Zoom),
+ * the board entry that acknowledged it (Miro), the tracker search that
+ * returned nothing (Jira). Each step is a surface; the order is the
+ * sequence of discovery, not importance.
+ *
+ * It uses the evidence rows' `label` (surface + source) rather than the
+ * `quote`, because the point is the WALK, not the specific words.
+ */
+function DerivationTimeline({ detail }: { detail: FindingDetail }): JSX.Element | null {
+  const evidence = detail.finding.evidence ?? [];
+  const kind = detail.finding.kind;
+  if (kind === 'cycle') return null; // The cycle has its own loop above.
+
+  const stepLabels: Array<{ surface: string; text: string }> = [];
+
+  // Walk evidence in order. This is not sorted -- the detector wrote
+  // the array in the order it read sources. That IS the derivation
+  // order for the demo: the finding's evidence carries the sequence.
+  for (const e of evidence) {
+    const surfaceLabel =
+      e.surface === 'zoom'
+        ? 'Zoom meeting'
+        : e.surface === 'slack'
+        ? 'Slack message'
+        : e.surface === 'miro'
+        ? 'Miro board'
+        : e.surface === 'jira'
+        ? 'Jira tracker'
+        : e.surface === 'confluence'
+        ? 'Confluence page'
+        : e.surface;
+    const sourceName = e.label ?? 'unnamed';
+    stepLabels.push({ surface: surfaceLabel, text: sourceName });
+  }
+
+  // The tracker silence (missing_ticket only) is always the last step.
+  if (kind === 'missing_ticket') {
+    stepLabels.push({ surface: 'Jira tracker', text: 'Searched; no matching issue' });
+  }
+
+  if (stepLabels.length < 2) return null;
+  return (
+    <div className="derivation-timeline" aria-label="How this finding was derived">
+      <h4>How this finding was derived</h4>
+      <ol>
+        {stepLabels.map((step, i) => (
+          <li key={i}>
+            <span className="step-num" aria-hidden="true">{i + 1}</span>
+            <span className="step-label">
+              <i className={`dot ${dotClass(step.surface as any)}`} aria-hidden="true" />
+              <span className="step-text">{step.surface}: <b>{step.text}</b></span>
+            </span>
+            {i < stepLabels.length - 1 && (
+              <span className="step-arrow" aria-hidden="true">→</span>
+            )}
+          </li>
+        ))}
+      </ol>
+    </div>
+  );
+}
+
 export function AlertPage({
   id,
   route,
@@ -308,6 +375,7 @@ export function AlertPage({
 
       {data && (
         <div className="page">
+          <div className="main-col">
           <div className="head">
             <div className="meta">
               <span className={`chip ${data.finding.severity}`}>{KIND_LABEL[data.finding.kind]}</span>
@@ -316,6 +384,13 @@ export function AlertPage({
             <h1 className="claim">{data.finding.claim}</h1>
             <p className="impact">{data.finding.impact}</p>
           </div>
+
+            {/* The derivation timeline: the argument that produced this finding,
+                in the order the evidence was read. This is not a citation --
+                it is the story the alert tells -- and it sits between the
+                claim and the checklist so the checklist's checked/missing
+                items make sense in that order. */}
+          <DerivationTimeline detail={data} />
 
           <Checklist detail={data} />
 
@@ -382,7 +457,10 @@ export function AlertPage({
             screen together, and *Create the ticket* is still directly above
             you."
           */}
-          <AskInline finding={data.finding} />
+          </div>
+          <div className="ask-rail">
+            <AskInline finding={data.finding} />
+          </div>
         </div>
       )}
     </AppWindow>
