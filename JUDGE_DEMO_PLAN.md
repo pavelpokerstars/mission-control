@@ -20,13 +20,14 @@ This is the shared progress record for the demo. It deliberately separates tempo
 
 ## Current position
 
-1. The demo branch is merged with the latest `main`, pushed, and deployed to Railway at `d252127`. The production build and Railway health check pass.
+1. The demo branch is merged with the latest reviewed `main`, pushed, and deployed to Railway at application commit `dc64af5`. The production build and Railway health check pass.
 2. The corrected OpenRouter key is valid. A live request now authenticates, but the pinned `meta-llama/llama-3.3-8b-instruct:free` route returned 404 because it had no available endpoints.
 3. Railway's `OPENROUTER_MODEL` is now `openrouter/free`. The deployed reasoning exclusion prevents thinking-trace leakage. The answer still uses unrelated vault memory, so M1 remains a blocker for trustworthy alert-scoped answers.
 4. The current guided journey is still structurally confusing: a citation moves from step 2 directly to a record page labelled step 4, while step 3 is actually the connector-coverage page. Route number is not a reliable proxy for task progress.
 5. The judge gate is a timer and name prompt, not a private session. Browser and server state are not isolated per judge. The current copy over-promises privacy.
 6. `Later` and global `Ask` are useful Mission Control features, but neither should interrupt the primary three-minute demo story.
 7. Mock data is treated as an opaque deployment asset during assistant sessions. Inspect schemas, paths, and loading code only; do not read fixture contents unless a future task explicitly requires it.
+8. Railway auto-deploy is pending repository-owner action: Pavel must grant the Railway GitHub App access to the private repository; after its cache refresh, the existing service can be connected to `judge-demo` from Tom's Railway account.
 
 ## Scope rule
 
@@ -74,7 +75,7 @@ Changes that improve comprehension, provenance, AI grounding, or reliability for
 
 **Why:** The current `localStorage` timer is shared across tabs, the session ID is never sent to the gateway, and server-side conversations/actions are shared. After expiry, old route and guide state can survive. “Got it” permanently hides the guide and sounds like step completion when it is only dismissal.
 
-- [x] Fix the first-mount bug that immediately persisted guide dismissal (`e2d0c7e`); not yet live.
+- [x] Fix the first-mount bug that immediately persisted guide dismissal (`e2d0c7e`); now live as part of `dc64af5`.
 - [ ] Replace `localStorage` with `sessionStorage` for the judge identity/timer, or change the copy if cross-tab persistence is intentional.
 - [ ] Stop claiming the session is private unless gateway data is genuinely namespaced by session.
 - [ ] On expiry, return to the start, clear the demo guide state, clear demo conversations, and reset the route.
@@ -136,9 +137,10 @@ Additional guide changes:
 - [x] Exclude `fixtures` and `fixtures-programme` from subsequent CLI uploads and container build contexts via `.railwayignore` and `.dockerignore`.
 - [ ] Preserve the banner colours; check contrast and wrapping at laptop widths.
 - [ ] Update the storyboard to match the final path.
-- [ ] Build, typecheck, and run targeted tests locally.
+- [~] Build and typecheck pass; the judge guide hide/reopen flow passed locally and in production. Broader targeted coverage remains.
 - [ ] Commit demo changes in reviewable batches.
-- [x] Push `judge-demo` and deploy application commit `d252127` to Railway (`8ce597f7-b019-4f99-8bb4-9833823671ca`, successful).
+- [x] Push `judge-demo` and deploy application commit `dc64af5` to Railway (`63abbaa3-77f3-450a-9c30-13a56012953e`, successful).
+- [!] Connect the service source to `pavelpokerstars/mission-control` branch `judge-demo` after Pavel grants the Railway GitHub App repository access; manual filtered deployments remain the temporary path.
 - [ ] Test from a clean session: gate, intro, notification, alert, each source, back path, inline Ask, expiry, guide hide/show, Later, and global Ask.
 - [ ] Rehearse once with a cold/free-model response and define a graceful fallback message.
 
