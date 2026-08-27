@@ -384,6 +384,20 @@ export function AlertPage({
             <h1 className="claim">{data.finding.claim}</h1>
             <p className="impact">{data.finding.impact}</p>
           </div>
+{data.note?.body && (
+            <div className="block">
+              {/*
+                The note is Mission Control's own synthesis of why the
+                commitment mattered, not a citation from a real source.
+                The heading has to make that distinction -- a judge who
+                reads 'The note it was recorded in' expects a record to
+                open, and there isn't one.
+              */}
+              <h4>Mission Control's note</h4>
+              <p className="blocklead">{data.note.body}</p>
+            </div>
+          )}
+
 
             {/* The derivation timeline: the argument that produced this finding,
                 in the order the evidence was read. This is not a citation --
@@ -428,19 +442,7 @@ export function AlertPage({
             </div>
           </div>
 
-          {data.note?.body && (
-            <div className="block">
-              {/*
-                The note is Mission Control's own synthesis of why the
-                commitment mattered, not a citation from a real source.
-                The heading has to make that distinction -- a judge who
-                reads 'The note it was recorded in' expects a record to
-                open, and there isn't one.
-              */}
-              <h4>Mission Control's note</h4>
-              <p className="blocklead">{data.note.body}</p>
-            </div>
-          )}
+          
 
           <Actions
             finding={data.finding}

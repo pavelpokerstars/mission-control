@@ -17,11 +17,11 @@
  * renderings of it.
  */
 
-import { useEffect, useState, type JSX } from 'react';
+import { useState, type JSX } from 'react';
 import type { Finding } from '@mc/domain';
-import { ask, suggestions, type Starter, type Subject } from '../chat';
+import { ask, type Subject } from '../chat';
 import { conversationsFor, openFullLabel, useConversations } from '../conversations';
-import { Composer, Suggestions, Turns } from '../Thread/Thread';
+import { Composer, Turns } from '../Thread/Thread';
 import { go } from '../router';
 
 import './AskInline.css';
@@ -57,7 +57,6 @@ export function AskInline({ finding }: { finding: Finding }): JSX.Element {
   const [started, setStarted] = useState<string>();
   const activeId = started ?? mine[0]?.id;
   const active = conversations.find((c) => c.id === activeId);
-  const [starters, setStarters] = useState<Starter[]>([]);
 
   const subject: Subject = {
     id: finding.id,
@@ -69,21 +68,10 @@ export function AskInline({ finding }: { finding: Finding }): JSX.Element {
     ...(finding.subject.kind === 'workitem' ? { key: finding.subject.key } : {}),
   };
 
-  useEffect(() => {
-    let live = true;
-    void suggestions(subject).then((s) => live && setStarters(s));
-    return () => {
-      live = false;
-    };
-    // The finding is the input; re-asking on every render would spend a gather
-    // per keystroke.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [finding.id]);
 
   const send = (text: string): void => {
     const id = activeId ?? newChat({ alertId: finding.id, alertClaim: finding.claim });
     setStarted(id);
-    setStarters((s) => s.filter((q) => q.text !== text));
     void ask(id, text, subject);
   };
 
@@ -133,7 +121,6 @@ export function AskInline({ finding }: { finding: Finding }): JSX.Element {
         onSend={send}
       />
 
-      {!turns.length && <Suggestions items={starters} onPick={send} />}
     </div>
   );
 }
