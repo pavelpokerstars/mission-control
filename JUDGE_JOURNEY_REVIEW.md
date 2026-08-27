@@ -36,6 +36,8 @@ The derivation should be explicit: sprint closed; Zoom and Miro contain a dated 
 
 The four numbered steps are mapped to routes, not completed actions. Clicking the evidence link on step 2 opens a record route that is labelled step 4. The nominal step 3 is the connector coverage screen, which is not on the investigation path. The record screen then tells the judge to Ask even though it has no composer. This is why users become stuck.
 
+Current `main` also moved navigation from hash URLs to path URLs. The previously shared `/#/record/...` step-4 link now falls back to the alert list, so existing demo links need a compatibility redirect or replacement.
+
 The guide should follow actions and the natural path: alert list → alert → cited record → back to alert → inline Ask. It should be hideable and reopenable. `Got it` currently means “dismiss forever,” not “I completed this step.”
 
 ### Source record
@@ -53,7 +55,7 @@ There are two separate changes:
 1. **Demo infrastructure:** Use OpenRouter's `openrouter/free` route and send `reasoning: { exclude: true }` in the request. This keeps the judge deployment free-only and resilient to individual free models disappearing.
 2. **Core Mission Control:** Enrich every alert-scoped question server-side with the alert's full evidence bundle before choosing a provider. At present OpenRouter sees the claim and general recalled context, but not necessarily the Zoom quote, Miro action, checklist, and Jira absence displayed on the page. This change benefits all providers and belongs in `main`.
 
-The corrected Railway key is valid. After changing Railway to `openrouter/free`, the live transport produced a response. That test was not an answer-quality pass: the currently deployed code exposed the model's long thinking trace and the model reached for unrelated vault memories because it lacked the alert evidence bundle. The local reasoning-exclusion change addresses the first problem; the provider-agnostic context work addresses the second.
+The corrected Railway key is valid. After changing Railway to `openrouter/free`, the live transport produced a response. The deployed request now excludes reasoning, and the latest response was a clean single sentence rather than a thinking trace. It was still not an answer-quality pass: the model reached for unrelated vault memories because it lacked the alert evidence bundle. The provider-agnostic context work remains necessary.
 
 ## Later and Ask
 

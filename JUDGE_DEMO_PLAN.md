@@ -5,6 +5,7 @@
 **Demo branch:** `judge-demo`
 **Main baseline merged locally:** `origin/main` at `4a4ed31`
 **Local merge commit:** `aba5371`
+**Deployed application commit:** `d252127`
 **Live site:** https://mc-judge-demo-production.up.railway.app/
 **Detailed experience review:** `JUDGE_JOURNEY_REVIEW.md`
 
@@ -19,9 +20,9 @@ This is the shared progress record for the demo. It deliberately separates tempo
 
 ## Current position
 
-1. The demo branch is merged with the latest `main` locally. The production build passes. Nothing from this review has been pushed yet, so Railway has not received the merge or UI changes.
+1. The demo branch is merged with the latest `main`, pushed, and deployed to Railway at `d252127`. The production build and Railway health check pass.
 2. The corrected OpenRouter key is valid. A live request now authenticates, but the pinned `meta-llama/llama-3.3-8b-instruct:free` route returned 404 because it had no available endpoints.
-3. Railway's `OPENROUTER_MODEL` is now `openrouter/free`, and the free router responds. The current live build exposed model reasoning and used unrelated vault memory; the local code adds reasoning exclusion, while M1 addresses the underlying evidence-grounding gap.
+3. Railway's `OPENROUTER_MODEL` is now `openrouter/free`. The deployed reasoning exclusion prevents thinking-trace leakage. The answer still uses unrelated vault memory, so M1 remains a blocker for trustworthy alert-scoped answers.
 4. The current guided journey is still structurally confusing: a citation moves from step 2 directly to a record page labelled step 4, while step 3 is actually the connector-coverage page. Route number is not a reliable proxy for task progress.
 5. The judge gate is a timer and name prompt, not a private session. Browser and server state are not isolated per judge. The current copy over-promises privacy.
 6. `Later` and global `Ask` are useful Mission Control features, but neither should interrupt the primary three-minute demo story.
@@ -46,7 +47,7 @@ Changes that improve comprehension, provenance, AI grounding, or reliability for
 - [x] Merge `origin/main` into `judge-demo` without rebasing published history.
 - [x] Resolve the two shell conflicts by retaining `main`'s component/CSS structure and re-pointing the demo gate and guide imports.
 - [x] Run the production build successfully after installing the new font dependencies.
-- [~] Push the merge only when the next demo batch is ready for Railway. Local branch is currently ahead of `origin/judge-demo`.
+- [x] Push the merge and deploy the merged application to Railway.
 - [!] `npm run verify` cannot run on Windows because `scripts/verify.mjs` constructs `C:\C:\...` paths and spawns `npx` rather than `npx.cmd`. Track as M5; do not treat it as a demo regression.
 
 **Acceptance:** `judge-demo` contains current `main`, `npm run build` passes, and the merge is recorded without rewriting remote history.
@@ -60,7 +61,7 @@ Changes that improve comprehension, provenance, AI grounding, or reliability for
 - [x] Change the code default from the unavailable pinned model to `openrouter/free`.
 - [x] Add `reasoning: { exclude: true }` to streaming chat and structured JSON calls, following the proven Toolbelt/Clive pattern.
 - [x] Change Railway `OPENROUTER_MODEL` to `openrouter/free`; redeployment succeeded on 27 August.
-- [~] Retest the exact suggested alert question: the route responds, but the current live build leaked a long thinking trace and reasoned from unrelated vault memory. Deploy the local reasoning exclusion and complete M1 before calling the answer demo-ready.
+- [~] Retest the exact suggested alert question: the live route responds and no longer exposes its thinking trace, but it still reasons from unrelated vault memory. Complete M1 before calling the answer trustworthy or demo-ready.
 - [ ] Add bounded 429 retry/backoff from the Toolbelt implementation if free-pool rate limits appear during rehearsal.
 - [ ] Ensure errors shown to judges are short, helpful UI states rather than raw provider JSON.
 
@@ -118,6 +119,7 @@ Additional guide changes:
 - [ ] Replace generic numbered route labels with action language such as `Open the alert`, `Open the evidence`, `Ask about this alert`.
 - [ ] Do not make the connector coverage screen a mandatory step. It is supporting product information, not part of the flagship investigation.
 - [ ] Do not tell judges to ask from the record screen, where there is no composer.
+- [ ] Redirect legacy `/#/...` demo links to the new path-based routes, or update every shared/demo link. After the `main` merge, the old step-4 hash URL falls back to the alert list.
 
 **Acceptance:** Five fresh users can complete the hero path without verbal rescue, visiting each intended screen once and never wondering how to reach the next step.
 
@@ -126,11 +128,12 @@ Additional guide changes:
 **Why:** The live environment must match the reviewed branch, and a clean browser is the only trustworthy way to validate the judge experience.
 
 - [ ] Remove or wire the demo-only source-mimic CSS that currently targets classes/attributes the React components do not emit.
+- [x] Add an explicit `.railwayignore` so manual uploads exclude dependencies, secrets, vault working state, and live data while retaining `libs/vault` source.
 - [ ] Preserve the banner colours; check contrast and wrapping at laptop widths.
 - [ ] Update the storyboard to match the final path.
 - [ ] Build, typecheck, and run targeted tests locally.
 - [ ] Commit demo changes in reviewable batches.
-- [ ] Push `judge-demo` and confirm Railway deploys the expected commit.
+- [x] Push `judge-demo` and deploy application commit `d252127` to Railway (`8ce597f7-b019-4f99-8bb4-9833823671ca`, successful).
 - [ ] Test from a clean session: gate, intro, notification, alert, each source, back path, inline Ask, expiry, guide hide/show, Later, and global Ask.
 - [ ] Rehearse once with a cold/free-model response and define a graceful fallback message.
 
@@ -235,6 +238,9 @@ Additional guide changes:
 | 27 Aug 2026 | Live OpenRouter after key correction | Key valid; pinned model returned authenticated 404 “No endpoints found” |
 | 27 Aug 2026 | Railway model change | `OPENROUTER_MODEL=openrouter/free`; redeployment succeeded |
 | 27 Aug 2026 | Live `openrouter/free` stand-up question | Transport works; failed answer-quality acceptance due to exposed reasoning and missing alert evidence context |
+| 27 Aug 2026 | Deploy merged demo application | Pass at `d252127`; Railway deployment `8ce597f7-b019-4f99-8bb4-9833823671ca` healthy |
+| 27 Aug 2026 | Live reasoning-exclusion retest | Pass for no thinking-trace leakage; failed grounding acceptance because alert evidence is absent from chat context |
+| 27 Aug 2026 | Legacy hash deep link after `main` merge | Failed; `/#/record/...` falls back to the alert list and needs redirect/update |
 
 # Decisions recorded
 
