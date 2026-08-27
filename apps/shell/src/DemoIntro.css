@@ -158,3 +158,18 @@
   .intro-slack .msg { grid-template-columns: 32px minmax(0, 1fr); padding: 14px; }
   .intro-slack .avatar { width: 32px; height: 32px; }
 }
+
+/*
+ * The line under the Mission Control card that explains what the chat is and
+ * isn't connected to on this demo. Small, muted, single-line on wide screens.
+ */
+.intro-ask-note {
+  grid-column: 1 / -1;
+  max-width: 66ch;
+  margin: 18px auto 0;
+  text-align: center;
+  color: var(--ink-2);
+  font-size: .9rem;
+  line-height: 1.4;
+}
+

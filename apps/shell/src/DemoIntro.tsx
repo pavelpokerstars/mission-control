@@ -107,6 +107,18 @@ export default function DemoIntro({
           <strong>Find what needs a human</strong>
           <small>Alert · evidence · action</small>
         </div>
+        {/*
+          The "Ask Mission Control" chat is connected to a free AI provider, but
+          this demo runs without the team's live Jira, Miro, Slack or Zoom
+          accounts -- only the rendered alert context the screen already shows.
+          Saying so here keeps the chat honest later, when a judge asks "what
+          should we clarify at stand-up?" and expects a tool-flavoured answer
+          but gets a context-flavoured one.
+        */}
+        <p className="intro-ask-note" aria-label="About the assistant on this demo">
+          The "Ask Mission Control" chat reads the alert text you see — it is not connected to
+          your live Jira, Miro or Slack on this demo.
+        </p>
       </section>
 
       <section className="intro-benefits">

@@ -100,6 +100,57 @@ Rules:
 `.trim();
 
 /**
+ * The judge-demo prompt.
+ *
+ * A free OpenRouter model with no tool loop, handed the same five-surface
+ * instructions and a tools-flavoured system prompt, used to emit lines like
+ * `{"tool": "jira_search", "args": {"jql": "key = PAY-9031"}}` as if it were
+ * calling a function -- except it never did, and the chat rendered the prose
+ * literally, and a judge saw what read like a busy loop where they expected
+ * an answer.
+ *
+ * This prompt is the same Mission Control voice, with the tool verbs cut
+ * and one line added that names the constraint. The model still cites
+ * surfaces by name; it just does so from the rendered context instead of
+ * from a tool that would retrieve more.
+ */
+const JUDGE_SYSTEM_PROMPT = `
+You are Mission Control, the planning assistant for an agile engineering team,
+answering questions on a public demo of the product.
+
+What you can see: the alert in front of you (its claim, its evidence, the
+records it was derived from), and the vault recall for the question asked.
+The five sources -- Jira, Miro, Confluence, Zoom, Slack -- and the vault --
+are described in the rendered context the caller hands you. That is the
+whole picture. Nothing else is reachable from this session, so do not
+pretend it is.
+
+Rules for this mode:
+  - You do NOT have tools. There is no recall, no propose_*, no jira_search.
+    Do not emit JSON tool calls or describe running a tool. Just answer from
+    what is in the rendered context.
+  - Cite which surface a claim came from ("Miro - Actions frame - riya") and
+    quote the exact line when one is in the evidence. A claim you cannot
+    ground in the rendered context is a claim you should not make.
+  - When surfaces disagree, say so explicitly rather than picking one. The
+    disagreement is usually the most useful thing you can tell the team.
+  - When the answer IS a shape -- a dependency chain, what one thing is
+    holding up, the members of a cycle in order -- draw it. Emit a fenced
+    block: three backticks, the word chain, an optional caption line, then
+    the nodes joined by ->. Tag a node [missing] when it has no ticket,
+    [at-risk] when it is waiting and will slip. Example:
+
+    \`\`\`chain
+    what the settled topic is holding up
+    settled topic - no ticket [missing] -> PAY-9031 - done -> PAY-9035 [at-risk]
+    \`\`\`
+
+  - Be concise. The judge is reading your answer inline beside an alert:
+    lead with the answer, then the evidence. No preamble, no restating the
+    question.
+`.trim();
+
+/**
  * Tools the HTTP surface keeps and no provider gets.
  *
  * `accept_proposal` is the one tool that performs the outbound write, and
@@ -305,22 +356,27 @@ export async function createAgent(
 
   if (mode() === 'openrouter') {
     // The judge-demo path: free model via OpenRouter, the shared
-    // OPENROUTER_API_KEY. No tools loop — the rendered context is enough for a
+    // OPENROUTER_API_KEY. No tools loop -- the rendered context is enough for a
     // demo, and it avoids free-model tool-call flakiness stalling the turn.
+    // We hand JUDGE_SYSTEM_PROMPT instead of `cfg.system`: the shared prompt
+    // names tools (`recall`, `propose_*`, `jira_search`) the provider does
+    // not have, and a free model will happily emit lines of JSON that look
+    // like tool calls but resolve to nothing.
+    const orCfg = { ...cfg, system: JUDGE_SYSTEM_PROMPT };
     const key = process.env.OPENROUTER_API_KEY || process.env.OPENROUTER_KEY;
     if (!key) {
       console.warn(
-        '[agent] MC_MODE=openrouter but OPENROUTER_API_KEY is not set — falling back to the scripted stub.',
+        '[agent] MC_MODE=openrouter but OPENROUTER_API_KEY is not set -- falling back to the scripted stub.',
       );
-      return scriptedStub(cfg);
+      return scriptedStub(orCfg);
     }
     try {
-      const or = await createOpenRouterAgent({ ...cfg, key });
+      const or = await createOpenRouterAgent({ ...orCfg, key });
       if (or) return or;
     } catch (err) {
-      console.warn('[agent] OpenRouter provider failed to start — falling back to the stub:', err);
+      console.warn('[agent] OpenRouter provider failed to start -- falling back to the stub:', err);
     }
-    return scriptedStub(cfg);
+    return scriptedStub(orCfg);
   }
 
   if (mode() === 'live') {
