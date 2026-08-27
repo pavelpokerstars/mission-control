@@ -173,3 +173,8 @@
 /* The synthetic final step for missing_ticket is always grey/italic
  * to distinguish it from a cited source. */
 .derivation-timeline ol li:last-child { opacity: .85; }
+.step-arrow { position:relative; }\n.step-arrow::before { content:'leads to'; font-size:.72rem; font-family:var(--mono); color:var(--ink-3); position:absolute; top:-18px; left:0; white-space:nowrap; }
+/* Clean right-rail assistant layout */
+.page { display:grid; grid-template-columns: minmax(0,1fr) 320px; gap:28px; max-width:1200px; padding: 24px var(--gutter); }
+.ask-rail { position:sticky; top:80px; align-self:start; padding:16px; background:var(--sunk); border-radius:12px; border:1px solid var(--line); }
+.ask-rail h4 { font-family:var(--mono); font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-3); margin:0 0 14px; }

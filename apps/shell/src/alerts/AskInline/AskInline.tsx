@@ -96,7 +96,8 @@ export function AskInline({ finding }: { finding: Finding }): JSX.Element {
   return (
     <div className="ask">
       <div className="askhead">
-        <span className="lab">Ask about this</span>
+        <span className="lab">Ask about this alert</span>
+        <span className="ask-sub">Chat history saved with this alert only</span>
         <button type="button" className="openfull" onClick={openFull}>
           {turns.length
             ? hidden > 0

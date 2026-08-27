@@ -50,7 +50,8 @@ function checklistHeading(kind: FindingDetail['finding']['kind'], containerLabel
   const total = list.length;
   const where = containerLabel ?? 'the container';
   if (kind === 'missing_ticket') {
-    return `${where} commitments · ${tracked} tracked in Jira · ${total - tracked} missing`;
+    const sprintName = containerLabel ? containerLabel.replace(/^Sprint\s+/i, 'Sprint ').trim() : 'Sprint unknown';
+    return `${sprintName} — commitments · ${tracked} tracked · ${total - tracked} missing`;
   }
   if (kind === 'aging') {
     return `${where} work · ${tracked} of ${total} still moving`;
@@ -82,7 +83,11 @@ function Checklist({ detail }: { detail: FindingDetail }): JSX.Element | null {
                   <a href={`/record/jira/${encodeURIComponent(i.ref)}`}>{i.ref}</a>
                 ) : (
                   i.ref === 'no ticket' && detail.finding.kind === 'missing_ticket' ? (
-                    <span className="missing-tag">not filed — use Create below</span>
+                    <button
+                      type="button"
+                      className="inline-create"
+                      onClick={() => window.location.hash = '#create'}
+                    >Create the ticket</button>
                   ) : (
                     i.ref
                   )
@@ -324,10 +329,24 @@ function DerivationTimeline({ detail }: { detail: FindingDetail }): JSX.Element 
             <span className="step-num" aria-hidden="true">{i + 1}</span>
             <span className="step-label">
               <i className={`dot ${dotClass(step.surface as any)}`} aria-hidden="true" />
-              <span className="step-text">{step.surface}: <b>{step.text}</b></span>
+              <span className="step-text">
+                {step.surface}:
+                {(() => {
+                  // Derivation timeline walks evidence array in order.
+                  // The index in the timeline (before synthetic steps) maps
+                  // to the evidence array index. We make the source text a
+                  // link when the underlying evidence has a `ref`.
+                  const evIndex = stepLabels.findIndex((s) => s === step);
+                  const ev = evIndex < evidence.length ? evidence[evIndex] : undefined;
+                  const linkHref = ev?.ref ? `/record/${ev.ref.surface}/${encodeURIComponent(ev.ref.id)}` : undefined;
+                  return linkHref ? (
+                    <a href={linkHref} className="step-source-link"><b>{step.text}</b></a>
+                  ) : (<b>{step.text}</b>);
+                })()}
+              </span>
             </span>
             {i < stepLabels.length - 1 && (
-              <span className="step-arrow" aria-hidden="true">→</span>
+              <span className="step-arrow" aria-hidden="true">→ <span className="step-arrow-label">leads to</span></span>
             )}
           </li>
         ))}
