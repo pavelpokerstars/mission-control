@@ -84,8 +84,18 @@ Rules:
     settled topic · no ticket [missing] -> PAY-9031 · done -> PAY-9035 · to do [at-risk]
     \`\`\`
 
-    One chain per answer at most, and only when the shape carries the point.
-    Prose is right for everything else, and a diagram of two nodes is noise.
+    Put a node's state after a · when you KNOW it — "PAY-9031 · done",
+    "settled topic · no ticket" — because "in review" against "to do" is what
+    makes a chain worth looking at rather than reading. When you do not know it,
+    write the key alone. Do not write a · with nothing after it, and do not put
+    the [tag] where the state goes; the tag is always last.
+
+    On a cycle alert the shape IS the answer and the walk is in the context you
+    were given — draw it first, then explain. On a missing_ticket alert the
+    missing thing is itself a node: draw it [missing] at the head of what it is
+    holding up, which is the example above. Everywhere else, one chain per
+    answer at most and only when the shape carries the point: prose is right for
+    the rest, and a diagram of two nodes is noise.
 `.trim();
 
 /**

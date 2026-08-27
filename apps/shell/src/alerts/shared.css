@@ -1,0 +1,170 @@
+/*
+ * What more than one screen draws.
+ *
+ * What more than one component renders — the chip, the greeting, the block, the
+ * composer, the thread, the select, the note editor — plus the atoms whose
+ * class is interpolated (`dot ${surface}`, `chip ${severity}`) and therefore
+ * appears as a literal in no component at all.
+ *
+ * The test for belonging here is mechanical and not aesthetic: **more than one
+ * component puts this class on an element.** A control used twice is shared
+ * even when it feels like it belongs to one screen, because the alternative is
+ * two files owning one selector and a cascade decided by import order.
+ *
+ * Imported by `main.tsx` immediately after `app.css`, so every component file
+ * loads after it and can override it at equal specificity.
+ *
+ * EVERY RULE HERE IS `docs/design-preview.html`'s, verbatim. The preview is the
+ * design and it wins where the two disagree, so a change belongs there first
+ * and is copied here second — the split changed which FILE a rule lives in and
+ * nothing about the rule. `scripts/verify-design.mts` concatenates every
+ * stylesheet under `apps/shell/src/` and asserts both directions: no selector
+ * appears that the preview does not have, and none of the preview's has gone
+ * missing — a rule can now fall out of one of seventeen files and fail on a
+ * single screen with nothing erroring.
+ */
+
+/* ---------- shared bits ---------- */
+.dot { width:8px; height:8px; border-radius:50%; display:inline-block; flex:none; }
+.jira{background:var(--s-jira)}
+.slack{background:var(--s-slack)}
+.zoom{background:var(--s-zoom)}
+.conf{background:var(--s-conf)}
+.miro{background:var(--s-miro)}
+.github{background:var(--s-github)}
+.vault{background:var(--s-vault)}
+.chip {
+    display:inline-flex; align-items:center; gap:6px; font-family:var(--mono);
+    font-size:10.5px; font-weight:600; letter-spacing:.08em; text-transform:uppercase;
+    padding:4px 9px; border-radius:99px; white-space:nowrap;
+  }
+.chip.crit { color:var(--crit); background:var(--crit-bg); }
+.chip.warn { color:var(--warn); background:var(--warn-bg); }
+.chip.ok   { color:var(--ok);   background:var(--ok-bg); }
+.chip.plain { color:var(--ink-3); background:var(--sunk); border:1px solid var(--line); }
+.greet { padding:34px var(--gutter) 22px; border-bottom:1px solid var(--line); }
+.greet h1 { margin:0 0 6px; font-size:1.6rem; font-weight:600; letter-spacing:-.02em; }
+.greet p { margin:0; color:var(--ink-2); font-size:.98rem; }
+.rows { display:grid; }
+.quiet { padding:22px var(--gutter); color:var(--ink-3); font-size:.9rem; }
+.quiet code { font-family:var(--mono); font-size:.85em; }
+.block { padding:24px var(--gutter); border-bottom:1px solid var(--line); }
+.block.flush { border-bottom:0; }
+.block.topped { border-top:1px solid var(--line); }
+.blocklead { margin:-6px 0 16px; font-size:.93rem; color:var(--ink-2); max-width:64ch; }
+.block > h4 {
+    font-family:var(--mono); font-size:10.5px; font-weight:600; letter-spacing:.12em;
+    text-transform:uppercase; color:var(--ink-3); margin:0 0 16px;
+  }
+.duepick { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:16px; }
+.duepick .lab {
+    font-family:var(--mono); font-size:10px; font-weight:600; letter-spacing:.1em;
+    text-transform:uppercase; color:var(--ink-3);
+  }
+/* Our own arrow, so it sits where we want and takes a themed colour — the
+     native one cannot be positioned and ignores the palette. */
+.selwrap { position:relative; display:inline-flex; max-width:100%; }
+.selwrap select {
+    appearance:none; -webkit-appearance:none;
+    font:inherit; font-size:.92rem; color:var(--ink); background:var(--app);
+    border:1px solid var(--line-2); border-radius:7px;
+    padding:8px 38px 8px 12px; min-width:0; max-width:100%;
+  }
+.selwrap::after {
+    content:''; position:absolute; right:13px; top:50%; width:13px; height:13px;
+    transform:translateY(-50%); background:var(--ink-3); pointer-events:none;
+    -webkit-mask:var(--ic-chev) center/contain no-repeat;
+            mask:var(--ic-chev) center/contain no-repeat;
+  }
+.selwrap:hover::after { background:var(--ink-2); }
+.selwrap select:focus { outline:2px solid var(--s-jira); outline-offset:1px; }
+.selwrap optgroup { color:var(--ink-3); font-style:normal; }
+.selwrap option { color:var(--ink); background:var(--app); }
+/* ask */
+.ask { padding:22px var(--gutter) 26px; background:var(--sunk); }
+.composer {
+    display:flex; gap:10px; align-items:center; background:var(--app);
+    border:1px solid var(--line-2); border-radius:9px; padding:11px 14px;
+  }
+.composer input { flex:1; border:0; background:transparent; color:var(--ink); font:inherit; font-size:.95rem; min-width:0; }
+.composer input::placeholder { color:var(--ink-3); }
+.composer button {
+    border:0; background:var(--btn); color:var(--btn-ink); border-radius:6px;
+    padding:7px 13px; font-size:.85rem; font-weight:600;
+  }
+/* ---------- 4 · chat ---------- */
+.thread { display:grid; gap:16px; padding:26px var(--gutter); }
+.thread.inline { padding:0 0 4px; }
+.thread.inline:empty { display:none; }
+/* ---------- 4 · the Ask page ---------- */
+/* Starting a chat is the reason you open this page, so the affordance is a
+     composer — not a button parked in a corner. */
+.askpagehead { padding:30px var(--gutter) 24px; border-bottom:1px solid var(--line); }
+.askpagehead .composer input { cursor:text; }
+.askpagehead h1 { margin:0 0 16px; font-size:1.6rem; font-weight:600; letter-spacing:-.02em; }
+.askpagehead .composer { cursor:text; }
+.askpagehead .composer:hover { border-color:var(--ink-3); }
+.hint { margin:12px 0 0; font-size:.88rem; color:var(--ink-3); max-width:64ch; }
+/* A row is a container now, because a delete button cannot live inside the
+     button that opens the row. The main area stays one big click target. */
+.rowmain {
+    display:block; width:100%; min-width:0; text-align:left;
+    background:transparent; border:0; padding:0; font:inherit; color:inherit;
+  }
+.rowdel {
+    width:28px; height:28px; border-radius:6px; border:1px solid transparent;
+    background:transparent; color:var(--ink-3); font-size:14px; line-height:1;
+    opacity:0; flex:none;
+  }
+.convrow:hover .rowdel, .later-row:hover .rowdel,
+  .rowdel:focus-visible { opacity:1; }
+.rowdel:hover { border-color:var(--stop); color:var(--stop); background:var(--crit-bg); }
+.ctxbar {
+    display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+    padding:13px var(--gutter); border-bottom:1px solid var(--line); background:var(--sunk);
+  }
+.ctxbar .about {
+    font-size:.9rem; color:var(--ink-2); min-width:0; overflow:hidden;
+    text-overflow:ellipsis; white-space:nowrap;
+  }
+.ctxbar .about b { color:var(--ink); font-weight:600; }
+.ctxbar .backlink {
+    margin-left:auto; background:transparent; border:1px solid var(--line-2); border-radius:99px;
+    padding:6px 13px; font-size:.85rem; color:var(--ink); white-space:nowrap; font-weight:500;
+  }
+.ctxbar .backlink:hover { border-color:var(--ink-3); background:var(--app); }
+.noteedit { margin-top:8px; }
+.noteedit textarea {
+    width:100%; min-height:88px; resize:vertical; font:inherit; font-size:.93rem;
+    color:var(--ink); background:var(--app); border:1px solid var(--line-2);
+    border-radius:7px; padding:11px 13px; line-height:1.5;
+  }
+.noteedit textarea:focus { outline:2px solid var(--s-jira); outline-offset:1px; }
+.editacts { display:flex; gap:8px; margin-top:16px; }
+.editacts button {
+    border-radius:6px; padding:7px 14px; font-size:.87rem; font-weight:600;
+    border:1px solid var(--line-2); background:transparent; color:var(--ink);
+  }
+.editacts button.primary { background:var(--btn); border-color:var(--btn); color:var(--btn-ink); }
+.editacts button:hover { border-color:var(--ink-3); }
+.noteedit textarea.tall { min-height:200px; font-size:.98rem; }
+.editacts .ghostdel {
+    margin-left:auto; border-style:dashed; color:var(--ink-3); font-weight:500;
+  }
+.editacts .ghostdel:hover { border-color:var(--stop); color:var(--stop); background:var(--crit-bg); }
+/* A row is an `<a>` rather than a `<button>`: the whole row navigates, and an
+ * anchor gets middle-click, copy-link and the browser's own affordances for
+ * free. Only the two declarations an anchor needs are restated — `display` is
+ * NOT among them. The preview's `.row` is a two-column grid
+ * (`minmax(0,1fr) auto`), and overriding it to flex kept the layout looking
+ * right while moving the right-hand meta 12px down its row. */
+/* Two rows are anchors rather than buttons, and both need the same two
+ * declarations: the whole row navigates, and an anchor gets middle-click,
+ * copy-link and the browser's own affordances for free. `display` is
+ * deliberately NOT restated — the preview's `.row` is a two-column grid and
+ * overriding it to flex moved the right-hand meta twelve pixels down its row. */
+a.row,
+a.rowmain,
+a.evrow { text-decoration: none; color: inherit; }
+a.row:hover h3,
+a.rowmain:hover .t { text-decoration: none; }

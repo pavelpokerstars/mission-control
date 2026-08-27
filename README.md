@@ -167,7 +167,7 @@ it first, that directory is generated and gitignored.
 apps/
   shell/        React + Vite — four pages (Mission Control, an alert, a
                 conversation, Later), records reached only from a citation, and
-                Sources. One stylesheet, no component library
+                Sources. One design system, no component library
   gateway/      Node — findings, records, the vault, webhooks, the event log,
                 the scheduler, the agent
 libs/
@@ -182,8 +182,9 @@ vault/          the notes themselves, created on first boot from fixtures/notes/
 **The whole application is `apps/shell/src/alerts/` — about 3,600 lines.** Four
 pages, plus records reached only from a citation and Sources under the bonnet —
 the shape `docs/design-preview.html` lays out on its `Six page types` screen. One
-stylesheet copied verbatim from that preview, and a hash router in one file. There is no component library and no second set of
-colour tokens, which keeps the build at **231 kB of JS and 28 kB of CSS**.
+stylesheet is that preview's, copied verbatim and split one file per component, and a path router in one file. There is no
+component library and no second set of colour tokens, which keeps the build at **238 kB of JS and 38 kB of CSS** — the CSS carrying
+the two self-hosted typefaces' `@font-face` blocks.
 
 
 ### The screens

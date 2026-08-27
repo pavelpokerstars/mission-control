@@ -14,9 +14,11 @@
  */
 
 import { useEffect, useRef, type JSX } from 'react';
-import { explain, dotClass, useJson } from './api';
-import { AppWindow, BackLink, type Counts } from './Chrome';
-import type { Route } from './router';
+import { explain, dotClass, useJson } from '../api';
+import { AppWindow, BackLink, type Counts } from '../Chrome/Chrome';
+import type { Route } from '../router';
+
+import './RecordView.css';
 
 interface RecordResult {
   surface: string;

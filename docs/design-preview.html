@@ -45,7 +45,7 @@
 
     /* semantic — source of record */
     --s-jira:#2C6BD9; --s-slack:#A0348C; --s-zoom:#167F8C;
-    --s-conf:#3E7A46; --s-miro:#9A7413; --s-vault:#535B66;
+    --s-conf:#3E7A46; --s-miro:#9A7413; --s-github:#6E40C9; --s-vault:#535B66;
 
     --sans:"Instrument Sans", ui-sans-serif, system-ui, -apple-system, sans-serif;
     --mono:"IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
@@ -65,7 +65,7 @@
       --warn:#D6A73C; --warn-bg:#2A2317;
       --ok:#6FB694;   --ok-bg:#16261F;
       --s-jira:#6EA4F0; --s-slack:#DE8FCE; --s-zoom:#52BFCC;
-      --s-conf:#7BBF86; --s-miro:#DCB44E; --s-vault:#A5AEBA;
+      --s-conf:#7BBF86; --s-miro:#DCB44E; --s-github:#A371F7; --s-vault:#A5AEBA;
       --shadow:0 1px 2px rgba(0,0,0,.5), 0 12px 32px -16px rgba(0,0,0,.8);
       color-scheme: dark;
     }
@@ -78,7 +78,7 @@
     --warn:#D6A73C; --warn-bg:#2A2317;
     --ok:#6FB694;   --ok-bg:#16261F;
     --s-jira:#6EA4F0; --s-slack:#DE8FCE; --s-zoom:#52BFCC;
-    --s-conf:#7BBF86; --s-miro:#DCB44E; --s-vault:#A5AEBA;
+    --s-conf:#7BBF86; --s-miro:#DCB44E; --s-github:#A371F7; --s-vault:#A5AEBA;
     --shadow:0 1px 2px rgba(0,0,0,.5), 0 12px 32px -16px rgba(0,0,0,.8);
     color-scheme: dark;
   }
@@ -126,7 +126,8 @@
   /* ---------- shared bits ---------- */
   .dot { width:8px; height:8px; border-radius:50%; display:inline-block; flex:none; }
   .jira{background:var(--s-jira)} .slack{background:var(--s-slack)} .zoom{background:var(--s-zoom)}
-  .conf{background:var(--s-conf)} .miro{background:var(--s-miro)} .vault{background:var(--s-vault)}
+  .conf{background:var(--s-conf)} .miro{background:var(--s-miro)} .github{background:var(--s-github)}
+  .vault{background:var(--s-vault)}
 
   .chip {
     display:inline-flex; align-items:center; gap:6px; font-family:var(--mono);
@@ -464,16 +465,69 @@
   /* ---------- 4 · chat ---------- */
   .thread { display:grid; gap:16px; padding:26px var(--gutter); }
   .turn { display:grid; grid-template-columns:30px minmax(0,1fr); gap:0 13px; }
+  /* The reader's own turn runs the other way: a body that hugs the right edge,
+     with the badge to the right of it.
+
+     THE TEMPLATE IS SWAPPED, NOT THE DIRECTION. `direction:rtl` gets the two
+     columns the right way round and reorders the bidi run with them, so
+     "why is PAY-9031 stuck?" renders its question mark at the left end and a
+     ticket key inside a reordered run. It swaps the layout and breaks the prose.
+
+     BOTH children need an explicit `grid-row:1`. Placing only the badge leaves
+     auto-placement to put the body on row 2, and the turn silently doubles in
+     height instead of moving.
+
+     `justify-self:end` is what makes a short message hug the right rather than
+     stretch: a grid item placed that way sizes to its content, clamped by the
+     track — so `minmax(0,1fr)` still does its job on a long one and the box can
+     never overflow the column. */
+  .turn.you { grid-template-columns:minmax(0,1fr) 30px; }
   .turn .badge {
     width:30px; height:30px; border-radius:7px; display:grid; place-items:center;
     font-family:var(--mono); font-size:10px; font-weight:600;
   }
-  .turn.you .badge { background:var(--sunk); color:var(--ink-2); }
+  .turn.you .badge { grid-column:2; grid-row:1; background:var(--sunk); color:var(--ink-2); }
   .turn.mc  .badge { background:var(--btn); color:var(--btn-ink); }
-  .turn .body { padding-top:4px; }
-  .turn.you .body { font-weight:600; }
+  /* `overflow-wrap` because a chat is where a URL gets pasted. Without it a long
+     unbreakable token sets the box's content minimum, and a capped box cannot
+     hold it: the text runs out through a drawn border, over the badge and off
+     the page. It belongs on `.turn .body` rather than on the reader's own turn,
+     because the agent's answers quote branch names and paths too. */
+  .turn .body { padding-top:4px; overflow-wrap:anywhere; }
+  /* A link in an answer is a citation like any other, and without this it is
+     the one UA-blue thing in the interface. A ticket key already reads as a key;
+     the underline is what says it opens. */
+  .turn .body a { color:inherit; text-decoration:underline; text-decoration-color:var(--line-2); }
+  .turn .body a:hover { text-decoration-color:var(--ink-3); }
+  /* The box is the composer's — the same hairline, the same radius, the same
+     `--app` fill — because the thing to say about a sent message is that it is
+     what you typed into that box.
+
+     THE FILL IS NOT OPTIONAL, and a bare outline is the tempting version. The
+     citation pill and the inline chain are both `--sunk`, and the inline thread
+     on an alert sits inside `.ask`, which is `--sunk` as well: an unfilled box
+     there puts a `--sunk` pill on a `--sunk` ground and the citation disappears.
+     `--app` gives everything inside it the ground it was drawn against.
+
+     NEVER `text-align:right`. The BLOCK is right-aligned; the text inside it is
+     not. Right-aligned text ragged-lefts every wrapped message, and it hangs the
+     list markers `padding-left:18px` puts on the left out into the margin. */
+  .turn.you .body {
+    grid-column:1; grid-row:1; justify-self:end; max-width:min(46ch,100%);
+    font-weight:600; background:var(--app); border:1px solid var(--line-2);
+    border-radius:9px; padding:10px 14px;
+  }
+  /* A message that renders to nothing — a lone fence marker is the reachable
+     case — used to be invisible. With a box it is a 30px empty control, which
+     reads as broken rather than as nothing to show. Not on `.turn.mc`: an
+     agent's body is empty on purpose while the chunks are still arriving. */
+  .turn.you .body:empty { display:none; }
   .turn .body p { margin:0 0 10px; }
   .turn .body p:last-child { margin:0; }
+  /* An agent quotes field names and ids in backticks constantly. Without this
+     the span falls to the UA's `monospace` at full size — a different typeface
+     from every other mono thing on the page, one size too big, mid-sentence. */
+  .turn .body code { font-family:var(--mono); font-size:.85em; }
   .turn .body .cited {
     display:inline-flex; align-items:center; gap:5px; font-family:var(--mono);
     font-size:10px; color:var(--ink-3); background:var(--sunk);
@@ -914,6 +968,7 @@
           <span><i class="dot zoom"></i>Zoom</span>
           <span><i class="dot conf"></i>Confluence</span>
           <span><i class="dot miro"></i>Miro</span>
+          <span><i class="dot github"></i>GitHub</span>
         </button>
       </div>
 
@@ -993,6 +1048,7 @@
           <span><i class="dot zoom"></i>Zoom</span>
           <span><i class="dot conf"></i>Confluence</span>
           <span><i class="dot miro"></i>Miro</span>
+          <span><i class="dot github"></i>GitHub</span>
         </button>
       </div>
       <button class="back" data-go="list">← back to the list</button>
@@ -1033,6 +1089,7 @@
           <span><i class="dot jira"></i>Jira</span><span><i class="dot slack"></i>Slack</span>
           <span><i class="dot zoom"></i>Zoom</span><span><i class="dot conf"></i>Confluence</span>
           <span><i class="dot miro"></i>Miro</span>
+          <span><i class="dot github"></i>GitHub</span>
         </button>
       </div>
 
@@ -1095,6 +1152,7 @@
           <span><i class="dot jira"></i>Jira</span><span><i class="dot slack"></i>Slack</span>
           <span><i class="dot zoom"></i>Zoom</span><span><i class="dot conf"></i>Confluence</span>
           <span><i class="dot miro"></i>Miro</span>
+          <span><i class="dot github"></i>GitHub</span>
         </button>
       </div>
       <div id="laterbody"></div>
@@ -1128,6 +1186,7 @@
           <span><i class="dot jira"></i>Jira</span><span><i class="dot slack"></i>Slack</span>
           <span><i class="dot zoom"></i>Zoom</span><span><i class="dot conf"></i>Confluence</span>
           <span><i class="dot miro"></i>Miro</span>
+          <span><i class="dot github"></i>GitHub</span>
         </button>
       </div>
       <button class="back" data-go="alert">← back to the alert</button>
@@ -1190,9 +1249,9 @@
         <div class="conn-row"><i class="dot miro"></i>
           <span class="nm">Miro<small class="scope">board <b>Payments reliability</b> · 6 frames</small></span>
           <span class="count">63 items · 12 arrows</span><span class="chip ok">Connected</span></div>
-        <div class="conn-row"><i class="dot vault"></i>
-          <span class="nm">GitHub<small class="scope">pull request state against each ticket</small></span>
-          <span class="count">—</span><span class="chip warn">Not yet</span></div>
+        <div class="conn-row"><i class="dot github"></i>
+          <span class="nm">GitHub<small class="scope">pull request state against each ticket, joined on the branch name</small></span>
+          <span class="count">96 pull requests</span><span class="chip ok">Connected</span></div>
       </div>
 
       <p class="quiet">Read every 15 minutes. Last pass 6 minutes ago, 3 new records, 1 new connection.</p>
@@ -1453,7 +1512,10 @@
           + 'recent tickets. I am inferring that, not reading it from an org chart.</p>'
           + '<div class="followups"><button type="button" data-go="alert">Draft a message to marcus</button>'
           + '<button type="button" class="sec" data-go="record">Show me where sanjay agreed it</button></div>' },
-        { who: 'you', text: 'What happens to MC-104 if this slips again?' },
+        // Deliberately long enough to WRAP. The reader's own turn is a box that
+        // hugs the right edge and caps its measure, and a preview whose every
+        // question is one short line never draws the case that design is about.
+        { who: 'you', text: 'What happens to MC-104 if this slips again, and does anything else in Sprint 14 depend on it?' },
         { who: 'mc', html:
           '<p>MC-104 is done, so it is not at risk itself — but it cannot be released without the topic, and '
           + 'two things behind it are waiting:</p>'

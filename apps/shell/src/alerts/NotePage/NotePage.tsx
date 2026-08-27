@@ -19,12 +19,14 @@
 
 import { useEffect, useState, type JSX } from 'react';
 import type { Note } from '@mc/domain';
-import { explain, deleteNote, saveNote, useJson } from './api';
-import { AppWindow, BackLink, type Counts } from './Chrome';
-import { DatePicker, fmtDay, isoDay, plusDays } from './DatePicker';
-import { WHEN, CUSTOM, optionLabel } from './Actions';
-import { due } from './Later';
-import { go, hrefFor, type Route } from './router';
+import { explain, deleteNote, saveNote, useJson } from '../api';
+import { AppWindow, BackLink, type Counts } from '../Chrome/Chrome';
+import { DatePicker, fmtDay, isoDay, plusDays } from '../DatePicker/DatePicker';
+import { WHEN, CUSTOM, optionLabel } from '../Actions/Actions';
+import { due } from '../Later/Later';
+import { go, hrefFor, type Route } from '../router';
+
+import './NotePage.css';
 
 /** Leave the reminder exactly as it is. Selected on open, always. */
 const KEEP = 'keep';

@@ -1,0 +1,58 @@
+/*
+ * AlertApp — its own stylesheet.
+ *
+ * The pair to `AlertApp.tsx`, imported by it. These 2 rules are scoped to a
+ * class that no other component renders, so nothing else can be changed by
+ * editing them and nothing else needs reading to understand them.
+ *
+ * A rule that a SECOND component starts rendering moves to `shared.css` — two
+ * files claiming one selector is the one thing the split can break silently,
+ * because which of them wins is then the order the module graph happens to
+ * import them in.
+ *
+ * EVERY RULE HERE IS `docs/design-preview.html`'s, verbatim. The preview is the
+ * design and it wins where the two disagree, so a change belongs there first
+ * and is copied here second — the split changed which FILE a rule lives in and
+ * nothing about the rule. `scripts/verify-design.mts` concatenates every
+ * stylesheet under `apps/shell/src/` and asserts both directions: no selector
+ * appears that the preview does not have, and none of the preview's has gone
+ * missing — a rule can now fall out of one of seventeen files and fail on a
+ * single screen with nothing erroring.
+ */
+
+/* ---------------------------------------------------------------------------
+ * The app shell — and the one place the app deliberately differs from the
+ * preview.
+ *
+ * The preview is a documentation page: it stacks screens down a scrolling body
+ * with captions between them, inside `main`, and it draws each one as a
+ * floating window — a border, a radius and a shadow on `.appwin`, inset in a
+ * grey `--ground` margin. That framing is the DOCUMENT's, not the product's: it
+ * is how you show a screenshot of an app on a page about the app. Shipped as
+ * it stands it reads as the real thing running inside a picture of itself.
+ *
+ * So the app fills the viewport, and this is the only rule allowed to say so.
+ * `.appwin` itself is untouched — the preview still draws its own window, which
+ * is what keeps `docs/design-preview.html` the reference `DESIGN.md` says it is
+ * — and everything below is scoped under `.app-shell`, which exists nowhere but
+ * here.
+ *
+ * WHAT IS NOT CHANGED, and this is the part worth guarding: every band still
+ * pads with `var(--gutter)`, so the single-x check in `DESIGN.md` §8 holds
+ * exactly as before. Widening the window moves where that x falls; it must not
+ * split it into several.
+ * ------------------------------------------------------------------------- */
+.app-shell {
+  min-height: 100vh;
+  background: var(--ground);
+}
+.app-shell .appwin {
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  min-height: 100vh;
+  /* The preview clips to its rounded corners. Full-bleed there are no corners
+   * to clip to, and clipping would cut off the date picker's popup where it
+   * opens past the bottom of a short page. */
+  overflow: visible;
+}

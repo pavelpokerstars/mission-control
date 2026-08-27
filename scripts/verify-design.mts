@@ -26,7 +26,7 @@
  * That friction is the feature; do not replace it with a glob.
  */
 
-import { readdirSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const ROOT = new URL('..', import.meta.url).pathname;
@@ -141,7 +141,7 @@ if (barLine) {
    * file are also `label:`d, and reading both reported an eight-entry toolbar.
    * The dots are Sources' door, not a nav item (`DESIGN.md` §4).
    */
-  const chrome = read('apps/shell/src/alerts/Chrome.tsx');
+  const chrome = read('apps/shell/src/alerts/Chrome/Chrome.tsx');
   const items = [...chrome.matchAll(/to:\s*\{[^}]*\},\s*label:\s*'([A-Za-z ]+)'/g)].map((m) => m[1]!);
 
   check(`the toolbar has exactly ${cap} entries`, items.length === cap,
@@ -183,12 +183,32 @@ const BANNED: { word: RegExp; why: string }[] = [
   { word: /\[\[[a-z0-9-]+\]\]/i, why: 'A vault wikilink. Wikilinks are internal to vault storage and appear nowhere\nin the interface; one reached the screen only via the removed queue.' },
 ];
 
+/**
+ * Every component is a FOLDER holding its `.tsx` and the `.css` beside it, so
+ * these are paths relative to `alerts/` rather than bare filenames. The four
+ * modules that draw nothing — the fetch wrapper, the SSE loop, the conversation
+ * store and the router — have no stylesheet to pair with and stay flat.
+ */
 const SHELL_FILES = [
-  'Actions.tsx', 'AlertApp.tsx', 'AlertList.tsx', 'AlertPage.tsx', 'Answer.tsx',
-  'Ask.tsx', 'AskInline.tsx', 'Chrome.tsx', 'ConversationPage.tsx', 'DatePicker.tsx',
-  'Later.tsx', 'NotePage.tsx', 'RecordView.tsx', 'Sources.tsx', 'Thread.tsx',
+  'Actions/Actions.tsx', 'AlertApp/AlertApp.tsx', 'AlertList/AlertList.tsx',
+  'AlertPage/AlertPage.tsx', 'Answer/Answer.tsx', 'Ask/Ask.tsx',
+  'AskInline/AskInline.tsx', 'Chrome/Chrome.tsx',
+  'ConversationPage/ConversationPage.tsx', 'DatePicker/DatePicker.tsx',
+  'Later/Later.tsx', 'NotePage/NotePage.tsx', 'RecordView/RecordView.tsx',
+  'Sources/Sources.tsx', 'Thread/Thread.tsx',
   'api.ts', 'chat.ts', 'conversations.ts', 'router.ts',
 ];
+
+/**
+ * The component folders — one per pair, each named for what it holds.
+ *
+ * A folder whose `.tsx` is not named after it is not a pair, and the checks
+ * below are all name-based, so this is the one place the shape is read off disk.
+ */
+const COMPONENT_DIRS = readdirSync(join(ROOT, 'apps/shell/src/alerts'), { withFileTypes: true })
+  .filter((e) => e.isDirectory())
+  .map((e) => e.name)
+  .sort();
 
 /** A string literal or a run of JSX text — the things a reader actually sees. */
 function visibleText(src: string): { line: number; text: string }[] {
@@ -272,9 +292,53 @@ const SANCTIONED_COMPONENTS = new Set([
   'Thread.tsx',           // the turns and the composer, shared so the two views cannot disagree
   'Answer.tsx',           // DIRECTION.md §9 — "it cites like the page does"
 ]);
-const onDisk = readdirSync(join(ROOT, 'apps/shell/src/alerts'))
-  .filter((f) => f.endsWith('.tsx'));
+const onDisk = COMPONENT_DIRS.map((d) => `${d}.tsx`);
 const unexpected = onDisk.filter((f) => !SANCTIONED_COMPONENTS.has(f));
+
+/**
+ * A FOLDER HOLDS EXACTLY ITS PAIR, AND THIS IS WHAT MAKES EVERY CHECK ABOVE
+ * COMPLETE AGAIN.
+ *
+ * The list check reads folder NAMES now, and `SHELL_FILES` is written by hand —
+ * so a `.tsx` dropped inside an existing sanctioned folder was seen by nothing.
+ * Not by the sanctioned-component list, not by the banned-vocabulary scan, not
+ * by the inline-style check. Measured when this was added: a file at
+ * `AlertPage/Queue.tsx` exporting `Queue`, rendering the heading "Proposals"
+ * with an inline style and the sentence "accept them in the queue", passed the
+ * whole verifier green. That is the exact defect this file exists to prevent,
+ * and the folder convention is what invites it — a sub-component "belonging to"
+ * a screen is precisely the thing somebody would put there.
+ *
+ * A second STYLESHEET in a folder is the same hole from the other side, and
+ * worse because it looks tidy. `STYLESHEETS` globs every `.css` in every folder,
+ * so its rules count as present for "every rule the preview draws is still in
+ * one of the stylesheets" — while nothing imports the file and the screen
+ * renders without them. Measured: moving `.undobar` out of `Chrome.css` into
+ * `Chrome/UndoStrip.css` left the undo strip unstyled with all four stylesheet
+ * checks green and the file count quietly 17 → 18.
+ *
+ * So: one `.tsx` and one `.css` per folder, both named for it. Anything else is
+ * the error, and enumerating it here is cheaper than teaching four other checks
+ * to walk a tree.
+ */
+const A = 'apps/shell/src/alerts';
+const stray = [
+  ...readdirSync(join(ROOT, A))
+    .filter((f) => f.endsWith('.tsx'))
+    .map((f) => `${f} — loose in alerts/, not in a folder`),
+  ...COMPONENT_DIRS.flatMap((d) =>
+    readdirSync(join(ROOT, A, d))
+      .filter((f) => (f.endsWith('.tsx') || f.endsWith('.css')) && f !== `${d}.tsx` && f !== `${d}.css`)
+      .map((f) => `${d}/${f} — not the pair this folder is named for`),
+  ),
+];
+check('every component folder holds exactly its own .tsx and .css', stray.length === 0,
+  `${stray.join('\n')}\n` +
+  'A component and its stylesheet are a pair and live together, both named for\n' +
+  'the folder: `alerts/<Name>/<Name>.tsx` beside `alerts/<Name>/<Name>.css`.\n' +
+  'A THIRD file here is invisible: a .tsx escapes the sanctioned-component list,\n' +
+  'the retired-vocabulary scan and the inline-style check, and a .css counts as\n' +
+  'present for the rule-loss check while nothing imports it.');
 check('every component in alerts/ is one the design sanctions', unexpected.length === 0,
   `unexpected: ${unexpected.join(', ')}\n` +
   'A new component here is usually a new screen, and DIRECTION.md §3 lists the\n' +
@@ -448,9 +512,9 @@ section('a failed refetch does not replace what is on screen');
 
 // ---------------------------------------------------------------------------
 
-section('the page shapes and the one stylesheet');
+section('the page shapes and the seventeen stylesheets');
 
-const acts = read('apps/shell/src/alerts/Actions.tsx');
+const acts = read('apps/shell/src/alerts/Actions/Actions.tsx');
 const actionButtons = (acts.match(/<button/g) ?? []).length;
 check('the alert still offers four actions', /PRIMARY\[/.test(acts) && /DISMISS\[/.test(acts) && actionButtons >= 4,
   'DIRECTION.md §7 and DESIGN.md §7: four actions, and TWO of them are "no",\n' +
@@ -479,32 +543,246 @@ check('no inline styles anywhere in the alert app',
   !SHELL_FILES.some((f) => /style=\{\{/.test(stripComments(read(`apps/shell/src/alerts/${f}`)))));
 
 /**
- * One stylesheet, one design system.
+ * One design system, seventeen files.
  *
- * `app.css` is the preview's, copied verbatim. It may restate a rule the preview
- * writes against a different element, and nothing more — a second component
- * library and a second set of colour tokens is what the pane retirement removed,
- * and 628 kB → 211 kB is what it was worth.
+ * The stylesheet is the preview's, copied verbatim, and it is now split one file
+ * per component — `apps/shell/src/app.css` for the tokens, the reset and the
+ * breakpoint, `alerts/shared.css` for what more than one screen draws, and
+ * `alerts/<Component>.css` beside the component that draws it. Which FILE a rule
+ * lives in changed; no rule did.
+ *
+ * So this reads all of them together. Pointed at `app.css` alone it would now
+ * see the tokens and none of the interface — passing green on a shell whose
+ * every screen had been rewritten.
+ *
+ * `fonts.css` is excluded: it is `@import`s of vendored `@font-face` files, not
+ * design, and it has no selectors of its own to compare.
  */
+function shellStylesheets(): { path: string; css: string }[] {
+  const A = 'apps/shell/src/alerts';
+  const loose = readdirSync(join(ROOT, A)).filter((f) => f.endsWith('.css')).sort();
+  const paired = COMPONENT_DIRS.flatMap((d) =>
+    readdirSync(join(ROOT, A, d)).filter((f) => f.endsWith('.css')).sort().map((f) => `${A}/${d}/${f}`),
+  );
+  return ['apps/shell/src/app.css', ...loose.map((f) => `${A}/${f}`), ...paired]
+    .map((p) => ({ path: p, css: read(p) }));
+}
+const STYLESHEETS = shellStylesheets();
+
 const previewCss = /<style>([\s\S]*?)<\/style>/.exec(read('docs/design-preview.html'))?.[1] ?? '';
-const previewLines = new Set(previewCss.split('\n').map((l) => l.trim()).filter(Boolean));
+
+/**
+ * SELECTORS ARE READ BY WALKING BRACES, NOT BY FILTERING LINES.
+ *
+ * The first version took every line *ending* in `{`. Most rules here are written
+ * on one line — `.turn.you { grid-template-columns:minmax(0,1fr) 30px; }` — and a
+ * one-liner never ends in `{`, so it was dropped before the comparison. Measured
+ * when this was fixed: **93 of 311 rules were being checked**, and a brand-new
+ * one-line selector in any of the seventeen files passed green. This file
+ * already learned the same lesson once, a few hundred lines down, where
+ * `previewClasses` says so in as many words.
+ *
+ * `@media` preludes are skipped; the rules nested inside them are still read,
+ * because a brace walk goes in.
+ */
+function selectorsIn(css: string): string[] {
+  return [...css.replace(/\/\*[\s\S]*?\*\//g, ' ').matchAll(/([^{}]+)\{/g)]
+    .map((m) => m[1]!.trim().replace(/\s+/g, ' '))
+    .filter((prelude) => prelude && !prelude.startsWith('@'));
+}
+
+const previewSelectors = new Set(selectorsIn(previewCss));
 const ALLOWED_LOCAL = [
   '.app-shell',       // the mount wrapper; the preview is a standalone page
   'a.evrow',          // an anchor where the preview writes a button — CLAUDE.md
   'a.rowmain',        // the same
-  '@media',
+  'a.row',            // the same
 ];
-const newSelectors = read('apps/shell/src/app.css')
-  .split('\n')
-  .map((l) => l.trim())
-  .filter((l) => l.endsWith('{') && !previewLines.has(l))
-  .filter((l) => !ALLOWED_LOCAL.some((a) => l.startsWith(a)));
+const newSelectors = STYLESHEETS.flatMap(({ path, css }) =>
+  selectorsIn(css)
+    .filter((sel) => !previewSelectors.has(sel))
+    .filter((sel) => !ALLOWED_LOCAL.some((a) => sel.startsWith(a)))
+    .map((sel) => `${path}  ${sel}`),
+);
 
-check('app.css introduces no selectors the preview does not have',
+check(`the stylesheet introduces no selectors the preview does not have (${STYLESHEETS.length} files)`,
   newSelectors.length === 0,
   'DESIGN.md: the preview wins where the two disagree — it is the version tested\n' +
   'in a browser, so a design change belongs there FIRST and here second.\n' +
   newSelectors.join('\n'));
+
+/**
+ * AND THE OTHER DIRECTION, which is the half the split made urgent.
+ *
+ * Everything above asks "has the app invented CSS the preview does not have".
+ * Nothing asked whether a preview rule is still THERE — so emptying a whole
+ * component stylesheet passed green, and so did deleting one rule out of one.
+ * Neither typecheck can see a `.css` file, so the only symptom is one screen
+ * rendering without it.
+ *
+ * That is now seventeen places a rule can fall out of instead of one, which is
+ * the cost of the split and this is what pays it: the standing version of the
+ * permutation proof that was done once, by hand, when the files were written.
+ */
+const ALLOWED_MISSING = new Map<string, string>([
+  ['.line.hit::after',
+   'the preview hard-codes `content:"cited by the Kafka alert"`; the app reads ' +
+   '`attr(data-cited-by)` — RecordView.tsx, and CLAUDE.md says why'],
+]);
+const appSelectors = new Set(STYLESHEETS.flatMap(({ css }) => selectorsIn(css)));
+const lost = [...previewSelectors]
+  .filter((sel) => !appSelectors.has(sel))
+  .filter((sel) => !ALLOWED_MISSING.has(sel));
+
+check('every rule the preview draws is still in one of the stylesheets',
+  lost.length === 0,
+  `${lost.join('\n')}\n` +
+  'A rule was lost, not moved. The stylesheet is the preview\'s copied verbatim,\n' +
+  'and it is now seventeen files — a rule can fall out of one of them and fail on\n' +
+  'a single screen with nothing erroring. If the preview genuinely dropped this\n' +
+  'rule, this check is telling you to delete it here too.');
+
+/**
+ * THE TWO CHECKS THE SPLIT ITSELF NEEDS, because neither typecheck can see a
+ * `.css` file at all and a stylesheet that stops applying fails on one screen
+ * with nothing erroring anywhere.
+ *
+ * FIRST: every component stylesheet is imported by its own component. An orphan
+ * — renamed component, deleted import, a file added and never wired — is
+ * invisible: the rules simply stop arriving, and the screen renders with
+ * whatever `shared.css` happens to give it.
+ */
+{
+  const unwired = COMPONENT_DIRS.filter((d) => {
+    const css = `${d}.css`;
+    if (!existsSync(join(ROOT, 'apps/shell/src/alerts', d, css))) return true;
+    if (!SHELL_FILES.includes(`${d}/${d}.tsx`)) return true;
+    return !new RegExp(`import '\\./${d}\\.css'`).test(read(`apps/shell/src/alerts/${d}/${d}.tsx`));
+  });
+  check('every component stylesheet is imported by its own component', unwired.length === 0,
+    `${unwired.join(', ')}\n` +
+    'A .css file is invisible to both typechecks. Unimported, its rules never\n' +
+    'arrive and the screen renders without them — no error, no warning, just a\n' +
+    'page that looks wrong. `<Component>.css` is imported by `<Component>.tsx`;\n' +
+    '`app.css` and then `alerts/shared.css` are imported by `main.tsx`.');
+
+  /**
+   * AND THE ORDER ITSELF, which nothing was asserting.
+   *
+   * The whole split rests on three lines in `main.tsx` — fonts, then the design
+   * tokens, then the shared layer — standing ABOVE `import AlertApp`. Both Vite
+   * dev and Rollup emit a bundle's CSS in module-*evaluation* order, which is
+   * depth-first, so with the component import first every component stylesheet
+   * is emitted before those three and `shared.css` lands last, beating the files
+   * it is supposed to lose to. Measured when it happened: `.appwin` at byte 0 of
+   * the stylesheet and the tokens at 26056.
+   *
+   * Deleting the `shared.css` line altogether — the chip, the
+   * greeting, the block, the composer, the thread and the select — was green
+   * too, because the check above only looks inside `alerts/`.
+   */
+  const LAYERS = ['./fonts.css', './app.css', './alerts/shared.css'];
+  const imports = [...read('apps/shell/src/main.tsx').matchAll(/^import [^;]*?['"]([^'"]+)['"];/gm)]
+    .map((m) => m[1]!);
+  const layers = imports.filter((i) => i.endsWith('.css'));
+  const firstComponent = imports.findIndex((i) => i.startsWith('./alerts/') && !i.endsWith('.css'));
+  check('main.tsx imports the layers, in order, before the component tree',
+    layers.join() === LAYERS.join() &&
+      (firstComponent === -1 || firstComponent > imports.indexOf(LAYERS[2]!)),
+    `found: ${layers.join(', ') || '(none)'}\n` +
+    `want:  ${LAYERS.join(', ')}, all before any ./alerts/* component import\n` +
+    'CSS is emitted in module-EVALUATION order, depth-first, in the dev server\n' +
+    'and the build alike. Move these below the component import and every\n' +
+    'component stylesheet is emitted first, so shared.css lands last and wins.');
+
+  /**
+   * SECOND, and this is the one the split is built on: **a scoping class lives
+   * in exactly one file.**
+   *
+   * Two component files styling the same scope makes the winner the order the
+   * module graph happened to import them in — which nothing in the toolchain
+   * pins and nothing here would notice. `shared.css` and `app.css` are exempt
+   * because they are the LAYERS: `main.tsx` imports both before any component,
+   * so a component overriding them at equal specificity is the intended
+   * direction rather than a race.
+   *
+   * A class two components render belongs in `shared.css`. That is the whole
+   * rule, and this is what enforces it.
+   */
+  const scopes = new Map<string, Set<string>>();
+  for (const { path, css } of STYLESHEETS) {
+    const file = path.split('/').pop()!;
+    if (file === 'app.css' || file === 'shared.css') continue;
+    // Comments FIRST, over the whole file. Every header here names a `.tsx` and
+    // a `.css`, and a `.`-prefixed word inside a comment reads as a class.
+    const bare = css.replace(/\/\*[\s\S]*?\*\//g, ' ');
+    // The leftmost class of each selector in the list — what the rule is scoped
+    // to. Preludes of at-rules carry no class and drop out on their own.
+    for (const m of bare.matchAll(/(^|\}|\{)([^{}]+)\{/g)) {
+      for (const sel of m[2]!.split(',')) {
+        const c = /\.([a-zA-Z][\w-]*)/.exec(sel);
+        if (!c) continue;
+        if (!scopes.has(c[1]!)) scopes.set(c[1]!, new Set());
+        scopes.get(c[1]!)!.add(file);
+      }
+    }
+  }
+  const contested = [...scopes].filter(([, files]) => files.size > 1);
+  check('no scoping class is claimed by two component stylesheets', contested.length === 0,
+    contested.map(([c, f]) => `  .${c} — ${[...f].sort().join(' and ')}`).join('\n') + '\n' +
+    'Whichever file the module graph imports last wins, and nothing pins that\n' +
+    'order. Move the shared scope to alerts/shared.css, which every component\n' +
+    'file loads after.');
+}
+
+/**
+ * THIRD: every rule has a selector, and it is a selector.
+ *
+ * `DESIGN.md` §8 records the defect and has described this check for longer than
+ * the check has existed: a regex that removed a selector and left its
+ * declaration block kept the brace count even and silently swallowed the next
+ * rule, and every conversation row fell back to browser-default button styling.
+ * Balanced braces are not a valid stylesheet.
+ *
+ * The split multiplies it by seventeen. A rule lost out of a thirty-line
+ * component file leaves that file parsing perfectly and one screen rendering
+ * without it — and neither typecheck can see a `.css` file at all.
+ *
+ * Two shapes catch it. An EMPTY prelude is the swallowed-rule signature
+ * directly. One ending in `;` or `}` is the other half: a declaration or a whole
+ * rule that ended up standing where a selector should be.
+ */
+{
+  const broken: string[] = [];
+  for (const { path, css } of STYLESHEETS) {
+    const bare = css.replace(/\/\*[\s\S]*?\*\//g, ' ');
+    let depth = 0;
+    let start = 0;
+    for (let i = 0; i < bare.length; i++) {
+      const ch = bare[i];
+      if (ch === '{') {
+        if (depth === 0) {
+          const prelude = bare.slice(start, i).trim();
+          if (!prelude) broken.push(`${path}  (empty selector)`);
+          else if (/[;}]$/.test(prelude)) broken.push(`${path}  ${prelude.slice(-70)}`);
+        }
+        depth++;
+      } else if (ch === '}') {
+        depth--;
+        // A nested block (inside @media) closes back to depth 1, and the next
+        // prelude starts after it; a top-level one resets to 0.
+        if (depth <= 1) start = i + 1;
+        if (depth < 0) { broken.push(`${path}  (unbalanced brace)`); depth = 0; }
+      }
+    }
+    if (depth !== 0) broken.push(`${path}  (${depth} unclosed block(s))`);
+  }
+  check('every rule has a selector, and no block is orphaned', broken.length === 0,
+    `${broken.join('\n')}\n` +
+    'DESIGN.md §8: balanced braces are not a valid stylesheet. A selector removed\n' +
+    'without its block keeps the brace count even and swallows the NEXT rule —\n' +
+    'silently, and now in one of seventeen files rather than one.');
+}
 
 // ---------------------------------------------------------------------------
 

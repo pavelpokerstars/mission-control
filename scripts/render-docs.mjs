@@ -16,9 +16,9 @@
  * or opened straight off disk with no server. That costs a few KB per file and
  * removes an entire class of "why is it unstyled" question.
  *
- * There is exactly one palette, in `docs/doc.css`, and it is the app's own
- * (`apps/shell/src/app.css`), inlined into every page so each one renders
- * standing alone — no server, no stylesheet to resolve.
+ * There is exactly one palette, in `docs/doc.css`, and it is the app's own — the
+ * tokens at the top of `apps/shell/src/app.css` — inlined into every page so
+ * each one renders standing alone: no server, no stylesheet to resolve.
  *
  * Regenerating is safe and repeatable — `docs/html/` is disposable output.
  */

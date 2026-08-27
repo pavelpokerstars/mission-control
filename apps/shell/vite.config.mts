@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite';
+import { defineConfig, type Plugin, type PreviewServer, type ViteDevServer } from 'vite';
 import react from '@vitejs/plugin-react';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -52,9 +52,49 @@ function aliasesFromTsconfig(): Record<string, string> {
   );
 }
 
+/**
+ * Serve `index.html` for every deep link.
+ *
+ * The router uses real paths (`/alert/…`, `/record/jira/PAY-9031`) rather than
+ * a hash, so a reload or a pasted link asks the server for a path no file sits
+ * at. Vite already falls back for most of them; it declines when the last
+ * segment looks like a filename, and record ids legitimately contain dots — a
+ * Slack `ts` is `1755950400.001` — so `/record/slack/1755950400.001` would
+ * 404 on reload while every other page worked. That is the failure worth
+ * pre-empting: it appears only on the deep link somebody pasted.
+ *
+ * Installed in the hook body so it runs BEFORE vite's own fallback, and gated
+ * on the request asking for HTML — a module request (`/src/main.tsx`,
+ * `/@vite/client`) accepts `*` and must still be served as itself.
+ *
+ * Anything else serving `dist/` needs the same rewrite.
+ */
+function spaFallback(): Plugin {
+  const rewrite = (server: ViteDevServer | PreviewServer): void => {
+    server.middlewares.use((req, _res, next) => {
+      const url = req.url ?? '/';
+      if (
+        (req.method === 'GET' || req.method === 'HEAD') &&
+        String(req.headers.accept ?? '').includes('text/html') &&
+        !url.startsWith('/@') &&
+        !url.startsWith('/src/') &&
+        !url.startsWith('/node_modules/')
+      ) {
+        req.url = '/index.html';
+      }
+      next();
+    });
+  };
+  return {
+    name: 'mc-spa-fallback',
+    configureServer: rewrite,
+    configurePreviewServer: rewrite,
+  };
+}
+
 export default defineConfig({
   root: r('.'),
-  plugins: [react()],
+  plugins: [react(), spaFallback()],
   resolve: { alias: aliasesFromTsconfig() },
   server: { port: 4200 },
   // Keep outDir inside the app root so Vite does not warn about writing

@@ -1,0 +1,58 @@
+/* ---------------------------------------------------------------------------
+ * The two typefaces the design is drawn in, self-hosted.
+ *
+ * WHY THIS FILE EXISTS AT ALL. `docs/design-preview.html` loads Instrument Sans
+ * and IBM Plex Mono from Google Fonts in its `<head>`; `apps/shell/index.html`
+ * loaded nothing. So `app.css` — which is the preview's stylesheet copied
+ * verbatim, `--sans` and `--mono` included — asked for two families the browser
+ * did not have and silently fell through to `ui-sans-serif` and `ui-monospace`.
+ * Every size, weight, line-height and letter-spacing was already identical;
+ * measured side by side, the ONLY things that differed were the glyphs
+ * themselves and the widths they produce. That is the whole of "the font and
+ * spacing do not match the preview".
+ *
+ * It is the failure mode a font stack is designed to hide: nothing errors,
+ * nothing logs, the page renders, and it is simply the wrong typeface. The
+ * fallbacks stay — they are what a reader sees for the few hundred milliseconds
+ * before the file arrives — but they must never again be what the app settles
+ * on.
+ *
+ * WHY SELF-HOSTED AND NOT THE PREVIEW'S `<link>`. The preview is a document you
+ * open off disk once; the app is the product, and this repo's standing promise
+ * is that it runs on committed fixtures with no credentials, no network and no
+ * server (`npm run verify`, `npm run dev`). A CDN in the boot path makes the
+ * typography depend on the one thing everything else here is careful not to
+ * need — and on a machine behind a proxy the app would quietly render in the
+ * fallback again, which is exactly the bug this file closes. `@fontsource` is
+ * the same Google-hosted family, versioned and vendored.
+ *
+ * WHY THE STATIC PACKAGE AND NOT THE VARIABLE ONE. `@fontsource-variable/…`
+ * would be one file instead of five, and it declares its family as
+ * `'Instrument Sans Variable'`. That name would have to be added to `--sans` in
+ * `app.css` — which is the preview's stylesheet, copied verbatim, and the one
+ * file a design change may not start in. The static package declares
+ * `'Instrument Sans'`, so the token is left exactly as the preview wrote it and
+ * this file is additive.
+ *
+ * THE FACES ARE THE PREVIEW'S, not a guess. Its Google Fonts URL asks for
+ * Instrument Sans 400/500/600/700 plus italic 400, and IBM Plex Mono
+ * 400/500/600. `app.css` uses 400, 500 and 600 directly; 700 is what a `<b>` in
+ * an agent's answer resolves to (`Answer.tsx`), and italic 400 is `.ev q`, the
+ * quotation on every evidence row. Each import carries the family's full subset
+ * set with `unicode-range`, so a browser downloads only the subsets the page
+ * actually puts on screen.
+ *
+ * `font-display: swap` comes from the package. Text is readable immediately in
+ * the fallback and reflows once when the real face lands — the right trade for
+ * a local file that arrives in a few milliseconds.
+ * ------------------------------------------------------------------------- */
+
+@import '@fontsource/instrument-sans/400.css';
+@import '@fontsource/instrument-sans/400-italic.css';
+@import '@fontsource/instrument-sans/500.css';
+@import '@fontsource/instrument-sans/600.css';
+@import '@fontsource/instrument-sans/700.css';
+
+@import '@fontsource/ibm-plex-mono/400.css';
+@import '@fontsource/ibm-plex-mono/500.css';
+@import '@fontsource/ibm-plex-mono/600.css';

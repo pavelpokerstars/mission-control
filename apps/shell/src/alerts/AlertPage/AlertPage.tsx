@@ -15,12 +15,14 @@
 
 import type { JSX } from 'react';
 import type { Evidence } from '@mc/domain';
-import { explain, dotClass, useFinding, type FindingDetail } from './api';
-import { AppWindow, BackLink, type Counts } from './Chrome';
-import { recordHref, type Route } from './router';
-import { Actions } from './Actions';
-import { AskInline } from './AskInline';
-import { KIND_LABEL } from './AlertList';
+import { explain, dotClass, useFinding, type FindingDetail } from '../api';
+import { AppWindow, BackLink, type Counts } from '../Chrome/Chrome';
+import { recordHref, type Route } from '../router';
+import { Actions } from '../Actions/Actions';
+import { AskInline } from '../AskInline/AskInline';
+import { KIND_LABEL } from '../AlertList/AlertList';
+
+import './AlertPage.css';
 
 /**
  * The checklist: what the container said would happen.
