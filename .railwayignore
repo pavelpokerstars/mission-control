@@ -16,16 +16,16 @@ apps/shell/dist/
 .idea/
 
 # Mission Control working state. Only committed synthetic fixtures are deployed.
-vault/
-vault-programme/
-live-raw/
-live-graph/
-live-vault/
-live-status-map.json
-demo-graph/
-demo-vault/
-.demo-map.json
-docs/HACKATHON.md
+/vault/
+/vault-programme/
+/live-raw/
+/live-graph/
+/live-vault/
+/live-status-map.json
+/demo-graph/
+/demo-vault/
+/.demo-map.json
+/docs/HACKATHON.md
 
 # Editor and OS noise.
 .DS_Store
