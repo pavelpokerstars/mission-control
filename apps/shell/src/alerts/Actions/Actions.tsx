@@ -29,7 +29,7 @@
  */
 
 import { useState, type JSX } from 'react';
-import type { Finding } from '@mc/domain';
+import type { Evidence, Finding } from '@mc/domain';
 import { act, type ActionResult } from '../api';
 import { DatePicker, fmtDay, isoDay, nextWeekday, plusDays } from '../DatePicker/DatePicker';
 
@@ -52,6 +52,33 @@ const PRIMARY: Partial<Record<Finding['kind'], string>> = {
 };
 
 /**
+ * The channel the askProposal draft is addressed to, when the evidence
+ * names one. Mirrors `apps/gateway/src/act.ts` askProposal: a Slack
+ * evidence label is `#channel - author`, so the channel is already on the
+ * page. Surfacing it on the button is the only way a judge can tell what
+ * "Ask someone" is going to do before they click it.
+ */
+function slackChannel(evidence: readonly Evidence[]): string | undefined {
+  return evidence
+    .map((e) => (e.surface === 'slack' ? /^#([^\s—]+)/.exec(e.label)?.[1] : undefined))
+    .find((ch): ch is string => !!ch);
+}
+
+/**
+ * The "ask" button label.
+ *
+ * The shell already knows the channel name (it's on the evidence row),
+ * and naming it on the button is the difference between "Ask someone"
+ * (vague) and "Draft a message to #eng-payments" (actionable). Falls
+ * back to a generic label when the evidence has no channel -- the draft
+ * itself will then say "pick a channel before sending".
+ */
+function askLabel(evidence: readonly Evidence[]): string {
+  const channel = slackChannel(evidence);
+  return channel ? `Draft a message to #${channel}` : 'Draft a message';
+}
+
+/**
  * What "not needed" means here, which is different per alert.
  *
  * A generic "dismiss" makes the reader supply the reason themselves, and the
@@ -61,7 +88,7 @@ const PRIMARY: Partial<Record<Finding['kind'], string>> = {
  */
 const DISMISS: Partial<Record<Finding['kind'], string>> = {
   missing_ticket: 'Not needed — dismiss',
-  cycle: 'It is not really circular — dismiss',
+  cycle: 'Not a real cycle — dismiss',
   disagreement: 'Already resolved — dismiss',
   suspect_link: 'The link is correct — dismiss',
   undetected_dependency: 'Not a dependency — dismiss',
@@ -257,10 +284,10 @@ export function Actions({ finding, onDone }: { finding: Finding; onDone: () => v
           {PRIMARY[finding.kind] ?? 'Open it'}
         </button>
         <button type="button" disabled={busy} onClick={() => void run({ action: 'ask' })}>
-          Ask someone
+          {askLabel(finding.evidence ?? [])}
         </button>
         <button type="button" disabled={busy} onClick={() => setDeferring(true)}>
-          Not now
+          Park it
         </button>
         <button
           className="ghost"
