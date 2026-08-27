@@ -26,6 +26,7 @@ This is the shared progress record for the demo. It deliberately separates tempo
 4. The current guided journey is still structurally confusing: a citation moves from step 2 directly to a record page labelled step 4, while step 3 is actually the connector-coverage page. Route number is not a reliable proxy for task progress.
 5. The judge gate is a timer and name prompt, not a private session. Browser and server state are not isolated per judge. The current copy over-promises privacy.
 6. `Later` and global `Ask` are useful Mission Control features, but neither should interrupt the primary three-minute demo story.
+7. Mock data is treated as an opaque deployment asset during assistant sessions. Inspect schemas, paths, and loading code only; do not read fixture contents unless a future task explicitly requires it.
 
 ## Scope rule
 
@@ -129,6 +130,10 @@ Additional guide changes:
 
 - [ ] Remove or wire the demo-only source-mimic CSS that currently targets classes/attributes the React components do not emit.
 - [x] Add an explicit `.railwayignore` so manual uploads exclude dependencies, secrets, vault working state, and live data while retaining `libs/vault` source.
+- [x] Attach Railway volume `mc-judge-demo-volume` at `/data`.
+- [x] Seed the current fixture tree once to `/data/fixtures` without parsing its contents.
+- [x] Set `MC_GRAPH_DIR=/data/fixtures` and `MC_VAULT_DIR=/data/vault`.
+- [x] Exclude `fixtures` and `fixtures-programme` from subsequent CLI uploads and container build contexts via `.railwayignore` and `.dockerignore`.
 - [ ] Preserve the banner colours; check contrast and wrapping at laptop widths.
 - [ ] Update the storyboard to match the final path.
 - [ ] Build, typecheck, and run targeted tests locally.
@@ -241,6 +246,7 @@ Additional guide changes:
 | 27 Aug 2026 | Deploy merged demo application | Pass at `d252127`; Railway deployment `8ce597f7-b019-4f99-8bb4-9833823671ca` healthy |
 | 27 Aug 2026 | Live reasoning-exclusion retest | Pass for no thinking-trace leakage; failed grounding acceptance because alert evidence is absent from chat context |
 | 27 Aug 2026 | Legacy hash deep link after `main` merge | Failed; `/#/record/...` falls back to the alert list and needs redirect/update |
+| 27 Aug 2026 | Persistent Railway demo storage | Pass; deployment `c726fb3b-c0cb-4ff5-9cef-8153f4b1d616` read graph data and vault state from `/data` |
 
 # Decisions recorded
 
@@ -250,3 +256,4 @@ Additional guide changes:
 4. Use `openrouter/free`, never `openrouter/auto`, and keep reasoning exclusion in code.
 5. Treat AI evidence enrichment as a core Mission Control change; treat OpenRouter hosting/provider wiring as demo-specific for now.
 6. Keep Later and global Ask in the product, but outside the hero demo path.
+7. Treat mock fixtures as opaque in working sessions and keep runtime demo data on Railway storage rather than repeatedly uploading it.

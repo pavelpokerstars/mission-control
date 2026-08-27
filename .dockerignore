@@ -1,0 +1,18 @@
+.git
+.railway
+node_modules
+**/node_modules
+.nx
+dist
+apps/shell/dist
+**/*.tsbuildinfo
+
+# Runtime demo data lives on the Railway volume at /data.
+fixtures
+fixtures-programme
+
+.env
+.env.*
+.claude
+.vscode
+.idea

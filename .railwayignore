@@ -8,6 +8,10 @@ dist/
 apps/shell/dist/
 *.tsbuildinfo
 
+# Demo data is seeded once into the attached /data volume.
+/fixtures/
+/fixtures-programme/
+
 # Local secrets and machine-specific configuration never belong in an upload.
 .env
 .env.*
