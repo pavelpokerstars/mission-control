@@ -34,10 +34,14 @@
 .row:hover { background:var(--sunk); border-left-color:var(--line-2); }
 .row.crit { border-left-color:var(--crit); }
 .row.warn { border-left-color:var(--warn); }
-.row .meta { display:flex; align-items:center; gap:10px; margin-bottom:7px; flex-wrap:wrap; }
-.row h3 { margin:0 0 5px; font-size:1.02rem; font-weight:600; letter-spacing:-.01em; }
-.row .sub { margin:0; font-size:.9rem; color:var(--ink-2); }
+.row .meta { display:flex; align-items:center; gap:10px; margin:0 0 8px; flex-wrap:wrap; }
+.row h3 { margin:0 0 8px; font-size:1.18rem; font-weight:650; letter-spacing:-.015em; line-height:1.25; }
+.row .sub { margin:0; font-size:.92rem; color:var(--ink-2); }
 .row .srcs { display:flex; gap:5px; align-items:center; }
+.row .when { font-size:.78rem; color:var(--ink-3); white-space:nowrap; }
+/* On the alert list the chip is a label, not a badge -- smaller and softer
+ * than the chip on the alert page itself, which still needs to be loud. */
+.row .chip { font-size:9.5px; padding:3px 7px; }
 .row .go { font-family:var(--mono); font-size:11px; color:var(--ink-3); white-space:nowrap; }
 @media (max-width:640px) {
     .row { grid-template-columns:minmax(0,1fr); }

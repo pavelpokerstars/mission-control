@@ -53,15 +53,32 @@ function since(iso: string, now = Date.now()): string {
   return `${days} days`;
 }
 
+/**
+ * `since()` plus "ago" when the value is a count. `today` and `new` already
+ * carry the recency themselves, so the "ago" suffix is conditional.
+ */
+function firedAgo(iso: string, now = Date.now()): string {
+  const v = since(iso, now);
+  if (v === 'today' || v === 'new') return v;
+  return `${v} ago`;
+}
+
 /** The surfaces this finding was read from, deduplicated, in a stable order. */
 function surfacesOf(f: Finding): string[] {
   return [...new Set(f.evidence.map((e) => dotClass(e.surface)))];
 }
 
 function Row({ f }: { f: Finding }): JSX.Element {
+  /*
+   * Order matters: the claim is the reason this row exists and is the line
+   * a judge reads first. The chip and source dots move UNDER it, so the
+   * kind is a label rather than a headline, and the impact stays a single
+   * line so the card's vertical weight matches its real estate.
+   */
   return (
     <a className={`row ${f.severity}`} href={hrefFor({ name: 'alert', id: f.id })}>
       <div>
+        <h3>{f.claim}</h3>
         <div className="meta">
           <span className={`chip ${f.severity}`}>{KIND_LABEL[f.kind]}</span>
           <span className="srcs">
@@ -69,11 +86,11 @@ function Row({ f }: { f: Finding }): JSX.Element {
               <i key={s} className={`dot ${s}`} />
             ))}
           </span>
+          <span className="when">fired {firedAgo(f.firedAt)}</span>
         </div>
-        <h3>{f.claim}</h3>
         <p className="sub">{f.impact}</p>
       </div>
-      <span className="go">{since(f.firedAt)} →</span>
+      <span className="go">open →</span>
     </a>
   );
 }
