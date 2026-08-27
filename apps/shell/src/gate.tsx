@@ -26,7 +26,9 @@ export interface JudgeSession {
 
 const KEY = 'mc-judge-session';
 const INTRO_KEY = 'mc-judge-intro-complete';
-const GUIDE_KEY = 'mc-judge-guide-dismissed';
+/** Guide persistence lives in Guide.tsx; these keys exist once, here. */
+export const GUIDE_DISMISS_KEY = 'mc-judge-guide-dismissed';
+export const GUIDE_ACTIONS_KEY = 'mc-judge-guide-actions';
 /** 20 minutes, in milliseconds. */
 export const SESSION_MS = 20 * 60 * 1000;
 
@@ -87,7 +89,8 @@ export function clearSession(): void {
   try {
     sessionStorage.removeItem(KEY);
     sessionStorage.removeItem(INTRO_KEY);
-    sessionStorage.removeItem(GUIDE_KEY);
+    sessionStorage.removeItem(GUIDE_DISMISS_KEY);
+    sessionStorage.removeItem(GUIDE_ACTIONS_KEY);
     // Clean up records written by the earlier cross-tab implementation.
     localStorage.removeItem(KEY);
   } catch {

@@ -65,8 +65,8 @@ Changes that improve comprehension, provenance, AI grounding, or reliability for
 - [x] Add `reasoning: { exclude: true }` to streaming chat and structured JSON calls, following the proven Toolbelt/Clive pattern.
 - [x] Change Railway `OPENROUTER_MODEL` to `openrouter/free`; redeployment succeeded on 27 August.
 - [~] Retest the exact suggested alert question: the live route responds and no longer exposes its thinking trace, but it still reasons from unrelated vault memory. Complete M1 before calling the answer trustworthy or demo-ready.
-- [ ] Add bounded 429 retry/backoff from the Toolbelt implementation if free-pool rate limits appear during rehearsal.
-- [ ] Ensure errors shown to judges are short, helpful UI states rather than raw provider JSON.
+- [x] Add bounded 429 retry/backoff, ported from the Toolbelt router (`C:\dev\toolbelt` — `src/toolbelt/llm_router.py` / `js/llm-router.mjs`). Three attempts, `Retry-After` header then prose-regex fallback, exponential backoff capped at 30s, never waiting past `MAX_WAIT_MS` (120s). Verified against a local 429-then-success stub.
+- [x] Ensure errors shown to judges are short, helpful UI states rather than raw provider JSON. `openrouter.ts` maps 401/403/404/429/5xx to one-line words; `/api/chat` no longer prefixes them with `Error:`.
 
 **Ownership:** OpenRouter transport and Railway configuration are demo-only today. The context-grounding change in M1 benefits core Mission Control.
 
@@ -82,8 +82,8 @@ Changes that improve comprehension, provenance, AI grounding, or reliability for
 - [~] On expiry, return to the start, clear the demo guide state, clear demo conversations, and reset the route. Implemented; the full 20-minute production wait remains to be rehearsed.
 - [x] Rename `Got it` to `Hide guide`.
 - [x] Scope dismissal to the current judge session and add a persistent `Show guide` affordance beside the timer.
-- [ ] Track completed actions rather than deriving step number solely from the current route.
-- [ ] Make actions non-mutating/simulated for the shared public demo, or namespace mutations and conversations with a signed session token.
+- [x] Track completed actions rather than deriving step number solely from the current route. The guide now marks `Open the top alert` / `Open the evidence` / `Ask about this alert` complete as the judge does them, and asks in place (no route change) is caught via the conversation store. Progress persists per judge session and clears on expiry.
+- [x] Make actions non-mutating/simulated for the shared public demo. When `MC_MODE=openrouter`, `/api/findings/:id/act` returns an honest simulated outcome and writes nothing — verified live: vault notes and pending proposals unchanged after a primary + dismiss.
 
 **Acceptance:** Two browser tabs cannot inherit one another's claimed private session; expiry produces a clean start; guidance can always be reopened; one judge cannot alter another judge's story.
 
@@ -253,6 +253,8 @@ Additional guide changes:
 | 27 Aug 2026 | Fixture-free deployment verification | Pass; deployment `ada03324-d6e8-4708-8ee6-cab7204b6db2` omitted fixture directories from the upload and started against `/data/fixtures` and `/data/vault` |
 | 27 Aug 2026 | Judge guide recovery | Pass; deployment `63abbaa3-77f3-450a-9c30-13a56012953e` showed the banner despite the legacy dismissal value, then passed hide and reopen checks |
 | 27 Aug 2026 | New judge entry journey (local) | Pass; name → pitch → simulated Slack alerts → Mission Control, refresh persistence, independent new tab, desktop layout, and 390px no-overflow checks |
+| 27 Aug 2026 | D1 429 retry against local stub | Pass; two 429s with `Retry-After: 1` then a streamed answer, ~1.3s total (gateway on `OPENROUTER_BASE_URL` override; no shared key spent) |
+| 27 Aug 2026 | D2 simulated actions (openrouter mode) | Pass; primary + dismiss returned simulated outcomes, vault notes 8→8, pending proposals 7→7 (nothing written) |
 
 # Decisions recorded
 
