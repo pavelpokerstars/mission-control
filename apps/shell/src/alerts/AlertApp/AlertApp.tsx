@@ -17,17 +17,19 @@
 
 import { useEffect, useRef, type JSX } from 'react';
 import type { Finding, Note } from '@mc/domain';
-import { useJson } from './api';
-import { useRoute } from './router';
-import { AlertList } from './AlertList';
-import { AlertPage } from './AlertPage';
-import { Ask } from './Ask';
-import { ConversationPage } from './ConversationPage';
-import { isParked, Later } from './Later';
-import { NotePage } from './NotePage';
-import { RecordView } from './RecordView';
-import { Sources } from './Sources';
-import type { Counts } from './Chrome';
+import { useJson } from '../api';
+import { useRoute } from '../router';
+import { AlertList } from '../AlertList/AlertList';
+import { AlertPage } from '../AlertPage/AlertPage';
+import { Ask } from '../Ask/Ask';
+import { ConversationPage } from '../ConversationPage/ConversationPage';
+import { isParked, Later } from '../Later/Later';
+import { NotePage } from '../NotePage/NotePage';
+import { RecordView } from '../RecordView/RecordView';
+import { Sources } from '../Sources/Sources';
+import type { Counts } from '../Chrome/Chrome';
+
+import './AlertApp.css';
 
 export default function AlertApp(): JSX.Element {
   const route = useRoute();

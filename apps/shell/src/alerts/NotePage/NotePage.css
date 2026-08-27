@@ -1,0 +1,35 @@
+/*
+ * NotePage — its own stylesheet.
+ *
+ * The pair to `NotePage.tsx`, imported by it. These 4 rules are scoped to a
+ * class that no other component renders, so nothing else can be changed by
+ * editing them and nothing else needs reading to understand them.
+ *
+ * A rule that a SECOND component starts rendering moves to `shared.css` — two
+ * files claiming one selector is the one thing the split can break silently,
+ * because which of them wins is then the order the module graph happens to
+ * import them in.
+ *
+ * EVERY RULE HERE IS `docs/design-preview.html`'s, verbatim. The preview is the
+ * design and it wins where the two disagree, so a change belongs there first
+ * and is copied here second — the split changed which FILE a rule lives in and
+ * nothing about the rule. `scripts/verify-design.mts` concatenates every
+ * stylesheet under `apps/shell/src/` and asserts both directions: no selector
+ * appears that the preview does not have, and none of the preview's has gone
+ * missing — a rule can now fall out of one of seventeen files and fail on a
+ * single screen with nothing erroring.
+ */
+
+/* A note you parked yourself can be named — the field looks like text until
+     you reach for it, so an unnamed note carries no chrome. */
+.titleinput {
+    flex:1; min-width:0; font:inherit; font-size:.95rem; font-weight:600; color:var(--ink);
+    background:transparent; border:1px solid transparent; border-radius:6px;
+    padding:5px 9px; margin-left:-9px;   /* cancel the padding so text lines up with .about */
+  }
+.titleinput::placeholder { color:var(--ink-3); font-weight:400; font-style:italic; }
+.titleinput:hover { border-color:var(--line-2); }
+.titleinput:focus {
+    border-color:var(--line-2); background:var(--app);
+    outline:2px solid var(--s-jira); outline-offset:1px;
+  }

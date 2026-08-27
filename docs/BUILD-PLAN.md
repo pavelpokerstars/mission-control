@@ -52,7 +52,7 @@ is thrown away" is about the engine rather than the screens: the five vendor
 panes, the two lens panes and the storyline route went, and what filled them —
 the contradiction detector, the citations, the dossier, the summariser — is what
 every alert page is now built from. Records survive as a *destination reached
-only from a citation* (`apps/shell/src/alerts/RecordView.tsx`), which is a
+only from a citation* (`apps/shell/src/alerts/RecordView/RecordView.tsx`), which is a
 different thing from a pane you could browse to.
 
 Their names are deliberately not listed here. A document that names a deleted

@@ -31,6 +31,14 @@ export interface Subject {
   id: string;
   kind: string;
   claim: string;
+  /**
+   * The detector's sentence about why it matters — and, for a `cycle`, the
+   * ordered walk itself. `DIRECTION.md` §9: "when the answer is a shape, it
+   * draws the shape", which the agent cannot do for a loop whose members it was
+   * never told. It is already in hand: the caller was handed the whole
+   * `Finding` by the gateway.
+   */
+  impact?: string;
   /** When the alert is about a work item, so the agent can join on it. */
   key?: string;
 }
@@ -70,7 +78,12 @@ export async function ask(
    */
   const context: ContextEnvelope = subject
     ? {
-        finding: { id: subject.id, kind: subject.kind, claim: subject.claim },
+        finding: {
+          id: subject.id,
+          kind: subject.kind,
+          claim: subject.claim,
+          ...(subject.impact ? { impact: subject.impact } : {}),
+        },
         ...(subject.key ? { focusedKey: subject.key as ContextEnvelope['focusedKey'] } : {}),
       }
     : {};

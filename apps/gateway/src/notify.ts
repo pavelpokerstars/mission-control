@@ -94,7 +94,15 @@ export function notificationFor(f: Finding): Notification {
      */
     detail: f.impact,
     firedAt: f.firedAt,
-    url: `${APP_URL}/#/alert/${encodeURIComponent(f.id)}`,
+    /**
+     * A path, not a hash. The shell routes on `location.pathname`, so
+     * `/#/alert/<id>` resolves to the front door — the notification would open
+     * the list rather than the one alert it was sent about, which is the whole
+     * of what a notification is for. Whatever serves the app has to answer a
+     * deep link with `index.html`; `spaFallback` in the shell's vite config is
+     * that, for the dev server and `vite preview`.
+     */
+    url: `${APP_URL}/alert/${encodeURIComponent(f.id)}`,
   };
 }
 

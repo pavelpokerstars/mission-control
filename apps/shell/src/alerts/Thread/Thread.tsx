@@ -15,8 +15,10 @@
 
 import { useEffect, useRef, useState, type JSX } from 'react';
 import type { ChatTurn } from '@mc/domain';
-import { Answer } from './Answer';
-import type { Starter } from './chat';
+import { Answer } from '../Answer/Answer';
+import type { Starter } from '../chat';
+
+import './Thread.css';
 
 export function Turns({
   turns,

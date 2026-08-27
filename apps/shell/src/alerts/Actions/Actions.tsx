@@ -30,8 +30,10 @@
 
 import { useState, type JSX } from 'react';
 import type { Finding } from '@mc/domain';
-import { act, type ActionResult } from './api';
-import { DatePicker, fmtDay, isoDay, nextWeekday, plusDays } from './DatePicker';
+import { act, type ActionResult } from '../api';
+import { DatePicker, fmtDay, isoDay, nextWeekday, plusDays } from '../DatePicker/DatePicker';
+
+import './Actions.css';
 
 /** The primary action per alert type. The label is a promise about the effect. */
 const PRIMARY: Partial<Record<Finding['kind'], string>> = {

@@ -1,0 +1,47 @@
+/*
+ * Later — its own stylesheet.
+ *
+ * The pair to `Later.tsx`, imported by it. These 12 rules are scoped to a
+ * class that no other component renders, so nothing else can be changed by
+ * editing them and nothing else needs reading to understand them.
+ *
+ * A rule that a SECOND component starts rendering moves to `shared.css` — two
+ * files claiming one selector is the one thing the split can break silently,
+ * because which of them wins is then the order the module graph happens to
+ * import them in.
+ *
+ * EVERY RULE HERE IS `docs/design-preview.html`'s, verbatim. The preview is the
+ * design and it wins where the two disagree, so a change belongs there first
+ * and is copied here second — the split changed which FILE a rule lives in and
+ * nothing about the rule. `scripts/verify-design.mts` concatenates every
+ * stylesheet under `apps/shell/src/` and asserts both directions: no selector
+ * appears that the preview does not have, and none of the preview's has gone
+ * missing — a rule can now fall out of one of seventeen files and fail on a
+ * single screen with nothing erroring.
+ */
+
+/* ---------- 5 · later ---------- */
+.later-row {
+    display:grid; grid-template-columns:minmax(0,1fr) auto auto; gap:12px 16px;
+    padding:18px var(--gutter); border-bottom:1px solid var(--line); align-items:start;
+  }
+.later-row:hover { background:var(--sunk); }
+.later-row .rowdel { margin-top:2px; }
+.later-row .notetext { margin:8px 0 0; font-size:.97rem; color:var(--ink); line-height:1.5; }
+.later-row .m { display:flex; align-items:baseline; gap:9px; margin-top:8px; }
+.later-row .when { font-family:var(--mono); font-size:11px; color:var(--ink-3); }
+.editnote-hint {
+    font-family:var(--mono); font-size:10px; letter-spacing:.06em; color:var(--ink-3);
+    opacity:0; margin-left:8px;
+  }
+.later-row:hover .editnote-hint { opacity:1; }
+.later-row h3 { margin:0 0 6px; font-size:1rem; font-weight:600; }
+.later-row .yournote {
+    margin:8px 0 0; padding:11px 14px; background:var(--sunk); border-radius:7px;
+    font-size:.93rem; color:var(--ink); border-left:2px solid var(--s-vault);
+  }
+.later-row .yournote b {
+    display:block; font-family:var(--mono); font-size:9.5px; font-weight:600;
+    letter-spacing:.1em; text-transform:uppercase; color:var(--ink-3); margin-bottom:4px;
+  }
+.later-row .due { font-family:var(--mono); font-size:11px; color:var(--ink-3); white-space:nowrap; }

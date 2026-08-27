@@ -1,0 +1,80 @@
+/*
+ * Chrome — its own stylesheet.
+ *
+ * The pair to `Chrome.tsx`, imported by it. These 21 rules are scoped to a
+ * class that no other component renders, so nothing else can be changed by
+ * editing them and nothing else needs reading to understand them.
+ *
+ * A rule that a SECOND component starts rendering moves to `shared.css` — two
+ * files claiming one selector is the one thing the split can break silently,
+ * because which of them wins is then the order the module graph happens to
+ * import them in.
+ *
+ * EVERY RULE HERE IS `docs/design-preview.html`'s, verbatim. The preview is the
+ * design and it wins where the two disagree, so a change belongs there first
+ * and is copied here second — the split changed which FILE a rule lives in and
+ * nothing about the rule. `scripts/verify-design.mts` concatenates every
+ * stylesheet under `apps/shell/src/` and asserts both directions: no selector
+ * appears that the preview does not have, and none of the preview's has gone
+ * missing — a rule can now fall out of one of seventeen files and fail on a
+ * single screen with nothing erroring.
+ */
+
+/* ---------- 2 · the list ---------- */
+.appwin {
+    background:var(--app); border:1px solid var(--line); border-radius:var(--r);
+    box-shadow:var(--shadow); overflow:hidden;
+  }
+.topbar {
+    display:flex; align-items:center; justify-content:space-between; gap:20px; flex-wrap:wrap;
+    padding:13px 22px; border-bottom:1px solid var(--line); background:var(--app);
+  }
+.brand { font-family:var(--mono); font-size:12px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; }
+/* the optional toolbar — compare it against no toolbar with the switch above */
+.appnav { display:flex; gap:2px; flex-wrap:wrap; margin-left:22px; margin-right:auto; }
+.appnav button {
+    background:transparent; border:0; border-radius:7px; padding:6px 11px;
+    font-size:.89rem; color:var(--ink-2); display:inline-flex; align-items:center; gap:7px;
+  }
+.appnav button:hover { background:var(--sunk); color:var(--ink); }
+.appnav button[aria-current="page"] { background:var(--sunk); color:var(--ink); font-weight:600; }
+.appnav .n {
+    font-family:var(--mono); font-size:10px; padding:1px 6px; border-radius:99px;
+    background:var(--line); color:var(--ink-2);
+  }
+.appnav .n.hot { background:var(--crit-bg); color:var(--crit); }
+.sources {
+    display:flex; gap:14px; flex-wrap:wrap; background:transparent; border:1px solid transparent;
+    border-radius:99px; padding:5px 10px; margin:-5px -10px;
+  }
+button.sources:hover { border-color:var(--line-2); background:var(--sunk); }
+.sources span {
+    display:inline-flex; align-items:center; gap:6px;
+    font-family:var(--mono); font-size:10px; letter-spacing:.06em; color:var(--ink-3);
+  }
+.appwin .back {
+    display:inline-flex; align-items:center; gap:8px; background:transparent; border:0;
+    font-family:var(--mono); font-size:11px; color:var(--ink-3); padding:16px var(--gutter) 14px;
+  }
+.appwin .back:hover { color:var(--ink); }
+/* The back link supplies the gap below itself, so whatever follows starts
+     flush. Without this each page needed its own ad-hoc top padding. */
+.back + .head, .back + .greet { padding-top:0; }
+.back + .stat-strip { margin-top:0; }
+.brand.muted { color:var(--ink-3); }
+/* Delete acts immediately and stays undoable. Asking "are you sure?" makes
+     the safe path cost two clicks and still loses the thing if you misread it. */
+.undobar {
+    display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+    padding:17px var(--gutter) 17px calc(var(--gutter) - 3px);
+    background:var(--sunk); border-left:3px solid var(--line-2);
+    border-bottom:1px solid var(--line); font-size:.9rem; color:var(--ink-2);
+  }
+.undobar .what {
+    min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--ink);
+  }
+.undobar button {
+    margin-left:auto; background:transparent; border:1px solid var(--line-2); border-radius:99px;
+    padding:5px 15px; font-size:.85rem; font-weight:600; color:var(--ink); white-space:nowrap;
+  }
+.undobar button:hover { border-color:var(--ink-3); background:var(--app); }

@@ -101,7 +101,8 @@ only via the removed queue.
 
 **5 · Then run it.** `npm run verify` includes `scripts/verify-design.mts`, which
 enforces the checkable part of the above — the route set, the toolbar cap, the
-retired vocabulary, the component list, one stylesheet. It is not a substitute
+retired vocabulary, the component list, the stylesheets and how they layer. It
+is not a substitute
 for 1–4; it is what catches you when 1–4 did not.
 
 And curling the gateway is not using the app. The dead "accept it in the queue"
@@ -398,7 +399,9 @@ are well-formed graphs — and reading four sentences settles it in ten seconds.
 The third is the newest and the least obvious. It asserts that the shipped app
 still has the destinations the direction lists and no others, that the toolbar is
 still capped at three, that nothing in the interface is named for a concept the
-direction deleted, and that `app.css` has not started a second design system. It
+direction deleted, that the stylesheet has not started a second design system,
+that every component stylesheet is imported by its component, and that no two of
+them claim one scoping class. It
 exists because documents alone did not prevent exactly that — see the section at
 the top of this file.
 
@@ -1125,10 +1128,35 @@ values and nothing is wrong. Compare *comparable* elements.
 ## The interface — alert-first
 
 **`apps/shell/src/alerts/` is the application.** `ls apps/shell/src/` returns
-`alerts/`, `app.css`, `main.tsx`, `vite-env.d.ts` and nothing else. `AlertApp`
-routes on the hash, the alert list is the front door, and an alert page is what
-a row opens. `main.tsx` mounts it, and Ask is built from `conversations.ts` and
-the SSE loop in `chat.ts`.
+`alerts/`, `app.css`, `fonts.css`, `main.tsx`, `vite-env.d.ts` and nothing else.
+Inside `alerts/`, **a component is a folder**: `AlertList/AlertList.tsx` beside
+`AlertList/AlertList.css`, fifteen of them. `AlertApp` routes on the path, the
+alert list is the front door, and an alert page is what a row opens.
+
+**The name is repeated rather than an `index.tsx`, deliberately.** `index.tsx`
+would keep the import specifiers shorter (`./AlertList` rather than
+`./AlertList/AlertList`) and it costs fifteen editor tabs all called `index` and
+a stack trace that names none of them. It also costs the verifier: every check
+here is name-based — the sanctioned-component list, "is this stylesheet imported
+by its component", "does any folder hold a `.tsx` not named after it" — and each
+would have to reconstruct the identity from the parent directory.
+
+**Only a PAIR gets a folder.** `api.ts`, `chat.ts`, `conversations.ts` and
+`router.ts` draw nothing, have no stylesheet to pair with, and stay flat beside
+the folders; so does `shared.css`, which is a layer rather than anybody's.
+`main.tsx` mounts `AlertApp`, and Ask is built from `conversations.ts` and the
+SSE loop in `chat.ts`.
+
+**A folder holds exactly its pair, and `verify-design.mts` asserts it** — one
+`.tsx` and one `.css`, both named for the folder. A third file there is
+invisible: the sanctioned-component list reads folder NAMES now and
+`SHELL_FILES` is written by hand, so a `.tsx` dropped inside an existing folder
+escapes that list, the retired-vocabulary scan and the inline-style check all at
+once. Measured before the check existed: `AlertPage/Queue.tsx`, exporting
+`Queue`, heading "Proposals", inline style, the literal sentence "accept them in
+the queue" — the whole verifier green. A second `.css` is the same hole and
+tidier-looking: `STYLESHEETS` globs every one, so its rules count as present
+while nothing imports the file and the screen renders without them.
 
 **There is no proposal queue, and one was built and removed.** `act.ts` and
 `Actions.tsx` both said accepting was "a separate act somebody performs in the
@@ -1158,27 +1186,158 @@ count was read from the collection, and then the collection was never read
 again. The effect is keyed on the route, and `reload` is held in a ref because
 it is a fresh closure every render and naming it in the deps re-runs forever.
 
-**The stylesheet is `docs/design-preview.html`'s, copied verbatim into
-`apps/shell/src/app.css`.** `DESIGN.md` says the preview wins where the two
-disagree — it is the version tested in a browser — so a design change belongs in
-the preview first and here second. Its preview-only rules (`.screen`,
-`.caption`, `.notes`, `.switch`) are still in the file and match nothing: it
-looked worth stripping them and that is exactly the trap `DESIGN.md` §8 records,
-where a regex removes a selector, leaves its block, keeps the brace count even
-and silently swallows the next rule. Dead CSS is harmless; a stylesheet that lost
-a rule is invisible until one screen renders with browser defaults.
+**The app is full-bleed, and it is the ONE place it deliberately differs from
+the preview.** The preview draws each screen as a floating window — a border, a
+radius and a shadow on `.appwin`, inset in a `--ground` margin — because it is a
+documentation page showing pictures of an app. Shipped as drawn, the real thing
+reads as itself running inside a picture of itself. So `.app-shell` fills the
+viewport and three rules under it flatten `.appwin`; `.appwin` itself is
+untouched, which is what keeps the preview the reference `DESIGN.md` says it is.
+Every band still pads with `var(--gutter)`, so §8's single-x check holds
+unchanged — widening the window moves where that x falls and must not split it
+into several. `verify-design.mts` allows these because they are scoped under
+`.app-shell`, which exists nowhere but the app.
 
-**One stylesheet, one design system.** `app.css` is the whole of it: no
-component library, no second reset, no second set of colour tokens. That is what
-keeps the shell build at ~231 kB of JS and ~28 kB of CSS, and a library pulled in
-to draw one screen costs more than the screen.
+**The stylesheet is `docs/design-preview.html`'s, copied verbatim** — and it is
+now seventeen files rather than one. `DESIGN.md` says the preview wins where the
+two disagree, it being the version tested in a browser, so a design change
+belongs in the preview first and here second. Which FILE a rule lives in changed;
+no rule did. Its preview-only rules (`.screen`, `.caption`, `.notes`, `.switch`)
+are still there and match nothing: stripping them looked worth doing and is
+exactly the trap `DESIGN.md` §8 records, where a regex removes a selector, leaves
+its block, keeps the brace count even and silently swallows the next rule. Dead
+CSS is harmless; a stylesheet that lost a rule is invisible until one screen
+renders with browser defaults.
 
-**Routing is a hash router in one file, not a library.** Eight *routes* — four
-pages, a note, the Ask index, a record and Sources — no nesting.
-Hash rather than path because the gateway serves nothing, vite would need a
-history fallback for every deep link, and the demo is a repo somebody clones —
-"it works however you serve it" beats a clean URL. A finding id carries `:`, so
+**The connector strip carries SIX dots, and GitHub was missing from more than the
+strip.** There was no `--s-github` token and no `.github` rule anywhere, so
+`dotClass('github')` produced a class matching nothing and every GitHub dot
+rendered transparent — on Sources, which lists it as a connected source with its
+pull-request count, and on any evidence row citing a PR. The token is GitHub's
+own merged-PR purple (`#6E40C9` / `#A371F7`), which is the one hue the five
+existing surfaces leave open: jira blue, slack magenta, zoom cyan, confluence
+green, miro amber.
+
+**Six dots is not the same number as five collectors.** The collectors are Jira,
+Zoom, Confluence, Slack and GitHub; Miro is the sixth *surface* and the one read
+live rather than out of `MC_GRAPH_DIR`. Do not quote one count as the other.
+
+**The two typefaces are self-hosted, and the app used to render in neither.**
+`app.css`'s `--sans` and `--mono` name Instrument Sans and IBM Plex Mono;
+`docs/design-preview.html` loads both from Google Fonts in its `<head>` and
+`apps/shell/index.html` loaded nothing, so the browser fell silently through to
+`ui-sans-serif` and `ui-monospace`. Every size, weight, line-height and
+letter-spacing already matched the preview — measured side by side, the only
+things that differed were the glyphs. That is the failure a font stack is
+designed to hide: nothing errors, nothing logs, the page renders, and it is the
+wrong typeface.
+
+`apps/shell/src/fonts.css` declares the faces the preview asks for — Instrument
+Sans 400/500/600/700 plus italic 400, IBM Plex Mono 400/500/600 — from
+`@fontsource`, and `main.tsx` imports it **first**, before `app.css`. Two
+choices in it are worth not undoing:
+
+- **Self-hosted, not the preview's `<link>`.** The preview is a document you open
+  once; the app is the product, and its standing promise is that it runs on
+  committed fixtures with no credentials, no network and no server. Behind a
+  proxy a CDN link renders the fallback again, which is the bug this closes.
+- **The static package, not `@fontsource-variable`.** The variable one is one
+  file instead of five and declares its family as `Instrument Sans Variable` —
+  a name that would have to be added to `--sans`, which lives in the file that
+  is the preview's copied verbatim. The static package declares
+  `Instrument Sans`, so nothing in `app.css` moved.
+
+**Check it with widths, never with `document.fonts.check()`** — that returns
+true for a family with no `@font-face` at all. Measure a string in
+`"Instrument Sans", monospace` against `monospace`; equal means the webfont is
+absent.
+
+**One design system, one file per component.**
+
+| | |
+|---|---|
+| `apps/shell/src/app.css` | the tokens, the reset, the breakpoint, and the preview's own document chrome the app never renders |
+| `alerts/shared.css` | what more than one screen draws — the chip, the greeting, the block, the composer, the thread, the select — plus the atoms whose class is interpolated (`dot ${surface}`) and so appears as a literal nowhere |
+| `alerts/<Name>/<Name>.css` | what only that component draws, imported by the `.tsx` beside it |
+
+Still no component library, no second reset and no second set of colour tokens:
+~238 kB of JS and ~38 kB of CSS, the CSS grown by the vendored `@font-face`
+blocks rather than by rules.
+
+**THE ORDER IS A CONTRACT AND `main.tsx` STATES IT**: `fonts.css`, `app.css`,
+`alerts/shared.css`, then each component's own file as the module graph reaches
+it. Everything in the first two is a token, a reset or an element selector, so
+they must come first; every component file loads after `shared.css` and can
+therefore override it at equal specificity.
+
+**`.claude/launch.json` has a third entry, `mission-control-built`, and it is
+there for exactly this.** `npx vite preview` on port 4300 serves `dist/`, which
+is the only way to look at the real bundle in a browser — the split's cascade,
+the emitted `@font-face` blocks and the SPA fallback all behave slightly
+differently there than under the dev server's module graph. Checked when the
+split landed: identical computed styles on every screen, dev against built.
+
+**Those three lines must sit ABOVE `import AlertApp`, and this is the same hazard
+`env.ts` has in the gateway.** CSS is emitted in module-*evaluation* order, which
+is depth-first: with the component import first, every component stylesheet in
+its subtree arrives before the three, `shared.css` lands last, and it beats the
+files it is supposed to lose to. Measured on the first build after the split —
+`.appwin` at byte 0 of the stylesheet and the tokens at 26056. **The dev server
+does the same**, Vite evaluating the ESM graph depth-first too, so it is visible
+in a browser either way. `verify-design.mts` asserts the four lines rather than
+trusting them: deleting the `shared.css` import outright — the chip, the
+greeting, the block, the composer, the thread and the select — was green
+before it did.
+
+**Between component files, order must not matter — and that is a rule, not a
+hope.** Nothing pins the module graph's order, so a class rendered by two
+components goes in `shared.css`. `verify-design.mts` asserts it
+(*no scoping class is claimed by two component stylesheets*), and asserts the
+other thing neither typecheck can see: **every component stylesheet is imported
+by its own component.** A `.css` file is invisible to `tsc` — orphan one and its
+rules simply stop arriving, on one screen, with nothing failing anywhere.
+
+**The phone breakpoint is split on purpose.** `:root { --gutter:18px }` is a
+token and stays in `app.css`; `.row`'s single-column override went to
+`AlertList.css`, beside the `.row` it overrides. Left in `app.css` it would load
+*before* that file and lose to it — the mobile layout silently reverting to the
+desktop grid, with every check still green.
+
+**How the split was done, because doing it by hand is how a rule disappears.**
+A brace-walking parser read the file into rules, each was assigned to a file by
+its scoping class, and the result was asserted to be a **permutation**: 313 rules
+in, 313 rules out, none lost, none gained, compared as normalised
+selector-plus-declarations rather than as text. Then every screen was measured in
+the browser — 757 elements across nine routes, thirty-six computed properties and
+the box each — against a capture taken before the split. Zero differences. Do it
+that way again if it is ever redone; a `diff` cannot check a reordering and a
+brace count cannot check a rule.
+
+**Routing is one file, not a library.** Eight *routes* — four pages, a note, the
+Ask index, a record and Sources — no nesting. `popstate` is already a browser
+event and `location.pathname` is already the state. A finding id carries `:`, so
 the route encodes and decodes it.
+
+**It routes on the PATH, and the hash is gone.** The address is part of the
+product — an alert is something you paste to a colleague — and `#/alert/…` reads
+as an artefact of a demo rather than as a place. It costs exactly one thing and
+it is worth naming: **every deep link now needs the server to answer with
+`index.html`**. `spaFallback` in `apps/shell/vite.config.mts` is that, for the
+dev server and for `vite preview`; anything else serving `dist/` needs the same
+rewrite. It is deliberately wider than vite's own fallback, which declines when
+the last segment looks like a filename — a Slack `ts` is `1755950400.001`, so
+`/record/slack/1755950400.001` would have 404'd on reload while every other page
+worked.
+
+**Two things follow from that and both were live defects the moment the hash
+went.** `notify.ts` built its link as `${APP_URL}/#/alert/<id>`, which now
+resolves to the front door — every notification would open the list instead of
+the one alert it was sent about. And a row is an `<a>` on purpose, so with a
+path every click would fetch the whole application again: `useRoute` installs one
+document-level listener that turns a plain left-click on an internal link into a
+`pushState`. Modified clicks, a `target`, another origin and anything already
+`defaultPrevented` are left to the browser, which is what keeps middle-click and
+copy-link — the reason rows are anchors at all — working.
 
 **The list counts what needs a person, not what was found.** An `ok` finding is a
 note in the margin, and counting it as a thing that "needs you" is how a list
@@ -1199,8 +1358,8 @@ inside `TopBar`, so a badge and the list it counts cannot disagree.
 
 **A row is an `<a>`, not a `<button>`.** The whole row navigates, and an anchor
 gets middle-click, copy-link and the browser's own affordances for free. The
-preview's `.row` rules are written against a button, so `app.css` restates the
-two declarations that differ rather than editing the copied block.
+preview's `.row` rules are written against a button, so `alerts/shared.css`
+restates the two declarations that differ rather than editing the copied block.
 
 **The checklist is the alert's argument, and it needs its ticks.** Three ✓ and a
 ✕ reads in a second; one ✕ alone is a sentence with extra steps. It sorts ticks
@@ -1662,8 +1821,69 @@ nothing, which is what one definition prevents.
 Check it with `curl -s localhost:8787/api/issue/PAY-9031 | jq '.contradictions'`
 and `curl -s 'localhost:8787/api/work?assignee=sam' | jq '.rows[].signals'`.
 
+**When the answer is a shape, the chat draws it — and the reason it usually did
+not was that the agent was never told the shape.** `Answer.tsx` renders a
+```chain fence as the preview's `.inline-graph`, the CSS has been there all
+along and `agent.ts` asks for the fence. But `ContextEnvelope.finding` was
+`{id, kind, claim}`, so on a cycle alert the model was told *"4 tickets are
+waiting on each other"* and not **which four or in what order** — while
+`Finding.impact` had carried the ordered walk the whole time
+(`in a dependency cycle — A → B → C → D → A`, built once in `work.ts` and copied
+by `findings.ts`). It could go and look with a tool call, and against a prompt
+saying *"be concise, lead with the answer"* it mostly did not. `impact` rides in
+the envelope now, filled by the browser — `AskInline` was handed that exact
+`Finding` by the gateway, so there is no second source for it to disagree with,
+and filling it server-side would mean a findings pass on every alert-scoped turn
+that the `if (!env.finding)` guard exists to skip.
+
+**The fence parser was strict in ways that failed silently, and each one turned a
+diagram into a sentence.** Four backticks — which models emit to nest a fence —
+matched the *closing* test, opened nothing, and both marker lines vanished, so
+the chain fell through as a paragraph reading `A -> B -> C`. `-->`, `=>` and the
+en-dash arrow each collapsed the whole walk into one node. `[MISSING]` and
+`[at risk]`, had they been accepted verbatim, would have produced
+`class="node MISSING"` and `class="node at risk"` — matching nothing, with the
+tag stripped out of the label as well, so the one node worth looking at rendered
+identically to the others; the tag is lower-cased, hyphenated and checked against
+the two classes the stylesheet actually draws. A caption is line one **only when
+it has no arrow and a later line does** — both halves matter, because "no arrow
+here" alone turns a one-line chain into a caption with zero nodes and an empty
+box. And a node is trimmed of a trailing separator: asked for `key · state
+[tag]`, a model with no state writes `ORB-1620 · [at-risk]`, and taking the tag
+off leaves punctuation promising a word that is not coming.
+
+**The reader's own turn is on the right, in the composer's box.** `.turn.you`
+swaps the grid template and places both children on row one — `direction:rtl`
+gets the columns right and reorders the bidi run with them, putting a question
+mark and a ticket key in the wrong place, and placing only the badge leaves
+auto-placement to drop the body to row two so the turn doubles in height instead
+of moving. `justify-self:end` is what makes a short message hug the right and a
+long one stop at its measure.
+
+The box carries `--app`, and the fill is not optional: `.cited` and
+`.inline-graph` are both `--sunk`, and the inline thread sits inside `.ask`,
+which is `--sunk` too — an unfilled box there puts a `--sunk` citation pill on a
+`--sunk` ground and the citation disappears. **Never `text-align:right`**: the
+block is right-aligned and the text inside it is not, or every wrapped message
+ragged-lefts and the list markers `padding-left:18px` puts on the left hang out
+into the margin.
+
+**`<code>` in an answer needed a rule and did not have one.** The preview has
+`.quiet code` and nothing else, because none of its fixture answers use a
+backtick; the app's agent quotes field names and ids in them constantly, and
+every one rendered in the UA's `monospace` at full size — a different typeface
+from every other mono thing on the page, one size too big, mid-sentence.
+
+**Every inline node is keyed on its offset in the WHOLE answer.** It used to be
+the offset within whatever substring the recursion was looking at, and the tail
+restarts at zero, so siblings collided: React logged *"two children with the same
+key"* on essentially every answer and warned they "may be duplicated and/or
+omitted". An absolute offset is unique by construction and stable across the
+re-render each SSE frame causes, so a streaming answer reconciles instead of
+remounting text somebody is part-way through reading.
+
 **A ticket key is a link to its record, and never to a vendor.** `Answer.tsx`
-holds the rule: a key in an agent's answer links to `#/record/jira/<key>`, which
+holds the rule: a key in an agent's answer links to `/record/jira/<key>`, which
 is ours and carries the join, not Atlassian's. Sending somebody to Jira sends
 them where they would have gone without this.
 
@@ -2293,8 +2513,8 @@ just makes a gesture feel broken.
 And one about reading rather than mechanics: **an unused margin has to look
 deliberate.** A single column jammed against the left edge with a third of the
 screen empty beside it reads as a layout that broke; centred at a capped measure,
-it reads as room to breathe. `app.css` keeps one reading width across every
-screen for that reason.
+it reads as room to breathe. The `ch` measures in `app.css` and its component
+files keep one reading width across every screen for that reason.
 
 ---
 

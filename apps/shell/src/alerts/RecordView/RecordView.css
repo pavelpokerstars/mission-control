@@ -1,0 +1,50 @@
+/*
+ * RecordView — its own stylesheet.
+ *
+ * The pair to `RecordView.tsx`, imported by it. These 11 rules are scoped to a
+ * class that no other component renders, so nothing else can be changed by
+ * editing them and nothing else needs reading to understand them.
+ *
+ * A rule that a SECOND component starts rendering moves to `shared.css` — two
+ * files claiming one selector is the one thing the split can break silently,
+ * because which of them wins is then the order the module graph happens to
+ * import them in.
+ *
+ * EVERY RULE HERE IS `docs/design-preview.html`'s, verbatim. The preview is the
+ * design and it wins where the two disagree, so a change belongs there first
+ * and is copied here second — the split changed which FILE a rule lives in and
+ * nothing about the rule. `scripts/verify-design.mts` concatenates every
+ * stylesheet under `apps/shell/src/` and asserts both directions: no selector
+ * appears that the preview does not have, and none of the preview's has gone
+ * missing — a rule can now fall out of one of seventeen files and fail on a
+ * single screen with nothing erroring.
+ */
+
+/* ---------- 6 · record ---------- */
+.rec-head {
+    padding:16px var(--gutter); border-bottom:1px solid var(--line); display:flex;
+    gap:12px; align-items:center; flex-wrap:wrap; background:var(--sunk);
+  }
+.rec-head .src {
+    display:inline-flex; align-items:center; gap:7px; font-family:var(--mono);
+    font-size:11px; color:var(--ink-2); letter-spacing:.04em;
+  }
+.rec-head .why { font-family:var(--mono); font-size:10.5px; color:var(--ink-3); }
+.transcript { padding:22px var(--gutter) 28px; display:grid; gap:2px; }
+.line { display:grid; grid-template-columns:74px minmax(0,1fr); gap:0 16px; padding:8px 12px; border-radius:6px; margin:0 -12px; }
+.line time { font-family:var(--mono); font-size:11px; color:var(--ink-3); padding-top:3px; }
+.line .said b { font-weight:600; margin-right:8px; }
+.line .said span { color:var(--ink-2); }
+.line.hit { background:var(--warn-bg); }
+.line.hit .said span { color:var(--ink); font-weight:500; }
+.line.hit::after {
+    /* The caption comes from the ELEMENT, not from this rule.
+     *
+     * The preview hard-codes "cited by the Kafka alert" here, which is right for
+     * a mockup with one example and wrong for an app: every record opened from
+     * a different alert claimed to be cited by the same one. `content` reads a
+     * data attribute the view sets, so the sentence is a fact about the page
+     * rather than a fact about the stylesheet. */
+    content:attr(data-cited-by); grid-column:2; font-family:var(--mono);
+    font-size:9.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--warn); margin-top:6px;
+  }

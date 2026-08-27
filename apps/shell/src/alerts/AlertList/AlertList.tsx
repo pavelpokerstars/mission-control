@@ -12,9 +12,11 @@
 
 import type { JSX } from 'react';
 import type { Finding, FindingKind, FindingSeverity } from '@mc/domain';
-import { dotClass, explain, useFindings } from './api';
-import { AppWindow, type Counts } from './Chrome';
-import { go, hrefFor, type Route } from './router';
+import { dotClass, explain, useFindings } from '../api';
+import { AppWindow, type Counts } from '../Chrome/Chrome';
+import { go, hrefFor, type Route } from '../router';
+
+import './AlertList.css';
 
 /**
  * The alert type, in the words a person would use.

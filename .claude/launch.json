@@ -4,14 +4,33 @@
     {
       "name": "mission-control",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev:shell"],
+      "runtimeArgs": [
+        "run",
+        "dev:shell"
+      ],
       "port": 4200
     },
     {
       "name": "mission-control-gateway",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev:gateway"],
+      "runtimeArgs": [
+        "run",
+        "dev:gateway"
+      ],
       "port": 8787
+    },
+    {
+      "name": "mission-control-built",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "vite",
+        "preview",
+        "--config",
+        "apps/shell/vite.config.mts",
+        "--port",
+        "4300"
+      ],
+      "port": 4300
     }
   ]
 }

@@ -12,9 +12,11 @@
  */
 
 import type { JSX } from 'react';
-import { explain, dotClass, useJson } from './api';
-import { AppWindow, type Counts } from './Chrome';
-import type { Route } from './router';
+import { explain, dotClass, useJson } from '../api';
+import { AppWindow, type Counts } from '../Chrome/Chrome';
+import type { Route } from '../router';
+
+import './Sources.css';
 
 interface SourcesReport {
   stats: { records: number; things: number; connections: number };

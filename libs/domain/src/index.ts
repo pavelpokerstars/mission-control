@@ -3127,7 +3127,26 @@ export interface ContextEnvelope {
    * this field. A finding is not a `WorkItemKey` — the flagship one is about
    * the *absence* of one — so it cannot ride in `focusedKey`.
    */
-  finding?: { id: string; kind: string; claim: string };
+  /**
+   * `impact` rides along because for some kinds it IS the answer's shape.
+   *
+   * A `cycle` finding's impact is the ordered walk —
+   * `in a dependency cycle — A → B → C → D → A` (`work.ts`, copied verbatim by
+   * `findings.ts`) — and without it the agent is told "4 tickets are waiting on
+   * each other" and not *which four* or *in what order*. It could go and find
+   * out with a tool call, and against a prompt that says "be concise, lead with
+   * the answer" it mostly does not. So the one rule the chat has about shapes —
+   * draw it, do not describe it — was asking the model to draw something it had
+   * never been shown.
+   *
+   * The browser fills it, not the gateway. `AskInline` was handed this exact
+   * `Finding` by `GET /api/findings/:id`, so there is no second source for it to
+   * disagree with — unlike `findings` below, where the gateway is the authority
+   * because the list is the gateway's. Filling it server-side would mean a
+   * findings pass on every alert-scoped turn, which the `if (!env.finding)`
+   * guard there exists to skip.
+   */
+  finding?: { id: string; kind: string; claim: string; impact?: string };
   /**
    * The front door, when the conversation is NOT about one alert.
    *
@@ -3208,6 +3227,12 @@ export function renderContext(env: ContextEnvelope): string {
   if (env.finding) {
     lines.push(
       `the alert being discussed: ${env.finding.claim} (${env.finding.kind})`,
+      // The detector's own sentence about why this matters — and for a cycle it
+      // carries the ordered walk, which is the shape the answer is supposed to
+      // draw. Printed under the claim rather than beside it because it
+      // elaborates on the claim; a reader of this prompt should meet them in
+      // that order.
+      ...(env.finding.impact ? [`why it matters: ${env.finding.impact}`] : []),
       'The question is about that alert unless it plainly is not. Do not ask which one.',
     );
   }

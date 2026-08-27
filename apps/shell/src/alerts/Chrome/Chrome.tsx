@@ -7,14 +7,34 @@
  */
 
 import type { JSX, ReactNode } from 'react';
-import { go, hrefFor, type Route } from './router';
+import { go, hrefFor, type Route } from '../router';
 
+import './Chrome.css';
+
+/**
+ * The six the app actually reads, and GitHub was missing from all of it.
+ *
+ * Not just from this strip: there was no `--s-github` token and no `.github`
+ * rule anywhere, so `dotClass('github')` produced a class matching nothing and
+ * every GitHub dot rendered transparent. Both render sites are on Sources — the
+ * connector row, which lists it with its pull-request count, and the
+ * "pull requests join to no ticket" failure row. NOT an evidence row: `github`
+ * is deliberately not in `Owner`, so a citation cannot carry it and
+ * `readRecord` has no branch to open a PR. The token is GitHub's own merged-PR
+ * purple, the one hue the five existing surfaces leave open.
+ *
+ * `CLAUDE.md` counts FIVE COLLECTORS — Jira, Zoom, Confluence, Slack, GitHub —
+ * and Miro is the sixth surface rather than the fifth collector: it is the one
+ * read live rather than out of `MC_GRAPH_DIR`. Six dots, and the two counts are
+ * different things.
+ */
 const SOURCES = [
   { key: 'jira', label: 'Jira' },
   { key: 'slack', label: 'Slack' },
   { key: 'zoom', label: 'Zoom' },
   { key: 'conf', label: 'Confluence' },
   { key: 'miro', label: 'Miro' },
+  { key: 'github', label: 'GitHub' },
 ];
 
 /**

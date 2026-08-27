@@ -1,0 +1,105 @@
+/*
+ * Thread — its own stylesheet.
+ *
+ * The pair to `Thread.tsx`, imported by it. These 22 rules are scoped to a
+ * class that no other component renders, so nothing else can be changed by
+ * editing them and nothing else needs reading to understand them.
+ *
+ * A rule that a SECOND component starts rendering moves to `shared.css` — two
+ * files claiming one selector is the one thing the split can break silently,
+ * because which of them wins is then the order the module graph happens to
+ * import them in.
+ *
+ * EVERY RULE HERE IS `docs/design-preview.html`'s, verbatim. The preview is the
+ * design and it wins where the two disagree, so a change belongs there first
+ * and is copied here second — the split changed which FILE a rule lives in and
+ * nothing about the rule. `scripts/verify-design.mts` concatenates every
+ * stylesheet under `apps/shell/src/` and asserts both directions: no selector
+ * appears that the preview does not have, and none of the preview's has gone
+ * missing — a rule can now fall out of one of seventeen files and fail on a
+ * single screen with nothing erroring.
+ */
+
+.sugg { display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; }
+.sugg button {
+    background:transparent; border:1px solid var(--line-2); border-radius:99px;
+    padding:6px 13px; font-size:.85rem; color:var(--ink-2);
+  }
+.sugg button:hover { border-color:var(--ink-3); color:var(--ink); }
+.turn { display:grid; grid-template-columns:30px minmax(0,1fr); gap:0 13px; }
+/* The reader's own turn runs the other way: a body that hugs the right edge,
+   with the badge to the right of it.
+
+   THE TEMPLATE IS SWAPPED, NOT THE DIRECTION. `direction:rtl` gets the two
+   columns the right way round and reorders the bidi run with them, so
+   "why is PAY-9031 stuck?" renders its question mark at the left end and a
+   ticket key inside a reordered run. It swaps the layout and breaks the prose.
+
+   BOTH children need an explicit `grid-row:1`. Placing only the badge leaves
+   auto-placement to put the body on row 2, and the turn silently doubles in
+   height instead of moving.
+
+   `justify-self:end` is what makes a short message hug the right rather than
+   stretch: a grid item placed that way sizes to its content, clamped by the
+   track — so `minmax(0,1fr)` still does its job on a long one and the box can
+   never overflow the column. */
+.turn.you { grid-template-columns:minmax(0,1fr) 30px; }
+.turn .badge {
+  width:30px; height:30px; border-radius:7px; display:grid; place-items:center;
+  font-family:var(--mono); font-size:10px; font-weight:600;
+}
+.turn.you .badge { grid-column:2; grid-row:1; background:var(--sunk); color:var(--ink-2); }
+.turn.mc  .badge { background:var(--btn); color:var(--btn-ink); }
+/* `overflow-wrap` because a chat is where a URL gets pasted. Without it a long
+   unbreakable token sets the box's content minimum, and a capped box cannot
+   hold it: the text runs out through a drawn border, over the badge and off
+   the page. It belongs on `.turn .body` rather than on the reader's own turn,
+   because the agent's answers quote branch names and paths too. */
+.turn .body { padding-top:4px; overflow-wrap:anywhere; }
+/* A link in an answer is a citation like any other, and without this it is
+   the one UA-blue thing in the interface. A ticket key already reads as a key;
+   the underline is what says it opens. */
+.turn .body a { color:inherit; text-decoration:underline; text-decoration-color:var(--line-2); }
+.turn .body a:hover { text-decoration-color:var(--ink-3); }
+/* The box is the composer's — the same hairline, the same radius, the same
+   `--app` fill — because the thing to say about a sent message is that it is
+   what you typed into that box.
+
+   THE FILL IS NOT OPTIONAL, and a bare outline is the tempting version. The
+   citation pill and the inline chain are both `--sunk`, and the inline thread
+   on an alert sits inside `.ask`, which is `--sunk` as well: an unfilled box
+   there puts a `--sunk` pill on a `--sunk` ground and the citation disappears.
+   `--app` gives everything inside it the ground it was drawn against.
+
+   NEVER `text-align:right`. The BLOCK is right-aligned; the text inside it is
+   not. Right-aligned text ragged-lefts every wrapped message, and it hangs the
+   list markers `padding-left:18px` puts on the left out into the margin. */
+.turn.you .body {
+  grid-column:1; grid-row:1; justify-self:end; max-width:min(46ch,100%);
+  font-weight:600; background:var(--app); border:1px solid var(--line-2);
+  border-radius:9px; padding:10px 14px;
+}
+/* A message that renders to nothing — a lone fence marker is the reachable
+   case — used to be invisible. With a box it is a 30px empty control, which
+   reads as broken rather than as nothing to show. Not on `.turn.mc`: an
+   agent's body is empty on purpose while the chunks are still arriving. */
+.turn.you .body:empty { display:none; }
+.turn .body p { margin:0 0 10px; }
+.turn .body p:last-child { margin:0; }
+/* An agent quotes field names and ids in backticks constantly. Without this
+   the span falls to the UA's `monospace` at full size — a different typeface
+   from every other mono thing on the page, one size too big, mid-sentence. */
+.turn .body code { font-family:var(--mono); font-size:.85em; }
+.turn .body .cited {
+    display:inline-flex; align-items:center; gap:5px; font-family:var(--mono);
+    font-size:10px; color:var(--ink-3); background:var(--sunk);
+    padding:2px 7px; border-radius:99px; white-space:nowrap; margin:0 2px;
+  }
+.turn .body ul { margin:6px 0 10px; padding-left:18px; }
+.turn .body li { margin-bottom:6px; font-size:.96rem; }
+.turn .followups { display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; }
+.turn .followups button {
+    background:var(--btn); color:var(--btn-ink); border:0; border-radius:6px;
+    padding:8px 14px; font-size:.86rem; font-weight:600;
+  }
+.turn .followups button.sec { background:transparent; color:var(--ink); border:1px solid var(--line-2); }
