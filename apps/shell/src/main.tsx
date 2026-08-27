@@ -54,6 +54,8 @@ import AlertApp from './alerts/AlertApp/AlertApp';
 
 function Root(): JSX.Element {
   const [session, setSession] = useState<JudgeSession | null>(() => validSession());
+  const [guideResetToken, setGuideResetToken] = useState(0);
+  const [guideVisible, setGuideVisible] = useState(true);
 
   if (!session) {
     return (
@@ -70,8 +72,17 @@ function Root(): JSX.Element {
       <SessionBadge
         session={session}
         onExpire={() => setSession(null)}
+        onShowGuide={() => {
+          setGuideVisible(true);
+          setGuideResetToken((value) => value + 1);
+        }}
+        guideVisible={guideVisible}
       />
-      <AlertApp />
+      <AlertApp
+        guideSessionId={session.id}
+        guideResetToken={guideResetToken}
+        onGuideVisibilityChange={setGuideVisible}
+      />
     </>
   );
 }

@@ -32,7 +32,15 @@ import { Guide } from '../../Guide';
 
 import './AlertApp.css';
 
-export default function AlertApp(): JSX.Element {
+export default function AlertApp({
+  guideSessionId,
+  guideResetToken,
+  onGuideVisibilityChange,
+}: {
+  guideSessionId: string;
+  guideResetToken: number;
+  onGuideVisibilityChange: (visible: boolean) => void;
+}): JSX.Element {
   const route = useRoute();
 
   /**
@@ -96,7 +104,11 @@ export default function AlertApp(): JSX.Element {
 
   return (
     <div className="app-shell">
-      <Guide />
+      <Guide
+        sessionId={guideSessionId}
+        resetToken={guideResetToken}
+        onVisibilityChange={onGuideVisibilityChange}
+      />
       {route.name === 'alerts' && <AlertList route={route} counts={counts} />}
       {route.name === 'alert' && (
         <AlertPage id={route.id} route={route} counts={counts} onActed={() => refresh.current()} />

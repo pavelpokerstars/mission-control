@@ -78,8 +78,8 @@ Changes that improve comprehension, provenance, AI grounding, or reliability for
 - [ ] Replace `localStorage` with `sessionStorage` for the judge identity/timer, or change the copy if cross-tab persistence is intentional.
 - [ ] Stop claiming the session is private unless gateway data is genuinely namespaced by session.
 - [ ] On expiry, return to the start, clear the demo guide state, clear demo conversations, and reset the route.
-- [ ] Rename `Got it` to `Hide guide`.
-- [ ] Add a persistent `Show guide` affordance.
+- [x] Rename `Got it` to `Hide guide`.
+- [x] Scope dismissal to the current judge session and add a persistent `Show guide` affordance beside the timer.
 - [ ] Track completed actions rather than deriving step number solely from the current route.
 - [ ] Make actions non-mutating/simulated for the shared public demo, or namespace mutations and conversations with a signed session token.
 

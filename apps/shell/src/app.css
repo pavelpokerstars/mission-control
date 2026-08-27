@@ -351,6 +351,17 @@ button.card:hover { border-color:var(--ink-3); }
 }
 .session-badge.warn .sb-clock { color: var(--warn); background: var(--warn-bg); }
 .session-badge.near .sb-clock { color: var(--crit); background: var(--crit-bg); }
+.session-badge .sb-guide {
+  border: 0;
+  padding: 0;
+  background: none;
+  color: var(--ink-2);
+  font: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.session-badge .sb-guide:hover { color: var(--ink); }
 
 /* ---------- Source-mimic styling (visualise the tool behind each surface) ----------
  * Each surface card gets a thin left rail in its source colour and a small

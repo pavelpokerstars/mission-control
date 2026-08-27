@@ -66,9 +66,13 @@ export function GateScreen({ onEnter }: { onEnter: (name: string) => void }): JS
 export function SessionBadge({
   session,
   onExpire,
+  onShowGuide,
+  guideVisible,
 }: {
   session: JudgeSession;
   onExpire: () => void;
+  onShowGuide: () => void;
+  guideVisible: boolean;
 }): JSX.Element {
   const [left, setLeft] = useState(remainingMs(session));
 
@@ -95,6 +99,11 @@ export function SessionBadge({
     <div className={`session-badge ${near}`} title="Your 20-minute judge session">
       <span className="sb-name">{session.name}</span>
       <span className="sb-clock">{clock}</span>
+      {!guideVisible && (
+        <button type="button" className="sb-guide" onClick={onShowGuide}>
+          Show guide
+        </button>
+      )}
     </div>
   );
 }

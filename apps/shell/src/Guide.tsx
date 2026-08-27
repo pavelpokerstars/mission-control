@@ -16,7 +16,7 @@
  * judge is never told something false about where they are.
  */
 
-import { useState, type JSX } from 'react';
+import { useEffect, useState, type JSX } from 'react';
 import { useRoute } from './alerts/router';
 
 const DISMISS_KEY = 'mc-judge-guide-dismissed';
@@ -50,15 +50,37 @@ const STEPS: Step[] = [
   },
 ];
 
-export function Guide(): JSX.Element | null {
+export function Guide({
+  sessionId,
+  resetToken,
+  onVisibilityChange,
+}: {
+  sessionId: string;
+  resetToken: number;
+  onVisibilityChange: (visible: boolean) => void;
+}): JSX.Element | null {
   const route = useRoute();
   const [dismissed, setDismissed] = useState<boolean>(() => {
     try {
-      return localStorage.getItem(DISMISS_KEY) === '1';
+      return localStorage.getItem(DISMISS_KEY) === sessionId;
     } catch {
       return false;
     }
   });
+
+  useEffect(() => {
+    if (resetToken === 0) return;
+    setDismissed(false);
+    try {
+      localStorage.removeItem(DISMISS_KEY);
+    } catch {
+      /* ignore */
+    }
+  }, [resetToken]);
+
+  useEffect(() => {
+    onVisibilityChange(!dismissed);
+  }, [dismissed, onVisibilityChange]);
 
   if (dismissed) return null;
 
@@ -75,14 +97,14 @@ export function Guide(): JSX.Element | null {
         onClick={() => {
           setDismissed(true);
           try {
-            localStorage.setItem(DISMISS_KEY, '1');
+            localStorage.setItem(DISMISS_KEY, sessionId);
           } catch {
             /* ignore */
           }
         }}
         aria-label="Dismiss guidance"
       >
-        Got it
+        Hide guide
       </button>
     </div>
   );
