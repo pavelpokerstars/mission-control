@@ -5,7 +5,7 @@
 **Demo branch:** `judge-demo`
 **Main baseline merged locally:** `origin/main` at `4a4ed31`
 **Local merge commit:** `aba5371`
-**Deployed application commit:** `7fc75ff`
+**Deployed application commit:** `dc64af5`
 **Live site:** https://mc-judge-demo-production.up.railway.app/
 **Detailed experience review:** `JUDGE_JOURNEY_REVIEW.md`
 
@@ -248,6 +248,7 @@ Additional guide changes:
 | 27 Aug 2026 | Legacy hash deep link after `main` merge | Failed; `/#/record/...` falls back to the alert list and needs redirect/update |
 | 27 Aug 2026 | Persistent Railway demo storage | Pass; deployment `c726fb3b-c0cb-4ff5-9cef-8153f4b1d616` read graph data and vault state from `/data` |
 | 27 Aug 2026 | Fixture-free deployment verification | Pass; deployment `ada03324-d6e8-4708-8ee6-cab7204b6db2` omitted fixture directories from the upload and started against `/data/fixtures` and `/data/vault` |
+| 27 Aug 2026 | Judge guide recovery | Pass; deployment `63abbaa3-77f3-450a-9c30-13a56012953e` showed the banner despite the legacy dismissal value, then passed hide and reopen checks |
 
 # Decisions recorded
 
