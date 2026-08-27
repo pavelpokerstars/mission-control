@@ -1,74 +1,75 @@
-# Judge Journey Review & Feedback
+# Judge journey review
 
-**Product:** Mission Control — an AI intelligence layer that reads across Slack, Jira,
-Confluence, Miro and Zoom, finds where they disagree, and surfaces it before
-stand-up.
-**Demo goal:** a judge, in ~3 minutes, should feel *"this is what it's like when my
-tools finally talk to each other."*
+**Reviewed:** 27 August 2026, after merging current `main` locally and testing the live Railway deployment.
+**Detailed work plan:** `JUDGE_DEMO_PLAN.md`
 
----
+## Verdict
 
-## 1. What the journey does well
+The product idea is strong and the flagship missing-ticket alert is credible, but the self-guided demo is not ready yet. A judge can see useful evidence, but the experience does not consistently explain how the alert arrived, how Mission Control derived it, or where to go next. The guide is exposing gaps in the app journey rather than causing them.
 
-- **The problem framing is strong.** "Five sources of truth" is a felt pain for
-  every engineering leader. The opening (Slack → Jira → Confluence → Miro → back
-  to Slack) is the single most relatable 25 seconds in the script. Keep it, slow
-  it down, let it breathe.
-- **The "it comes to you" beat is the product's soul.** Mission Control posting
-  into Slack rather than being another dashboard is the differentiator. The
-  morning-check-in example (3 items, conflict / missing follow-up / dependency)
-  is concrete and believable.
-- **Investigate → Ask is the right two-act structure.** Seeing *why* an alert
-  fired (the sources behind it) before asking the assistant is exactly the
-  "not a black box" promise, and it's the part judges will remember.
-- **The value section lands the personas** (Scrum Master, Product Owner,
-  developer). That's who judges often are.
+## What is working
 
-## 2. Gaps and risks for a live judge
+1. The alert list is an effective Mission Control home: concise, urgent, and visually confident.
+2. The judge banner colours are distinctive and should remain.
+3. The missing-ticket example makes the cross-tool problem tangible: a spoken Zoom commitment, a Miro action, and an absence in Jira.
+4. Opening a citation at the relevant transcript line is the right provenance pattern.
+5. Inline `Ask about this` is the right conclusion to the investigation because the question should inherit the alert's context.
 
-1. **Latency is the make-or-break risk.** The script implies instant answers.
-   With a *free* OpenRouter model the first token can take 3–8s. Mitigations we
-   built in: the chat shows "Reading across every connected source… this takes a
-   moment." Keep that copy — judging a slow answer is fine; a silent spinner
-   reads as broken.
-2. **The "Open Mission Control" hand-off must be one click.** If the judge has
-   to find the app, the morning-notification → investigation beat collapses. We
-   added a subtle 4-step guide strip that points at the next action on each
-   screen, so a judge who has never seen the product still flows through it.
-3. **Visual source-mimic helps judges "get it" fast.** We added thin per-surface
-   colour rails (Slack aubergine, Jira blue, Confluence green, Miro amber) and a
-   small source chip on evidence rows, so the judge immediately sees *which tool*
-   each claim came from — that's the whole thesis made visible.
-4. **The "story" needs a named conflict.** The flagship alert (Slack says one
-   thing, Jira says another) is the demo. Make sure it loads first and reads as
-   a real disagreement, not a synthetic label. The fixtures already do this.
-5. **Don't over-promise the assistant.** A free model reasons over the *joined
-   context* we hand it (findings + vault recall), not live tool calls. It will
-   answer "what's the issue and what to clarify at stand-up?" credibly. It will
-   *not* click through Jira. The script's questions stay within that envelope —
-   good. Avoid ad-libbing "show me the ticket" live.
+## What is confusing and why
 
-## 3. Suggested tightening (3-minute cut)
+### Entry
 
-- **0:00–0:25** problem — keep, maybe add a literal "5 tabs open" frame.
-- **0:25–0:45** intro — cut the abstract "missing follow-ups / dependencies /
-  stale decisions" list to one line each; the example carries it.
-- **0:45–1:05** morning Slack notification — this is the hero shot; hold it.
-- **1:05–1:45** investigate — show the *sources* panel, not just the alert.
-- **1:45–2:15** ask — type the exact suggested question; don't free-form.
-- **2:15–2:40** value — keep the persona trio, drop the slow sequence animation.
-- **2:40–3:05** close — end on the logo + "Stop searching. Start knowing."
+After entering a name, the judge lands directly in an unfamiliar dashboard. There is no short explanation of the work problem or the hand-off from Slack/another notification channel into Mission Control. Styling the alert list as Slack would blur product boundaries; a simulated Slack notification before the dashboard is the clearer solution.
 
-## 4. Judge-experience verdict
+### Alert detail
 
-With the judge gate (unique 20-min name-based session, unlimited concurrency),
-the source-mimic styling, the guided 4-step strip, and the OpenRouter-backed
-assistant, a judge can go **name → morning check-in → open conflict → see
-sources → ask Mission Control** with no instruction from you and no waiting on
-infrastructure. That's the bar, and it's met.
+The page has the right raw material but its labels are implementation-shaped:
 
-**One honest caveat:** the assistant is a free model over pre-joined context, so
-its answers are good but not Claude-Opus-deep. For a 3-minute impression that's
-the right trade (zero cost, zero card, always up). If a judge probes hard, steer
-back to "it surfaces the conflict and shows you the sources" — which is the real
-product and which always works.
+- `What PAY Sprint 12 said would happen` sounds as though the sprint itself spoke. `Sprint 12 commitments` is clearer.
+- `Why we think this was promised` weakens confidence. `Evidence for this commitment` says what the section contains.
+- `The note it was recorded in` does not explain that this is Mission Control's internal saved synthesis, distinct from primary Zoom/Miro evidence.
+- `back to the list` omits which list. Use `Back to all alerts`.
+
+The derivation should be explicit: sprint closed; Zoom and Miro contain a dated owned commitment; Jira is the expected action system; no matching issue exists; therefore Mission Control raised a missing-ticket alert.
+
+### Guidance
+
+The four numbered steps are mapped to routes, not completed actions. Clicking the evidence link on step 2 opens a record route that is labelled step 4. The nominal step 3 is the connector coverage screen, which is not on the investigation path. The record screen then tells the judge to Ask even though it has no composer. This is why users become stuck.
+
+The guide should follow actions and the natural path: alert list → alert → cited record → back to alert → inline Ask. It should be hideable and reopenable. `Got it` currently means “dismiss forever,” not “I completed this step.”
+
+### Source record
+
+It is correct that the Zoom record appears inside Mission Control: the product is showing connected evidence, not impersonating Zoom. It needs stronger labelling as a source record and clearer separation between timestamp, speaker, and quote. `Back to this alert` should be the dominant next action.
+
+### Session
+
+The UI claims a private, tab-held 20-minute session. The implementation stores the timer in `localStorage`, so it is shared across tabs, and the generated ID is not used to isolate gateway data. Conversations, Later notes, and actions can therefore be shared. Either implement session namespacing or describe it honestly as a timed demo pass and keep demo mutations simulated.
+
+## AI assessment
+
+There are two separate changes:
+
+1. **Demo infrastructure:** Use OpenRouter's `openrouter/free` route and send `reasoning: { exclude: true }` in the request. This keeps the judge deployment free-only and resilient to individual free models disappearing.
+2. **Core Mission Control:** Enrich every alert-scoped question server-side with the alert's full evidence bundle before choosing a provider. At present OpenRouter sees the claim and general recalled context, but not necessarily the Zoom quote, Miro action, checklist, and Jira absence displayed on the page. This change benefits all providers and belongs in `main`.
+
+The corrected Railway key is valid. After changing Railway to `openrouter/free`, the live transport produced a response. That test was not an answer-quality pass: the currently deployed code exposed the model's long thinking trace and the model reached for unrelated vault memories because it lacked the alert evidence bundle. The local reasoning-exclusion change addresses the first problem; the provider-agnostic context work addresses the second.
+
+## Later and Ask
+
+`Later` is valuable when a user accepts that an alert matters but cannot act immediately. `Not now` should visibly park it there and explain when/how it will resurface. It is worth an optional short demo branch, not a mandatory hero step.
+
+Global `Ask` is for programme-wide questions when the user is not already inside an alert. It is a legitimate destination, but the main demo should use inline alert-scoped Ask because that better demonstrates automatic context and provenance. After the guided story completes, both can be offered as optional exploration.
+
+## Recommended three-minute flow
+
+1. Enter name.
+2. Read a two-sentence problem pitch.
+3. See a clearly simulated Slack notification and choose `Open Mission Control`.
+4. Open the top missing-ticket alert.
+5. Read the explicit derivation and open the Zoom citation.
+6. Return via `Back to this alert`.
+7. Ask: “What is the issue here, and what should we clarify at stand-up?”
+8. End the guided story; optionally explore Later or global Ask.
+
+The plan should not declare the demo ready until that flow succeeds from a clean session on the live deployment without verbal rescue.

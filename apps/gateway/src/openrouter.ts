@@ -17,14 +17,17 @@
  * flakiness stalling the demo mid-answer.
  *
  * Select it with `MC_MODE=openrouter`. `OPENROUTER_MODEL` overrides the model
- * (default a free one); `OPENROUTER_API_KEY` is read at runtime from the
- * environment (set as a shared Railway variable).
+ * (default OpenRouter's rotating free-model pool); `OPENROUTER_API_KEY` is read
+ * at runtime from the environment (set as a shared Railway variable).
  */
 
 import { renderContext, type ChatThread, type ContextEnvelope } from '@mc/domain';
 import type { Agent, ProviderConfig } from './agent.js';
 
-export const OPENROUTER_MODEL = process.env.OPENROUTER_MODEL ?? 'meta-llama/llama-3.3-8b-instruct:free';
+// A pinned `:free` model can disappear from the pool without notice. The free
+// router selects an available free endpoint and never falls through to paid
+// models (unlike `openrouter/auto`). This is the same route Clive uses.
+export const OPENROUTER_MODEL = process.env.OPENROUTER_MODEL ?? 'openrouter/free';
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
 function apiKey(): string | undefined {
@@ -73,6 +76,10 @@ export async function createOpenRouterAgent(cfg: ProviderConfig): Promise<Agent>
         // Free models are small; keep the answer bounded and snappy for a demo.
         max_tokens: 800,
         temperature: 0.3,
+        // Some free routes expose reasoning tokens. Ask OpenRouter to exclude
+        // them from the response; the setting belongs in the request body, not
+        // in OPENROUTER_MODEL.
+        reasoning: { exclude: true },
       };
 
       const res = await fetch(OPENROUTER_URL, {
@@ -179,6 +186,7 @@ export async function askOpenRouterStructured(req: {
       ],
       max_tokens: 1500,
       temperature: 0.2,
+      reasoning: { exclude: true },
     }),
   });
 
