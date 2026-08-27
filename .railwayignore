@@ -1,0 +1,33 @@
+# Railway uploads source and installs dependencies during its own build.
+.git/
+.railway/
+node_modules/
+**/node_modules/
+.nx/
+dist/
+apps/shell/dist/
+*.tsbuildinfo
+
+# Local secrets and machine-specific configuration never belong in an upload.
+.env
+.env.*
+.claude/
+.vscode/
+.idea/
+
+# Mission Control working state. Only committed synthetic fixtures are deployed.
+vault/
+vault-programme/
+live-raw/
+live-graph/
+live-vault/
+live-status-map.json
+demo-graph/
+demo-vault/
+.demo-map.json
+docs/HACKATHON.md
+
+# Editor and OS noise.
+.DS_Store
+Thumbs.db
+*.swp
