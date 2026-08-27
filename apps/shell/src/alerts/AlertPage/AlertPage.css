@@ -166,3 +166,10 @@
 }
 .page { display:grid; grid-template-columns: minmax(0,1fr) 360px; gap:32px; align-items:start; padding: 24px var(--gutter); max-width:1200px; }
 .ask-rail { position:sticky; top:24px; }
+
+.inline-create { font-family:inherit; font-size:.8rem; padding:4px 10px; border-radius:99px; border:1px solid var(--line-2); background:var(--sunk); color:var(--ink); cursor:pointer; white-space:nowrap; }
+.inline-create:hover { border-color:var(--ink-3); background:var(--line); }
+
+/* The synthetic final step for missing_ticket is always grey/italic
+ * to distinguish it from a cited source. */
+.derivation-timeline ol li:last-child { opacity: .85; }
