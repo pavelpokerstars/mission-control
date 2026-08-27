@@ -2,10 +2,8 @@
  * The gate screen and the persistent session badge.
  *
  * `GateScreen` shows only when there is no valid session. It asks for a name,
- * starts a 20-minute session, and the app renders immediately after — the
- * parent swaps it out on submit, so there is no second click and nothing to
- * "load into". (A judge who lands and types their name is in the product the
- * instant they hit enter.)
+ * starts a 20-minute session, and hands the judge to the short pitch before the
+ * simulated Slack notification opens Mission Control itself.
  *
  * `SessionBadge` is the subtle always-on reminder: who the session is for and
  * how long is left. On expiry it calls `onExpire`, which returns the parent to
@@ -36,8 +34,8 @@ export function GateScreen({ onEnter }: { onEnter: (name: string) => void }): JS
         <div className="gate-logo">Mission Control</div>
         <h1>Welcome, judge</h1>
         <p className="gate-sub">
-          You get a private 20-minute session to explore the demo. Enter your name to begin —
-          no account, no limit on how many judges join at once.
+          Enter your name to begin a 20-minute walkthrough. No account is required, and the
+          demo content is simulated and shared.
         </p>
         <label className="gate-label" htmlFor="judge-name">
           Your name
@@ -57,7 +55,7 @@ export function GateScreen({ onEnter }: { onEnter: (name: string) => void }): JS
         <button type="button" className="gate-btn" disabled={!name.trim()} onClick={submit}>
           Enter the demo
         </button>
-        <p className="gate-fine">Your session is temporary and held only in this browser tab.</p>
+        <p className="gate-fine">Your timer and walkthrough progress stay in this browser tab.</p>
       </div>
     </div>
   );

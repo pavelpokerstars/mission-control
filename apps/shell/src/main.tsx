@@ -1,7 +1,14 @@
 import { StrictMode, useState, type JSX } from 'react';
 import { createRoot } from 'react-dom/client';
 import { GateScreen, SessionBadge } from './JudgeGate';
-import { startSession, validSession, type JudgeSession } from './gate';
+import {
+  clearSession,
+  completeIntro,
+  introComplete,
+  startSession,
+  validSession,
+  type JudgeSession,
+} from './gate';
 
 /**
  * The two typefaces first, then the design system.
@@ -41,48 +48,80 @@ import { startSession, validSession, type JudgeSession } from './gate';
  * Every rule in all seventeen is `docs/design-preview.html`'s, copied verbatim.
  * A design change belongs in the preview first and here second.
  *
- * The judge gate wraps `AlertApp`: if there is no valid temporary session the
- * gate renders and the product does not; entering a name starts one and the
- * product mounts immediately. The session badge rides above the app while a
- * session is live.
+ * The judge shell wraps `AlertApp`: if there is no valid temporary session the
+ * gate renders; entering a name starts the pitch and simulated Slack hand-off;
+ * only their `Open Mission Control` action mounts the product. The session badge
+ * rides above every post-gate stage while the timer is live.
  */
 import './fonts.css';
 import './app.css';
 import './alerts/shared.css';
 
+import DemoIntro from './DemoIntro';
 import AlertApp from './alerts/AlertApp/AlertApp';
+import { useConversations } from './alerts/conversations';
 
 function Root(): JSX.Element {
   const [session, setSession] = useState<JudgeSession | null>(() => validSession());
+  const [introduced, setIntroduced] = useState<boolean>(() =>
+    session ? introComplete(session) : false,
+  );
   const [guideResetToken, setGuideResetToken] = useState(0);
   const [guideVisible, setGuideVisible] = useState(true);
+
+  const resetProductState = (): void => {
+    useConversations.getState().clearAll();
+    window.history.replaceState(null, '', '/');
+    setGuideResetToken(0);
+    setGuideVisible(true);
+  };
 
   if (!session) {
     return (
       <GateScreen
         onEnter={(name) => {
-          setSession(startSession(name));
+          const next = startSession(name);
+          resetProductState();
+          setIntroduced(false);
+          setSession(next);
         }}
       />
     );
   }
 
+  const finishIntroduction = (): void => {
+    completeIntro(session);
+    window.history.replaceState(null, '', '/');
+    setIntroduced(true);
+  };
+
+  const expireSession = (): void => {
+    clearSession();
+    resetProductState();
+    setIntroduced(false);
+    setSession(null);
+  };
+
   return (
     <>
       <SessionBadge
         session={session}
-        onExpire={() => setSession(null)}
+        onExpire={expireSession}
         onShowGuide={() => {
           setGuideVisible(true);
           setGuideResetToken((value) => value + 1);
         }}
-        guideVisible={guideVisible}
+        guideVisible={!introduced || guideVisible}
       />
-      <AlertApp
-        guideSessionId={session.id}
-        guideResetToken={guideResetToken}
-        onGuideVisibilityChange={setGuideVisible}
-      />
+      {introduced ? (
+        <AlertApp
+          guideSessionId={session.id}
+          guideResetToken={guideResetToken}
+          onGuideVisibilityChange={setGuideVisible}
+        />
+      ) : (
+        <DemoIntro judgeName={session.name} onComplete={finishIntroduction} />
+      )}
     </>
   );
 }

@@ -3,7 +3,7 @@
  * the 3-minute demo journey without ever becoming a modal wall.
  *
  * It reads the live route and shows the one next step that matches where the
- * judge is. Dismiss it and it stays gone for the session (localStorage), so a
+ * judge is. Dismiss it and it stays gone for the session (sessionStorage), so a
  * judge who knows the path can get it out of the way in one click — but one who
  * is seeing the product for the first time gets a pointer at each stage:
  *
@@ -62,7 +62,7 @@ export function Guide({
   const route = useRoute();
   const [dismissed, setDismissed] = useState<boolean>(() => {
     try {
-      return localStorage.getItem(DISMISS_KEY) === sessionId;
+      return sessionStorage.getItem(DISMISS_KEY) === sessionId;
     } catch {
       return false;
     }
@@ -72,7 +72,7 @@ export function Guide({
     if (resetToken === 0) return;
     setDismissed(false);
     try {
-      localStorage.removeItem(DISMISS_KEY);
+      sessionStorage.removeItem(DISMISS_KEY);
     } catch {
       /* ignore */
     }
@@ -97,7 +97,7 @@ export function Guide({
         onClick={() => {
           setDismissed(true);
           try {
-            localStorage.setItem(DISMISS_KEY, sessionId);
+            sessionStorage.setItem(DISMISS_KEY, sessionId);
           } catch {
             /* ignore */
           }

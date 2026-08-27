@@ -28,6 +28,7 @@ This is the shared progress record for the demo. It deliberately separates tempo
 6. `Later` and global `Ask` are useful Mission Control features, but neither should interrupt the primary three-minute demo story.
 7. Mock data is treated as an opaque deployment asset during assistant sessions. Inspect schemas, paths, and loading code only; do not read fixture contents unless a future task explicitly requires it.
 8. Railway auto-deploy is pending repository-owner action: Pavel must grant the Railway GitHub App access to the private repository; after its cache refresh, the existing service can be connected to `judge-demo` from Tom's Railway account.
+9. The new demo entry journey is implemented locally: name entry → Mission Control pitch → clearly simulated Slack morning alerts → Mission Control. Local desktop, refresh-persistence, and new-tab isolation checks pass; production deployment is pending.
 
 ## Scope rule
 
@@ -76,9 +77,9 @@ Changes that improve comprehension, provenance, AI grounding, or reliability for
 **Why:** The current `localStorage` timer is shared across tabs, the session ID is never sent to the gateway, and server-side conversations/actions are shared. After expiry, old route and guide state can survive. “Got it” permanently hides the guide and sounds like step completion when it is only dismissal.
 
 - [x] Fix the first-mount bug that immediately persisted guide dismissal (`e2d0c7e`); now live as part of `dc64af5`.
-- [ ] Replace `localStorage` with `sessionStorage` for the judge identity/timer, or change the copy if cross-tab persistence is intentional.
-- [ ] Stop claiming the session is private unless gateway data is genuinely namespaced by session.
-- [ ] On expiry, return to the start, clear the demo guide state, clear demo conversations, and reset the route.
+- [x] Replace `localStorage` with `sessionStorage` for the judge identity/timer so each tab starts independently.
+- [x] Stop claiming the session is private; the gate now says the timer/progress are tab-scoped while demo content is simulated and shared.
+- [~] On expiry, return to the start, clear the demo guide state, clear demo conversations, and reset the route. Implemented; the full 20-minute production wait remains to be rehearsed.
 - [x] Rename `Got it` to `Hide guide`.
 - [x] Scope dismissal to the current judge session and add a persistent `Show guide` affordance beside the timer.
 - [ ] Track completed actions rather than deriving step number solely from the current route.
@@ -90,16 +91,16 @@ Changes that improve comprehension, provenance, AI grounding, or reliability for
 
 **Why:** A new judge currently lands on an unexplained alert dashboard. The product direction says alerts arrive from the tools people already use; the demo needs to show that hand-off without pretending the Mission Control alert list is Slack.
 
-- [ ] Add a short screen immediately after name entry:
+- [x] Add a short screen immediately after name entry:
   - “Work gets promised in Zoom, Slack and Miro. Jira only knows what got filed.”
   - “Mission Control finds the gap, shows the evidence, and gives you somewhere to act.”
-- [ ] Include one clearly labelled simulated Slack notification:
+- [x] Include one clearly labelled simulated Slack notification:
   - “Mission Control — Five things need you.”
   - “One Sprint 12 commitment never became a Jira ticket.”
   - CTA: `Open Mission Control`.
-- [ ] Keep the existing judge banner gradient and visual tone.
-- [ ] Make it unambiguous that the alert list after the CTA is Mission Control, not a Slack replica.
-- [ ] Offer `Skip introduction` for repeat reviewers.
+- [x] Keep the existing judge banner gradient and visual tone.
+- [x] Make it unambiguous that the alert list after the CTA is Mission Control, not a Slack replica.
+- [x] Offer `Skip introduction` for repeat reviewers.
 
 **Acceptance:** Without narration, a first-time judge can state the problem, why the alert arrived, and which screen is Slack versus Mission Control.
 
@@ -107,9 +108,9 @@ Changes that improve comprehension, provenance, AI grounding, or reliability for
 
 **Why:** The present mapping is `alerts → alert → sources coverage → record`, but the natural evidence path is `alerts → alert → cited record → back to alert → inline Ask`. Clicking evidence currently skips from guide step 2 to guide step 4.
 
-1. [ ] Name entry.
-2. [ ] Problem pitch plus simulated Slack notification.
-3. [ ] Mission Control morning alert list.
+1. [x] Name entry.
+2. [x] Problem pitch plus simulated Slack notification.
+3. [x] Mission Control morning alert list.
 4. [ ] Flagship missing-ticket alert with a clear derivation.
 5. [ ] Exact Zoom or Miro source at the cited line.
 6. [ ] Explicit `Back to this alert` CTA.
@@ -251,6 +252,7 @@ Additional guide changes:
 | 27 Aug 2026 | Persistent Railway demo storage | Pass; deployment `c726fb3b-c0cb-4ff5-9cef-8153f4b1d616` read graph data and vault state from `/data` |
 | 27 Aug 2026 | Fixture-free deployment verification | Pass; deployment `ada03324-d6e8-4708-8ee6-cab7204b6db2` omitted fixture directories from the upload and started against `/data/fixtures` and `/data/vault` |
 | 27 Aug 2026 | Judge guide recovery | Pass; deployment `63abbaa3-77f3-450a-9c30-13a56012953e` showed the banner despite the legacy dismissal value, then passed hide and reopen checks |
+| 27 Aug 2026 | New judge entry journey (local) | Pass; name → pitch → simulated Slack alerts → Mission Control, refresh persistence, independent new tab, desktop layout, and 390px no-overflow checks |
 
 # Decisions recorded
 
