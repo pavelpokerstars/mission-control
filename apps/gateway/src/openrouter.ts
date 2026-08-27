@@ -28,10 +28,88 @@ import type { Agent, ProviderConfig } from './agent.js';
 // router selects an available free endpoint and never falls through to paid
 // models (unlike `openrouter/auto`). This is the same route Clive uses.
 export const OPENROUTER_MODEL = process.env.OPENROUTER_MODEL ?? 'openrouter/free';
-const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
+// Base URL override: rehearsal / offline testing point a stub here instead of
+// spending the shared key. Defaults to the real provider.
+const OPENROUTER_URL =
+  process.env.OPENROUTER_BASE_URL ?? 'https://openrouter.ai/api/v1/chat/completions';
 
 function apiKey(): string | undefined {
   return process.env.OPENROUTER_API_KEY || process.env.OPENROUTER_KEY || undefined;
+}
+
+/**
+ * Bounded 429 retry, ported from the toolbelt router (`C:\dev\toolbelt` —
+ * `src/toolbelt/llm_router.py` / `js/llm-router.mjs`). The free pool rate-limits
+ * under load, and a judge should see a short wait and a retry, not a raw
+ * provider error. Three attempts, exponential backoff capped at 30s, and never
+ * waiting longer than the 429 actually asked for.
+ */
+const ATTEMPTS_PER_PROVIDER = 3;
+const MAX_WAIT_MS = 120_000;
+
+function retryAfterMs(payload: unknown, headers: Headers): number {
+  const headerValue = Number.parseFloat(headers.get('retry-after') ?? '0');
+  if (headerValue > 0) return headerValue * 1000;
+  const message = (payload as { error?: { message?: string } } | undefined)?.error?.message ?? '';
+  const match = String(message).match(/try again in (?:(\d+)m)?(\d+(?:\.\d+)?)s/);
+  if (!match) return 0;
+  return (Number.parseInt(match[1] || '0', 10) * 60 + Number.parseFloat(match[2] || '0')) * 1000;
+}
+
+const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
+
+/**
+ * Short, judge-facing words instead of raw provider JSON. The gateway streams
+ * this straight into the chat, so it must read as a UI state, not a stack trace.
+ */
+function friendlyError(status: number): string {
+  if (status === 429) {
+    return 'Mission Control is asking the free AI pool too fast. Please wait a moment and try again.';
+  }
+  if (status === 401 || status === 403) {
+    return 'Mission Control cannot reach its AI provider (an access problem).';
+  }
+  if (status === 404) return 'The free model is temporarily unavailable. Please try again in a moment.';
+  if (status >= 500) return 'The AI provider is having trouble. Please try again in a moment.';
+  return `Mission Control could not get an answer (${status}).`;
+}
+
+/**
+ * POST to OpenRouter with bounded 429 retry. Non-429 responses are returned as
+ * they are, so each caller keeps its own error handling; only a 429 that
+ * outlives the backoff throws.
+ */
+async function postOpenRouter(body: unknown): Promise<Response> {
+  const key = apiKey();
+  if (!key) throw new Error('OPENROUTER_API_KEY is not set — cannot reach OpenRouter');
+
+  for (let attempt = 0; attempt < ATTEMPTS_PER_PROVIDER; attempt++) {
+    const res = await fetch(OPENROUTER_URL, {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${key}`,
+        'content-type': 'application/json',
+        'HTTP-Referer': 'https://mission-control.demo',
+        'X-Title': 'Mission Control Judge Demo',
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (res.status === 429) {
+      const payload = await res.json().catch(() => ({}));
+      const waitMs = retryAfterMs(payload, res.headers);
+      if (waitMs > MAX_WAIT_MS || attempt === ATTEMPTS_PER_PROVIDER - 1) {
+        console.warn('[openrouter] rate limited, giving up');
+        throw new Error(friendlyError(429));
+      }
+      await sleep(waitMs || Math.min(1000 * 2 ** attempt, 30_000));
+      continue;
+    }
+
+    return res;
+  }
+
+  throw new Error(friendlyError(0));
 }
 
 /** Turn the context envelope + thread into an OpenAI message array. */
@@ -82,20 +160,12 @@ export async function createOpenRouterAgent(cfg: ProviderConfig): Promise<Agent>
         reasoning: { exclude: true },
       };
 
-      const res = await fetch(OPENROUTER_URL, {
-        method: 'POST',
-        headers: {
-          authorization: `Bearer ${key}`,
-          'content-type': 'application/json',
-          'HTTP-Referer': 'https://mission-control.demo',
-          'X-Title': 'Mission Control Judge Demo',
-        },
-        body: JSON.stringify(body),
-      });
+      const res = await postOpenRouter(body);
 
       if (!res.ok || !res.body) {
         const detail = await res.text().catch(() => '');
-        throw new Error(`OpenRouter ${res.status}: ${detail.slice(0, 300)}`);
+        console.warn(`[openrouter] ${res.status}: ${detail.slice(0, 200)}`);
+        throw new Error(friendlyError(res.status));
       }
 
       // OpenAI SSE: lines `data: {json}` terminating in `data: [DONE]`.
@@ -164,15 +234,9 @@ export async function askOpenRouterStructured(req: {
   const key = apiKey();
   if (!key) return undefined;
 
-  const res = await fetch(OPENROUTER_URL, {
-    method: 'POST',
-    headers: {
-      authorization: `Bearer ${key}`,
-      'content-type': 'application/json',
-      'HTTP-Referer': 'https://mission-control.demo',
-      'X-Title': 'Mission Control Judge Demo',
-    },
-    body: JSON.stringify({
+  let res: Response;
+  try {
+    res = await postOpenRouter({
       model: OPENROUTER_MODEL,
       stream: false,
       response_format: { type: 'json_object' },
@@ -187,8 +251,11 @@ export async function askOpenRouterStructured(req: {
       max_tokens: 1500,
       temperature: 0.2,
       reasoning: { exclude: true },
-    }),
-  });
+    });
+  } catch {
+    // A 429 that outlived the backoff is a rate limit, not an answer to parse.
+    return undefined;
+  }
 
   if (!res.ok) {
     const detail = await res.text().catch(() => '');

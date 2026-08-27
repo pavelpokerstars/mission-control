@@ -76,6 +76,34 @@ const PORT = Number(process.env.PORT ?? 8787);
 const MODE = process.env.MC_MODE ?? 'mock';
 
 /**
+ * The judge demo runs with `MC_MODE=openrouter` and is a shared, public deploy.
+ * Answering an alert (dismiss / defer / primary / ask) writes to the shared
+ * vault and event log — one judge would alter the next judge's story. In demo
+ * mode those actions are simulated: the outcome is honest and short, and
+ * nothing is written. See JUDGE_DEMO_PLAN.md D2.
+ */
+const SIMULATE_ACTIONS = MODE === 'openrouter';
+
+/** A simulated action outcome — demo-only, no writes. */
+function simulatedOutcome(action: ActionInput['action']): { outcome: string } {
+  switch (action) {
+    case 'primary':
+      return {
+        outcome:
+          'In a shared demo nothing is written. In the real product this would create the ticket (or draft the question), and the alert would stop firing.',
+      };
+    case 'ask':
+      return { outcome: 'Drafted — simulated. Nothing has been sent or saved in this shared demo.' };
+    case 'defer':
+      return { outcome: 'Parked — simulated. Nothing was saved in this shared demo.' };
+    case 'dismiss':
+      return {
+        outcome: 'Dismissed — simulated. It will come back on the next visit, because this demo is shared.',
+      };
+  }
+}
+
+/**
  * THE INTERFACE THIS BINDS, AND THE DEFAULT IS THE HOSTING DECISION.
  *
  * `ROADMAP.md` D4: single-tenant, self-hosted, on one machine inside the
@@ -563,6 +591,9 @@ async function main(): Promise<void> {
       if (!['primary', 'ask', 'defer', 'dismiss'].includes(body?.action)) {
         return res.status(400).json({ error: 'action must be primary, ask, defer or dismiss' });
       }
+      // Demo: simulate, write nothing. One judge must not alter the next
+      // judge's shared story — see JUDGE_DEMO_PLAN.md D2.
+      if (SIMULATE_ACTIONS) return res.json(simulatedOutcome(body.action));
       res.json(await actOnFinding(detail.finding, body, vault, detail.note, applyProposal));
     } catch (err) {
       res.status(500).json({ error: String(err) });
@@ -815,7 +846,7 @@ async function main(): Promise<void> {
       }
       res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
     } catch (err) {
-      res.write(`data: ${JSON.stringify({ error: String(err) })}\n\n`);
+      res.write(`data: ${JSON.stringify({ error: err instanceof Error ? err.message : String(err) })}\n\n`);
     }
     res.end();
   });
