@@ -31,22 +31,62 @@ import './AlertPage.css';
  * commitment does not. The tick is `relatedKeys.length > 0` and nothing more —
  * no scoring, no inference — which is why it can be shown as fact.
  */
+/**
+ * Per-kind checklist heading.
+ *
+ * The shape is the same across kinds -- a list of items, each either
+ * tracked in Jira or not -- but the wording has to name what the list
+ * actually IS, which depends on the alert type. The container label
+ * ("PAY Sprint 12", "ORBIT 33") is reused so the heading still anchors
+ * to the meeting the commitments came out of.
+ *
+ * `tracked` and `total` are recomputed from `list` rather than read off
+ * the detail envelope, because the envelope's view of the count can drift
+ * from the visible rows (it once did, and the summary said `3 tracked`
+ * over a 5-row list).
+ */
+function checklistHeading(kind: FindingDetail['finding']['kind'], containerLabel: string | undefined, list: NonNullable<FindingDetail['checklist']>): string {
+  const tracked = list.filter((i) => i.tracked).length;
+  const total = list.length;
+  const where = containerLabel ?? 'the container';
+  if (kind === 'missing_ticket') {
+    return `${where} commitments · ${tracked} tracked in Jira · ${total - tracked} missing`;
+  }
+  if (kind === 'aging') {
+    return `${where} work · ${tracked} of ${total} still moving`;
+  }
+  return `${where} · ${tracked} of ${total} tracked`;
+}
+
 function Checklist({ detail }: { detail: FindingDetail }): JSX.Element | null {
   const list = detail.checklist;
   if (!list?.length) return null;
   return (
     <div className="block">
-      <h4>What {detail.container?.label ?? 'the sprint'} said would happen</h4>
+      <h4>{checklistHeading(detail.finding.kind, detail.container?.label, list)}</h4>
       <ul className="check">
-        {list.map((i) => (
-          <li key={i.title} className={i.tracked ? 'done' : 'miss'}>
-            <span className="mark" aria-hidden="true">
-              {i.tracked ? '✓' : '✕'}
-            </span>
-            <span className="txt">{i.title}</span>
-            <span className="ref">{i.ref}</span>
-          </li>
-        ))}
+        {list.map((i) => {
+          // `i.ref` is either a Jira key (tracked items) or 'no ticket'.
+          // Only the Jira key has somewhere to go, so only that one is a
+          // link. The other stays plain text -- a link with nowhere to
+          // land is the same lie an evidence row without a quote was.
+          const refIsKey = /^([A-Z][A-Z0-9]+-\d+)$/.test(i.ref);
+          return (
+            <li key={i.title} className={i.tracked ? 'done' : 'miss'}>
+              <span className="mark" aria-hidden="true">
+                {i.tracked ? '✓' : '✕'}
+              </span>
+              <span className="txt">{i.title}</span>
+              <span className="ref">
+                {refIsKey ? (
+                  <a href={`/record/jira/${encodeURIComponent(i.ref)}`}>{i.ref}</a>
+                ) : (
+                  i.ref
+                )}
+              </span>
+            </li>
+          );
+        })}
       </ul>
     </div>
   );
@@ -135,13 +175,24 @@ function EvidenceRow({ e, from }: { e: Evidence; from: string }): JSX.Element {
  * `DIRECTION.md` §3 asks for a purpose-built page per alert type, and the
  * heading over the evidence is the cheapest place that stops being true.
  */
+/**
+ * Evidence heading per alert type.
+ *
+ * Each heading has to do two things: tell the reader what the rows below
+ * are (the citations the alert stands on), and what their ORDER means.
+ * Generic 'Evidence' fails the second -- a disagreement reads differently
+ * from a cycle reads differently from a missing ticket, and the heading
+ * is the cheapest place that has to be honest.
+ */
 const EVIDENCE_HEADING: Partial<Record<string, string>> = {
-  missing_ticket: 'Why we think this was promised',
-  disagreement: 'Both records, newest first',
-  cycle: 'The four links, and who is waiting on whom',
+  // Was 'Why we think this was promised' -- which only made sense if you
+  // already knew what was promised. The alert has just told you.
+  missing_ticket: 'Why this alert fired',
+  disagreement: 'What each side said, newest first',
+  cycle: 'The loop, member by member',
   suspect_link: 'What the tracker declares, and what supports it',
   undetected_dependency: 'Where the dependency was found',
-  // Not "the last thing that happened to it": the rows are now the carry out of
+  // Not 'the last thing that happened to it': the rows are now the carry out of
   // a closed sprint and either the last thing anybody said OR the fact that
   // nobody has. Silence is the finding here, so the heading has to cover the
   // case where the evidence is an absence.
@@ -188,7 +239,7 @@ export function AlertPage({
 
   return (
     <AppWindow route={route} counts={counts}>
-      <BackLink to={{ name: 'alerts' }} label="back to the list" />
+      <BackLink to={{ name: 'alerts' }} label="Back to all alerts" />
 
       {loading && <div className="greet"><h1>Looking…</h1></div>}
 
@@ -243,7 +294,14 @@ export function AlertPage({
 
           {data.note?.body && (
             <div className="block">
-              <h4>The note it was recorded in</h4>
+              {/*
+                The note is Mission Control's own synthesis of why the
+                commitment mattered, not a citation from a real source.
+                The heading has to make that distinction -- a judge who
+                reads 'The note it was recorded in' expects a record to
+                open, and there isn't one.
+              */}
+              <h4>Mission Control's note</h4>
               <p className="blocklead">{data.note.body}</p>
             </div>
           )}
