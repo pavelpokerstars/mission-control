@@ -22,12 +22,20 @@
 
 .convrow {
     display:grid; grid-template-columns:minmax(0,1fr) auto auto; gap:8px 16px; align-items:center;
-    border-bottom:1px solid var(--line); border-left:3px solid transparent;
-    padding:16px var(--gutter) 16px calc(var(--gutter) - 3px);
+    border-bottom:1px solid var(--line);
+    padding:16px var(--gutter);
+    position:relative;
+  }
+/* A SEGMENT, for the reason `.row` is one: `border-left` runs the full height,
+     so a run of conversations about alerts drew a single unbroken line and the
+     boundary between them went with it. Same 10px inset, same 20px break. */
+.convrow::before {
+    content:""; position:absolute; left:0; top:10px; bottom:10px; width:3px;
+    border-radius:2px; background:transparent;
   }
 .convrow:hover { background:var(--sunk); }
-.convrow.tied    { border-left-color:var(--crit); }
-.convrow.general { border-left-color:var(--line-2); }
+.convrow.tied::before    { background:var(--crit); }
+.convrow.general::before { background:var(--line-2); }
 .convrow .top { display:flex; align-items:center; gap:9px; flex-wrap:wrap; margin-bottom:6px; }
 .convrow .m { display:flex; }
 .convrow .t { font-size:1rem; font-weight:600; color:var(--ink); }
