@@ -122,6 +122,26 @@ preview puts that same fact in an **answer** to a suggested question. The note
 is untouched in the vault, it is what the agent reads, and the ask box is
 directly below the actions.
 
+### One label leads, and the rest sit back
+
+Every band label was 10.5px mono, uppercase, `600`, tracked `.12em`, in
+`--ink-3` — and there were four of them on a page. Four signposts in one
+treatment is why none of them led, and a 63-character sentence in tracked
+uppercase (`EVERY PROMISE MADE IN ORBIT 32, AND WHICH ONES REACHED THE TRACKER`)
+is the heaviest mark on the page after the claim.
+
+The descriptive ones drop to `500` and `.1em`. **`What now` keeps the weight
+they gave up and steps one shade closer to the text** (`--ink-2`) — it is the
+band you came to press, and it is now the only loud line above the claim.
+
+### A row has one voice, not two
+
+`.row h3` is 1.02rem and `.row .sub` was `.9rem` in `--ink-2`: two pixels and
+one shade apart, so each row read as two competing paragraphs and nineteen of
+them read as a wall. The subtitle is `.845rem` in `--ink-3` now. Same
+information, one level of hierarchy — the titles form a column you can scan and
+the detail is there when you stop on one.
+
 ### Back links own their space
 
 `.back` supplies the gap beneath itself and the next band starts flush

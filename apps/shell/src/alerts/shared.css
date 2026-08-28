@@ -53,9 +53,13 @@
 .block.topped { border-top:1px solid var(--line); }
 .blocklead { margin:-4px 0 11px; font-size:.93rem; color:var(--ink-2); max-width:64ch; }
 .block > h4 {
-    font-family:var(--mono); font-size:10.5px; font-weight:600; letter-spacing:.12em;
+    font-family:var(--mono); font-size:10.5px; font-weight:500; letter-spacing:.1em;
     text-transform:uppercase; color:var(--ink-3); margin:0 0 10px;
   }
+/* …EXCEPT THE ONE THAT IS THE ANSWER. Four labels in one treatment is why none
+   of them led; this is the band you came to press, so it keeps the weight the
+   others gave up and steps one shade closer to the text. */
+.block > h4.now { font-weight:600; color:var(--ink-2); }
 .duepick { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:16px; }
 .duepick .lab {
     font-family:var(--mono); font-size:10px; font-weight:600; letter-spacing:.1em;

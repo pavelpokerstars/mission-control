@@ -227,7 +227,7 @@
   .row.warn { border-left-color:var(--warn); }
   .row .meta { display:flex; align-items:center; gap:10px; margin-bottom:7px; flex-wrap:wrap; }
   .row h3 { margin:0 0 5px; font-size:1.02rem; font-weight:600; letter-spacing:-.01em; }
-  .row .sub { margin:0; font-size:.9rem; color:var(--ink-2); }
+  .row .sub { margin:0; font-size:.845rem; color:var(--ink-3); }
   .row .srcs { display:flex; gap:5px; align-items:center; }
   .row .go { font-family:var(--mono); font-size:11px; color:var(--ink-3); white-space:nowrap; }
   .quiet { padding:22px var(--gutter); color:var(--ink-3); font-size:.9rem; }
@@ -270,9 +270,13 @@
   .failbox .conn-row:last-child { border-bottom:0; }
   .brand.muted { color:var(--ink-3); }
   .block > h4 {
-    font-family:var(--mono); font-size:10.5px; font-weight:600; letter-spacing:.12em;
+    font-family:var(--mono); font-size:10.5px; font-weight:500; letter-spacing:.1em;
     text-transform:uppercase; color:var(--ink-3); margin:0 0 10px;
   }
+/* …EXCEPT THE ONE THAT IS THE ANSWER. Four labels in one treatment is why none
+   of them led; this is the band you came to press, so it keeps the weight the
+   others gave up and steps one shade closer to the text. */
+.block > h4.now { font-weight:600; color:var(--ink-2); }
 
   /* checklist */
   .check { display:grid; gap:0; }
@@ -596,7 +600,7 @@
     flex-wrap:wrap; margin:0 0 14px;
   }
   .askhead .lab {
-    font-family:var(--mono); font-size:10.5px; font-weight:600; letter-spacing:.12em;
+    font-family:var(--mono); font-size:10.5px; font-weight:500; letter-spacing:.1em;
     text-transform:uppercase; color:var(--ink-3);
   }
   .openfull {
@@ -1586,7 +1590,7 @@
     });
     html += '</div></div>';
 
-    html += '<div class="block" id="actblock"><h4>What now</h4>'
+    html += '<div class="block" id="actblock"><h4 class="now">What now</h4>'
           + (a.actlead ? '<p class="blocklead">' + esc(a.actlead) + '</p>' : '')
           + '<div class="acts">';
     a.actions.forEach(function (act, i) {
@@ -2154,7 +2158,7 @@
       if (chosen.defer) { block.innerHTML = deferFormHtml(); 
         var t = document.getElementById('defernote'); if (t) t.focus();
         return; }
-      block.innerHTML = '<h4>What now</h4><div class="result">'
+      block.innerHTML = '<h4 class="now">What now</h4><div class="result">'
         + '<span class="tick" aria-hidden="true">✓</span><div>' + chosen.result
         + '<p><button type="button" class="undo">choose something else</button></p></div></div>';
       return;
@@ -2357,7 +2361,7 @@
   function deferFormHtml() {
     var a = ALERTS[current];
     startPicker();
-    return '<h4>What now</h4><div class="deferform">'
+    return '<h4 class="now">What now</h4><div class="deferform">'
       + '<p class="deferlead">Park <b>' + esc(a.claim) + '</b> and let it come back.</p>'
       + '<div class="noteedit"><textarea id="defernote" aria-label="Why you are leaving it"'
       + ' placeholder="Why you are leaving it — the note you will thank yourself for…"></textarea></div>'
@@ -2383,7 +2387,7 @@
     renderLater();
     applyNav(currentScreen);
     document.getElementById('actblock').innerHTML =
-      '<h4>What now</h4><div class="result"><span class="tick">✓</span><div>'
+      '<h4 class="now">What now</h4><div class="result"><span class="tick">✓</span><div>'
       + '<p><b>Parked.</b> It comes back ' + esc(due.replace(/^back /, ''))
       + ', carrying your note — as a notification, like anything else.</p>'
       + '<p><button type="button" class="undo" data-go="later">see it in Later</button></p></div></div>';

@@ -410,7 +410,7 @@ export function Actions({
   if (result) {
     return (
       <div className="block" ref={block}>
-        <h4>What now</h4>
+        <h4 className="now">What now</h4>
         <div className={`result${result.failed ? ' failed' : ''}`}>
           {/* The mark states the outcome, so it cannot be a tick over a refusal.
               `.tick` is the class the preview draws and it carries the colour;
@@ -536,7 +536,7 @@ export function Actions({
   if (deferring) {
     return (
       <div className="block">
-        <h4>What now</h4>
+        <h4 className="now">What now</h4>
         <div className="deferform">
           <p className="deferlead">
             Park <b>{finding.claim}</b> and let it come back.
@@ -589,7 +589,7 @@ export function Actions({
 
   return (
     <div className="block">
-      <h4>What now</h4>
+      <h4 className="now">What now</h4>
       <p className="blocklead">{whatHappens(finding, safeMode, audience)}</p>
       <div className="acts">
         <button

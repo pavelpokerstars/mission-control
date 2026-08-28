@@ -36,7 +36,7 @@
 .row.warn { border-left-color:var(--warn); }
 .row .meta { display:flex; align-items:center; gap:10px; margin-bottom:7px; flex-wrap:wrap; }
 .row h3 { margin:0 0 5px; font-size:1.02rem; font-weight:600; letter-spacing:-.01em; }
-.row .sub { margin:0; font-size:.9rem; color:var(--ink-2); }
+.row .sub { margin:0; font-size:.845rem; color:var(--ink-3); }
 .row .srcs { display:flex; gap:5px; align-items:center; }
 .row .go { font-family:var(--mono); font-size:11px; color:var(--ink-3); white-space:nowrap; }
 @media (max-width:640px) {
