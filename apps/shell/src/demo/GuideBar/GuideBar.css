@@ -53,6 +53,134 @@
 }
 
 /**
+ * ---------- collapsed: a lane, not a band ----------
+ *
+ * `Hide guide` has to actually collapse the section, so the surface colour goes
+ * with the panel — otherwise the band is still a full-width block of `--app`
+ * sitting above an identical `--app`, which is a seam for no reason. What is
+ * left is a transparent lane just tall enough for the clock, still `sticky`, so
+ * the clock stays with the reader down the page without being `fixed` over the
+ * connector dots. See the TSX for why that distinction is load-bearing.
+ */
+/**
+ * COLLAPSED: the strip stops occupying the page entirely.
+ *
+ * No height, no surface, no place in the flow — the app moves up under it and
+ * the clock is `fixed`, floating over the page and staying put as it scrolls.
+ * That is what `Hide guide` should mean.
+ *
+ * WHAT IT MUST NOT LAND ON. The app's toolbar ends in the six connector dots,
+ * which are the only way in to Sources, so the corner immediately below the
+ * viewport's top-right is occupied. The pill therefore floats CLEAR of that
+ * band rather than on top of it — `--mcdemo-float-top` is the toolbar's height
+ * plus a little, and the media query below carries the taller wrapped toolbar.
+ * Floating over the reading column is fine and is the point; floating over the
+ * one control in the corner is not.
+ */
+/**
+ * COLLAPSED, ON BOTH SURFACES: no height, no place in the flow, a `fixed` clock.
+ *
+ * The introduction reserved a band for a while, which gave that page a strip of
+ * furniture it never had before this feature existed. It floats too now, and
+ * the page is back to its own height — the difference is only WHAT each has to
+ * clear, which is the offset below.
+ */
+.mcdemo-strip[data-collapsed] {
+  position: static;
+  background: transparent;
+  height: 0;
+  overflow: visible;
+}
+
+.mcdemo-strip[data-collapsed] .mcdemo-lane {
+  --mcdemo-float-top: 64px;
+  position: fixed;
+  top: var(--mcdemo-float-top);
+  right: 18px;
+  z-index: 90;
+  display: flex;
+  justify-content: flex-end;
+  pointer-events: none;
+}
+
+.mcdemo-lane > * {
+  pointer-events: auto;
+}
+
+/* Bare in the lane, which happens on the introduction: there is no guide to
+   bring back there, so the clock is not wrapped in `.mcdemo-recall` and does not
+   inherit that button's 3px top padding and 1px border. Four pixels, added back
+   explicitly, so the clock sits on exactly the same line on both surfaces
+   rather than four pixels higher on one of them. */
+.mcdemo-lane > .mcdemo-clock {
+  margin-top: 4px;
+}
+
+/* The toolbar wraps its nav under the wordmark below this width, so the band to
+   clear is roughly twice as tall. Measured rather than guessed. */
+@media (max-width: 620px) {
+  .mcdemo-strip[data-collapsed] .mcdemo-lane {
+    right: 12px;
+  }
+}
+
+/**
+ * The clock as a button. It carries its own surface here, because in the panel
+ * it sits on a gradient and in the lane it sits on the page.
+ */
+.mcdemo-recall {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--line);
+  background: var(--app);
+  border-radius: 99px;
+  padding: 3px 4px 3px 3px;
+  box-shadow: var(--shadow);
+  cursor: pointer;
+}
+
+.mcdemo-recall:hover {
+  border-color: var(--line-2);
+}
+
+.mcdemo-recallhint {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  padding-right: 9px;
+}
+
+.mcdemo-recall:hover .mcdemo-recallhint {
+  color: var(--ink-2);
+}
+
+/* In the lane the clock has no gradient under it, so it takes the app's own
+   sunk surface rather than a translucent white that assumed one. */
+.mcdemo-lane .mcdemo-clock {
+  background: var(--sunk);
+  color: var(--ink-2);
+}
+
+.mcdemo-lane .mcdemo-time {
+  background: var(--ok-bg);
+  color: var(--ok);
+}
+
+/* Under 760px the hint is the first thing to go: the clock alone is still an
+   obvious control, and the label is what stops fitting. */
+@media (max-width: 760px) {
+  .mcdemo-recallhint {
+    display: none;
+  }
+  .mcdemo-recall {
+    padding: 3px;
+  }
+}
+
+/**
  * Sticky, and one element rather than two.
  *
  * An instruction you have to scroll back for is not guidance, so the strip

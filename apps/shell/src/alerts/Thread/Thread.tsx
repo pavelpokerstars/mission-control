@@ -17,6 +17,7 @@ import { useEffect, useRef, useState, type JSX } from 'react';
 import type { ChatTurn } from '@mc/domain';
 import { Answer } from '../Answer/Answer';
 import type { Starter } from '../chat';
+import { getViewer, initialsOf } from '../identity';
 
 import './Thread.css';
 
@@ -25,6 +26,7 @@ export function Turns({
   streaming,
   scrollOnGrow = false,
   followups,
+  chains,
 }: {
   turns: ChatTurn[];
   streaming?: boolean;
@@ -39,6 +41,13 @@ export function Turns({
    * between the thread and the composer belongs to neither.
    */
   followups?: JSX.Element;
+  /**
+   * Whether an answer here may DRAW a chain rather than print it.
+   *
+   * True only where the gateway supplied the walk — which is to say, where the
+   * conversation has a subject. `Answer` carries the argument; this is the wire.
+   */
+  chains?: boolean;
 }): JSX.Element {
   const end = useRef<HTMLDivElement>(null);
   /**
@@ -65,14 +74,35 @@ export function Turns({
     if (scrollOnGrow) end.current?.scrollIntoView({ block: 'nearest' });
   }, [turns.length, scrollOnGrow]);
 
+  const viewer = getViewer();
+  const you = initialsOf(viewer);
+
   return (
     <>
       {turns.map((t, i) => (
-        <div className={`turn ${t.role === 'user' ? 'you' : 'mc'}`} key={i}>
-          <div className="badge">{t.role === 'user' ? 'PP' : 'MC'}</div>
+        <div
+          className={`turn ${t.role === 'user' ? 'you' : 'mc'}`}
+          {...(t.role === 'user' && !you ? { 'data-anon': '' } : {})}
+          key={i}
+        >
+          {/**
+           * The agent always signs; the reader signs only when something knows
+           * their name. `identity.ts` explains why the default is nothing —
+           * this app has no login, and the initials that used to sit here were
+           * a person's, shown to every visitor of the deployed demo.
+           */}
+          {t.role === 'user' ? (
+            you ? (
+              <div className="badge" title={viewer}>
+                {you}
+              </div>
+            ) : null
+          ) : (
+            <div className="badge">MC</div>
+          )}
           <div className="body">
             {t.text ? (
-              <Answer text={t.text} />
+              <Answer text={t.text} chains={chains} />
             ) : streaming && i === turns.length - 1 ? (
               /**
                * `DESIGN.md` §9 lists loading as unsettled, and this is the one

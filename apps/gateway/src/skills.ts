@@ -765,22 +765,22 @@ interface ActionCandidate {
  * A meeting ROOM is not a person, and nothing upstream can tell the difference.
  *
  * When somebody speaks from a shared room, Zoom attributes the line to the room
- * — so the summary says "CATOR to post the pen testing requirements", and the
- * extractor faithfully reports an owner called CATOR. Measured on this corpus:
- * of 22 commitments, four were owned by a room, one read `Jerry (Cator)` and
- * one read `CATOR / Sohrab / Jody`.
+ * — so the summary says "MERIDIAN to post the pen testing requirements", and the
+ * extractor faithfully reports an owner called MERIDIAN. Measured on this corpus:
+ * of 22 commitments, four were owned by a room, one read `Riya (Meridian)` and
+ * one read `MERIDIAN / Dana / Sam`.
  *
  * That matters because of what the owner is FOR. `DIRECTION.md` §5 gates the
  * flagship alert on a *named* owner precisely so it never fires on "someone
  * should look at that" — and a room is that, wearing a name. An alert saying
- * "Taken by CATOR" is worse than no alert: nobody is CATOR, so nobody picks it
- * up, and the reader learns the list names people who do not exist.
+ * "Taken by MERIDIAN" is worse than no alert: nobody is MERIDIAN, so nobody
+ * picks it up, and the reader learns the list names people who do not exist.
  *
  * So a room is stripped, never mapped to a guess:
  *
- *   `Jerry (Cator)`        → `Jerry`          the room is where he sat
- *   `CATOR / Sohrab / Jody`→ `Sohrab / Jody`  two named people, and a room
- *   `CATOR`                → nothing          fails the gate, correctly
+ *   `Riya (Meridian)`       → `Riya`       the room is where they sat
+ *   `MERIDIAN / Dana / Sam` → `Dana / Sam` two named people, and a room
+ *   `MERIDIAN`              → nothing      fails the gate, correctly
  *
  * `MC_MEETING_ROOMS` is a comma-separated list because rooms are per-office and
  * a hardcoded one is wrong everywhere else. Read at call time, not at import.
@@ -802,7 +802,7 @@ export function namedOwner(raw: string | undefined): string | undefined {
   const people = raw
     .split(/\s*(?:,|\/|&|\band\b)\s*/)
     .map((part) => part.trim())
-    // `Jerry (Cator)` — a trailing parenthetical naming a room is a location,
+    // `Riya (Meridian)` — a trailing parenthetical naming a room is a location,
     // not a second owner. Anything else in brackets is left alone.
     .map((part) => part.replace(/\s*\(([^)]*)\)\s*$/, (m, inner: string) => (isRoom(inner) ? '' : m)).trim())
     .filter((part) => part && !isRoom(part));
@@ -1324,7 +1324,7 @@ const workshop: Skill = {
        *
        * The date half is different, and measured: across thirty real ceremonies
        * the model found an owner on 16 of 16 extracted actions and a spoken due
-       * date on **none**. Teams say "Jerry will confirm with DevOps", not "by
+       * date on **none**. Teams say "Riya will confirm with DevOps", not "by
        * the twelfth". Requiring a spoken date therefore did not make the alert
        * precise, it made it silent — which is the failure mode this whole repo
        * is written against.
@@ -1343,7 +1343,7 @@ const workshop: Skill = {
       const dueAt = a.dueAt ?? container?.endsAt;
       const dueFromSprint = !a.dueAt && !!dueAt;
       // A room is not a person — see `namedOwner`. Resolved BEFORE the gate, so
-      // "CATOR to post the requirements" fails it exactly as "someone should
+      // "MERIDIAN to post the requirements" fails it exactly as "someone should
       // look at that" does.
       const owner = namedOwner(a.owner);
       if (!owner || !dueAt) continue;

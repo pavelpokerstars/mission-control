@@ -14,6 +14,20 @@ config. Everything below works immediately.
 
 ---
 
+## If you are evaluating this
+
+Four things, in this order, and the first two are the whole product:
+
+1. **`npm run dev`, then open the app** — [Follow one alert end to end](#follow-one-alert-end-to-end) is the tour. Six alerts, worst first; open the top one, follow a citation into the transcript, answer it.
+2. **`npm run verify`** — the acceptance command. Ten checks, no credentials, no network, no server. There is no test framework; this is the substitute and it is the honest one.
+3. **[docs/DIRECTION.md](docs/DIRECTION.md)** — what the product is and why, including §11, which is the two questions this expects to be asked.
+4. **[docs/KNOWN-GAPS.md](docs/KNOWN-GAPS.md) §6** — what looks like a gap and is a decision.
+
+`MC_DEMO=on npm run dev` wraps the same app in a guided walkthrough, for reading
+it without somebody standing next to you — see [Demo mode](#demo-mode--a-guided-walkthrough-for-somebody-opening-it-cold).
+
+---
+
 ## The idea
 
 A dashboard makes you go and look. This does not:
@@ -28,16 +42,23 @@ finding, and Jira only knows what exists. Miro cannot see it, Slack cannot see i
 Confluence cannot see it. It takes a promise recorded from a conversation and the
 tracker's silence about it, and those two facts never sit in the same system.
 
-Six kinds of finding fire today:
+**Eight kinds are detected. Six of them interrupt you**, in the words the screen
+uses for them:
 
 | | |
 |---|---|
-| **missing ticket** | a promise with an owner and a date that no issue references |
-| **sources disagree** | called done on Tuesday, blocked on Wednesday |
-| **circular dependency** | nothing in the loop can start |
-| **unrecorded dependency** | reconstructed from evidence, never declared in the tracker |
-| **stale link** | declared in the tracker, corroborated by nothing |
-| **not moving** | it has sat in one status long enough to say so |
+| **Missing ticket** | a promise with an owner and a date that no issue references |
+| **Probably this ticket** | a promise whose ticket can be named, and no record connects them |
+| **Raised, then dropped** | promised out loud, its sprint still running, and nothing has named it since |
+| **Sources disagree** | called done on Tuesday, blocked on Wednesday |
+| **Circular dependency** | nothing in the loop can start |
+| **Not moving** | it has sat in one status long enough to say so |
+
+The other two — **Unrecorded dependency** and **Stale link** — are detected and
+then deliberately kept off the front door. They fall out of the graph's tiers one
+per edge, so a real programme produces them by the hundred; they are facts about
+how settled the data is rather than things that need a person, and they live on
+**Sources**, which already counts the links they come from.
 
 ---
 
@@ -58,136 +79,71 @@ the person who can tell, with their dates.
 
 ---
 
-## Try it
+## Follow one alert end to end
 
-With the gateway running:
+1. **The front door names something you did not know.** Six findings on the
+   committed fixture, worst first, each one a sentence rather than a chart. The
+   top row is the one to open — that is the whole promise of the screen.
 
-```bash
-# The front door — what needs a person, worst first
-curl -s localhost:8787/api/findings | jq -r '.findings[] | "[\(.severity)] \(.kind) — \(.claim)"'
+2. **The hero: a promise nobody ticketed.** Sprint 12 planning agreed that the
+   platform team would provide a topic. Sanjay accepted it, due 12 August. The
+   sprint closed. No issue references it. The alert page shows what that sprint
+   said would happen — three ticks and two crosses — with the quote from the
+   recording and the sticky somebody wrote, minutes apart.
 
-# One alert, with its checklist and the records it stands on
-curl -s 'localhost:8787/api/findings/missing_ticket%3Aplatform-owns-settled-topic' \
-  | jq '{claim: .finding.claim, checklist, evidence: .finding.evidence}'
+3. **Follow the citation.** Click the Zoom quote and the transcript opens at
+   14:12 with that line marked and scrolled to the centre, the rest of the
+   conversation either side of it. Click the Slack quote on a disagreement and
+   the channel opens on the message, in its thread.
 
-# Answer it. This CREATES the ticket — you are the gate, and you just read the evidence
-curl -sX POST 'localhost:8787/api/findings/missing_ticket%3Aplatform-owns-settled-topic/act' \
-  -H 'content-type: application/json' -d '{"action":"primary"}' | jq
+4. **Answer it.** *Create the ticket* files one, carrying a comment that names
+   the meeting, the rationale and both citations with their timestamps; the
+   commitment gains the key and the alert stops firing. The result appears in
+   place, with `choose something else` beside it — asking is not navigation and
+   neither is acting.
 
-# Follow a citation to the line it quotes
-curl -s 'localhost:8787/api/records/zoom/sprint-12-planning?at=852' \
-  | jq -r '.lines[] | "\(if .id == "852" then "▸" else " " end) [\(.at)s] \(.who): \(.text)"'
+   **A fresh checkout reports that write without performing it**, because
+   `MC_SAFE_MODE` is on unless you turn it off. The page says what it did, the
+   durable log still records the decision as uncarried, and the alert is
+   deliberately still on the list when you go back. The page says so before you
+   click — *"Read-only instance. Create the ticket **would** write to Jira"* sits
+   above the buttons — so it never claims to be the other kind. One line makes it
+   real against the in-memory connectors, with no credentials and no network, and
+   then the ticket exists and the alert genuinely stops:
 
-# The connection graph the findings are read from
-jq '{nodes: (.nodes|length), edges: (.links|length)}' fixtures/graph.json
-jq -r '.links[] | select(.relation=="depends_on") | "\(.tier)\t\(.source) -> \(.target)"' fixtures/graph.json
-```
+   ```bash
+   MC_SAFE_MODE=off npm run dev
+   ```
 
-Then open **http://localhost:4200**.
+   > The click files rather than drafts, and the gate is not weakened by it:
+   > you are standing in front of the claim, the checklist and every citation,
+   > and a second confirmation re-asks what you have just answered. What keeps
+   > the *model* away from the button is `HUMAN_ONLY`, which governs its tool
+   > set — and this route is not a tool. The message actions still draft, because
+   > those words go out over your name.
 
-### Check it still works
+5. **Two of the four answers are "no", and they are different.** *Not needed*
+   dismisses it for good and records who decided. *Not now* asks for the note you
+   will thank yourself for and when it should come back — a date, or an event
+   like "when the sprint ends" — and it lands in Later with that note attached.
 
-There is no test framework. There is one command:
+6. **Nothing is self-reported.** There is no field to set to green. Every signal
+   is a by-product of work people already do: a message sent, a sticky written, a
+   status moved. The only way to change what Mission Control says is to change
+   what actually happened.
 
-```bash
-npm run verify
-```
-
-Typecheck, a byte-identical fixture regenerate, the graph contract, the refresh,
-the app against `DIRECTION.md` and `DESIGN.md`, the fixture against the collector
-contract,
-and the shell build — about two seconds, exiting non-zero with a readable line
-naming what is wrong. It reads no credential, opens no socket and starts no
-server, because if it needs a token it is not the demo.
-
-The middle two are the ones worth knowing. **`verify-graph`** asserts that the
-contract holds, that the fixture still contains the cases the detectors exist
-for, *and that the detectors still find them* — a fixture can be perfectly valid
-and still produce an empty alert list, which is the one outcome that makes the
-product look like it does nothing. **The determinism check** asserts that
-regenerating `fixtures/` changes nothing, because the fixture is committed and
-generated, and a demo that rearranges itself between rehearsal and stage is
-worse than one that is out of date.
-
-The stricter typecheck is still worth running on its own while working:
-
-```bash
-npm run typecheck:all          # authoritative — stricter than `npm run typecheck`
-```
-
----
-
-## Where the data comes from
-
-`fixtures/` is written by `npm run fixture` — a **generator**, not a fixture file,
-emitting the same artefact a real collector produces:
-
-```
-graph.json         nodes, edges, and the excerpt that justifies each edge
-records/           full bodies, read only when somebody follows a citation
-events.jsonl       the transitions, so "nine days in review" is measured
-notes/             the claims — promises, decisions, impediments
-observations.json  firstSeen / lastConfirmed per edge, so a vanished edge reads
-                   as "last confirmed 3 days ago" rather than silently not existing
-```
-
-So **going live is a change of which collector wrote the file**, never a change of
-layer. `MC_GRAPH_DIR` is the switch. See [docs/GRAPH-SCHEMA.md](docs/GRAPH-SCHEMA.md).
-
-The content is invented — it ships in a repo strangers open — but the *shape* and
-the *vocabulary* are real, and the generator is deterministic, so a re-run is
-byte-identical and a demo cannot rearrange itself between rehearsal and stage.
+The fixture contains a deliberate four-ticket cycle
+(`PAY-9042 → PAY-9041 → PAY-9044 → PAY-9043 → PAY-9042`, as the alert prints
+it — each arrow reads *waits on*), invisible in a
+backlog and obvious the moment something looks across it. Every planted case is
+listed in [docs/GRAPH-SCHEMA.md](docs/GRAPH-SCHEMA.md) §8, and
+`scripts/verify-graph.mts` runs the detectors over the fixture and asserts that
+the missing ticket, the unrecorded dependency and the stale link all fire — the
+check that a valid fixture has not quietly stopped producing alerts.
 
 ---
 
-## Docs
-
-| | |
-|---|---|
-| [docs/DIRECTION.md](docs/DIRECTION.md) | **Start here** — what the product is and why |
-| [docs/DESIGN.md](docs/DESIGN.md) | What the screen does — the interface spec |
-| [docs/design-preview.html](docs/design-preview.html) | The clickable target. Open it off disk; it wins over prose |
-| [docs/ROADMAP.md](docs/ROADMAP.md) | The ledger — what was built, in what order, and what is left |
-| [docs/BUILD-PLAN.md](docs/BUILD-PLAN.md) | How the alert-first work was sequenced, and why in that order |
-| [docs/GRAPH-SCHEMA.md](docs/GRAPH-SCHEMA.md) | The contract between the collectors and the gateway |
-| [docs/CEREMONY-FLOW.md](docs/CEREMONY-FLOW.md) | How a meeting becomes the commitment note the flagship alert fires on |
-| [docs/KNOWN-GAPS.md](docs/KNOWN-GAPS.md) | What is broken, approximate, or deliberately unfinished |
-| [CLAUDE.md](CLAUDE.md) | Working notes — commands, invariants, and what breaks if you change them |
-| [AGENTS.md](AGENTS.md) | A pointer to the above, for coding agents that do not read `CLAUDE.md` |
-| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | The layer underneath — what each surface owns, how events move, echo suppression |
-
-`npm run docs` renders the lot as one page at `docs/html/everything.html` — run
-it first, that directory is generated and gitignored.
-
----
-
-## Layout
-
-```
-apps/
-  shell/        React + Vite — four pages (Mission Control, an alert, a
-                conversation, Later), records reached only from a citation, and
-                Sources. One design system, no component library
-  gateway/      Node — findings, records, the vault, webhooks, the event log,
-                the scheduler, the agent
-libs/
-  domain/       Finding, WorkItem, Note, McEvent, ContextEnvelope, the graph
-                contract, FIELD_OWNER, extractKeys, findCycles, stalenessOf
-  connectors/   one interface per surface; `createGraphConnectors` projects graph.json
-  vault/        markdown notes + the recall that feeds them to the agent
-fixtures/       the generated graph, records, events and claims — the demo's input
-vault/          the notes themselves, created on first boot from fixtures/notes/
-```
-
-**The whole application is `apps/shell/src/alerts/` — about 3,600 lines.** Four
-pages, plus records reached only from a citation and Sources under the bonnet —
-the shape `docs/design-preview.html` lays out on its `Six page types` screen. One
-stylesheet is that preview's, copied verbatim and split one file per component, and a path router in one file. There is no
-component library and no second set of colour tokens, which keeps the build at **238 kB of JS and 38 kB of CSS** — the CSS carrying
-the two self-hosted typefaces' `@font-face` blocks.
-
-
-### The screens
+## The screens
 
 The shape is `docs/design-preview.html`'s — open it off disk and click through
 it; where it and this disagree, it wins. **It arrives** as a notification, which
@@ -224,7 +180,47 @@ from a piece of evidence and the way out is back to the thing that cited it.
 **Sources** is coverage, never content: which projects, channels and boards are
 in scope, the provenance tiers, and — the honest part — what could not be read.
 
-### The five ideas
+---
+
+## Where the data comes from
+
+`fixtures/` is written by `npm run fixture` — a **generator**, not a fixture file,
+emitting the same artefact a real collector produces:
+
+```
+graph.json         nodes, edges, and the excerpt that justifies each edge
+records/           full bodies, read only when somebody follows a citation
+events.jsonl       the transitions, so "nine days in review" is measured
+notes/             the claims — promises, decisions, impediments
+observations.json  firstSeen / lastConfirmed per edge, so a vanished edge reads
+                   as "last confirmed 3 days ago" rather than silently not existing
+```
+
+So **going live is a change of which collector wrote the file**, never a change of
+layer. `MC_GRAPH_DIR` is the switch. See [docs/GRAPH-SCHEMA.md](docs/GRAPH-SCHEMA.md).
+
+The content is invented — it ships in a repo strangers open — but the *shape* and
+the *vocabulary* are real, and the generator is deterministic, so a re-run is
+byte-identical and a demo cannot rearrange itself between rehearsal and stage.
+
+**There is a second committed fixture, and it exists to stop the first one
+flattering us.** `fixtures-programme/` is a larger, messier corpus — several
+projects, dozens of meetings, people who appear under different handles on
+different surfaces — generated the same way and checked by the same verifiers:
+
+```bash
+MC_GRAPH_DIR=./fixtures-programme MC_VAULT_DIR=./vault-programme npm run dev
+```
+
+`fixtures/` is small enough to hold in your head, which is what makes it the one
+to demo. This one is big enough that a detector which only works because the
+fixture is tidy stops working — which is the failure a single hand-made fixture
+cannot show you. `npm run verify` regenerates both and asserts both are
+byte-identical.
+
+---
+
+## The five ideas
 
 **The join key.** Every artefact in every tool carries a Jira issue key. No second
 ID space. `extractKeys()` pulls a key out of Slack messages and transcript lines,
@@ -261,13 +257,19 @@ whether it can rot; `stalenessOf()` ranks dated claims down as they age. A stale
 note is never deleted or hidden — it arrives marked `may be stale` so the agent
 hedges instead of asserting.
 
-### What runs without you asking
+---
+
+## What runs without you asking
 
 `scheduler.ts` fires four slots: a re-derive at 07:00 and 19:00, `/standup` at
-08:00, `/tidy` at 22:00. It reads and proposes; it posts nothing and writes no
-field, and a slot stays open two hours so a gateway that was down at 08:00 still
-runs the standup at 09:30. "Have we already run today" is answered from the
-durable log, not from memory. `MC_SCHEDULER=off` turns it off.
+08:00, `/tidy` at 22:00. It runs only reading skills, writes no vendor field and
+changes no note, and a slot stays open two hours so a gateway that was down at
+08:00 still runs the standup at 09:30. "Have we already run today" is answered
+from the durable log, not from memory. `MC_SCHEDULER=off` turns it off.
+
+Its one outbound act is the notification below, and only when
+`MC_SLACK_WEBHOOK_URL` is set — deduplicated against that same durable log, and
+refusing to announce a baseline run.
 
 A re-derive diffs against the last run and appends what changed, so the system
 can say something went wrong *at 07:41* rather than only that it is wrong now.
@@ -275,6 +277,127 @@ can say something went wrong *at 07:41* rather than only that it is wrong now.
 would be a morning of alerts about a quarter of history. A notification carries
 a **pointer, never a quote**: evidence does not leave the machine holding it,
 which is also what makes every transport safe.
+
+---
+
+## Try it from the terminal
+
+With the gateway running:
+
+```bash
+# The front door — what needs a person, worst first
+curl -s localhost:8787/api/findings | jq -r '.findings[] | "[\(.severity)] \(.kind) — \(.claim)"'
+
+# One alert, with its checklist and the records it stands on
+curl -s 'localhost:8787/api/findings/missing_ticket%3Aplatform-owns-settled-topic' \
+  | jq '{claim: .finding.claim, checklist, evidence: .finding.evidence}'
+
+# Answer it. Safe mode is ON by default, so this reports the act and writes nothing —
+# the alert is still on the list afterwards. Add MC_SAFE_MODE=off to make it real.
+curl -sX POST 'localhost:8787/api/findings/missing_ticket%3Aplatform-owns-settled-topic/act' \
+  -H 'content-type: application/json' -d '{"action":"primary"}' | jq
+
+# Follow a citation to the line it quotes
+curl -s 'localhost:8787/api/records/zoom/sprint-12-planning?at=852' \
+  | jq -r '.lines[] | "\(if .id == "852" then "▸" else " " end) [\(.at)s] \(.who): \(.text)"'
+
+# The connection graph the findings are read from
+jq '{nodes: (.nodes|length), edges: (.links|length)}' fixtures/graph.json
+jq -r '.links[] | select(.relation=="depends_on") | "\(.tier)\t\(.source) -> \(.target)"' fixtures/graph.json
+```
+
+The browser is the real surface, though, and the section above is the tour.
+
+---
+
+## Check it still works
+
+There is no test framework. There is one command:
+
+```bash
+npm run verify
+```
+
+Typecheck, a byte-identical fixture regenerate, the graph contract, the refresh,
+the app against `DIRECTION.md` and `DESIGN.md`, the fixture against the collector
+contract,
+and the shell build — a few seconds, exiting non-zero with a readable line
+naming what is wrong. It reads no credential, opens no socket and starts no
+server, because if it needs a token it is not the demo.
+
+The middle two are the ones worth knowing. **`verify-graph`** asserts that the
+contract holds, that the fixture still contains the cases the detectors exist
+for, *and that the detectors still find them* — a fixture can be perfectly valid
+and still produce an empty alert list, which is the one outcome that makes the
+product look like it does nothing. **The determinism check** asserts that
+regenerating `fixtures/` changes nothing, because the fixture is committed and
+generated, and a demo that rearranges itself between rehearsal and stage is
+worse than one that is out of date.
+
+The stricter typecheck is still worth running on its own while working:
+
+```bash
+npm run typecheck:all          # authoritative — stricter than `npm run typecheck`
+```
+
+---
+
+## Layout
+
+```
+apps/
+  shell/        React + Vite — four pages (Mission Control, an alert, a
+                conversation, Later), records reached only from a citation, and
+                Sources. One design system, no component library
+  gateway/      Node — findings, records, the vault, webhooks, the event log,
+                the scheduler, the agent
+libs/
+  domain/       Finding, WorkItem, Note, McEvent, ContextEnvelope, the graph
+                contract, FIELD_OWNER, extractKeys, findCycles, stalenessOf
+  connectors/   one interface per surface; `createGraphConnectors` projects graph.json
+  vault/        markdown notes + the recall that feeds them to the agent
+fixtures/       the generated graph, records, events and claims — the demo's input
+vault/          the notes themselves, created on first boot from fixtures/notes/
+```
+
+**The whole application is `apps/shell/src/alerts/` — about 6,400 lines.** Four
+pages, plus records reached only from a citation and Sources under the bonnet —
+the shape `docs/design-preview.html` lays out on its `Six page types` screen. One
+stylesheet is that preview's, copied verbatim and split one file per component, and a path router in one file. There is no
+component library and no second set of colour tokens, which keeps the build at **259 kB of JS and 50 kB of CSS** — the CSS carrying
+the two self-hosted typefaces' `@font-face` blocks.
+
+---
+
+## Docs
+
+Eleven documents, and they are not equal. **In reading order**, with what each is
+for and who it is for:
+
+| | | |
+|---|---|---|
+| **1** | [docs/DIRECTION.md](docs/DIRECTION.md) | **Start here.** What the product is and why — the one document that states the direction |
+| **2** | [docs/design-preview.html](docs/design-preview.html) | **Open it off disk and click it.** A committed, standalone preview of every screen. Where it and any prose disagree, *it wins* — it is the version that was tested in a browser |
+| **3** | [docs/DESIGN.md](docs/DESIGN.md) | What the screen does. §1, §4, §7 and §9 carry the argument; §2, §3 and §6 are token inventories for whoever edits the CSS |
+| **4** | [docs/GRAPH-SCHEMA.md](docs/GRAPH-SCHEMA.md) | The contract between the collectors and the gateway — what a node is, what an edge is, what a collector must emit |
+| **5** | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | The layer underneath — what each surface owns, how events move, echo suppression, safe mode |
+| **6** | [docs/CEREMONY-FLOW.md](docs/CEREMONY-FLOW.md) | How a meeting becomes the commitment note the flagship alert fires on |
+
+And the three that are a record rather than an explanation — worth opening for a
+specific question, not worth reading through:
+
+| | |
+|---|---|
+| [docs/KNOWN-GAPS.md](docs/KNOWN-GAPS.md) | What is broken, approximate, or deliberately unfinished. **Read §6 first** — it is the list of things that look like defects and are decisions |
+| [docs/ROADMAP.md](docs/ROADMAP.md) | The ledger. **"Status at a glance" and "What is NOT built"** are the two sections that answer *what is built*; the remaining 60% is a build log |
+| [docs/BUILD-PLAN.md](docs/BUILD-PLAN.md) | How the alert-first work was sequenced, and why in that order. Historical |
+
+[CLAUDE.md](CLAUDE.md) and [AGENTS.md](AGENTS.md) are working notes for coding
+agents — commands, invariants, and what breaks if you change them. They are not
+product documentation and nothing in them is aimed at a reader evaluating this.
+
+`npm run docs` renders the lot as one page at `docs/html/everything.html` — run
+it first, that directory is generated and gitignored.
 
 ---
 
@@ -312,12 +435,37 @@ answer rather than a policy one, which is the privacy property rather than a
 limitation. It does not make the gateway safe to expose — there is still no
 authentication on it — it makes exposing it a deliberate act.
 
+**`railway.json` is that deliberate act, and it is worth being plain about the
+trade.** It deploys the repo as *one* process — the gateway serves the built
+shell, because a static deploy ships the interface with no `/api` behind it and
+a shell hardcoding `localhost:8787` asks the *reader's* machine for data. A
+hosted instance is the way somebody reads this without a checkout, and it gives
+up the property above: the evidence is now on a host rather than on your laptop.
+That is why it runs on the committed fixture, where every name is invented, and
+why `MC_SAFE_MODE` is on — a visitor can read everything and write nothing. Do
+not point a hosted instance at `MC_GRAPH_DIR` full of real transcripts; the
+loopback default is the configuration the privacy argument is about.
+
 **The agent already works with no credential at all.** The provider ladder is
 the Claude CLI first — your own CLI login, no key and no credit — then
-`ANTHROPIC_API_KEY`, then Copilot in live mode, then a scripted stub. A fresh
-checkout with an empty `.env` gets a real agent over the fixtures, which is what
-"mock mode is a complete product" was always supposed to mean.
-`node scripts/inspect.mjs health` says which one is about to answer.
+`ANTHROPIC_API_KEY`, then a scripted stub. A fresh checkout with an empty `.env`
+gets a real agent over the fixtures, which is what "mock mode is a complete
+product" was always supposed to mean. `node scripts/inspect.mjs health` says
+which one is about to answer.
+
+Two more are selected by `MC_MODE` rather than reached by falling down the
+ladder, because each assumes something the default does not have:
+
+| | | |
+|---|---|---|
+| `MC_MODE=live` | **Copilot** | a `gh` login or `GITHUB_TOKEN` |
+| `MC_MODE=openrouter` | **OpenRouter** | `OPENROUTER_API_KEY` |
+
+OpenRouter exists for the case the other three cannot serve: **a host nobody is
+logged into.** The Claude CLI authenticates from a developer's own login and
+Copilot from a `gh` session — neither survives a container — and
+`ANTHROPIC_API_KEY` is metered per person. A shared instance wants one key in
+one variable, answering for everyone who opens the link.
 
 **On a Copilot deployment, two things change.** Copilot is reachable only at
 `MC_MODE=live`, so that is the switch — plus `gh auth login` or `GITHUB_TOKEN`:
@@ -400,52 +548,7 @@ dies or a token expires.
 
 ---
 
-## What a demo looks like
-
-1. **The front door names something you did not know.** Four findings, worst
-   first, each one a sentence rather than a chart. The top row is the one to
-   open — that is the whole promise of the screen.
-
-2. **The hero: a promise nobody ticketed.** Sprint 12 planning agreed that the
-   platform team would provide a topic. Sanjay accepted it, due 12 August. The
-   sprint closed. No issue references it. The alert page shows what that sprint
-   said would happen — three ticks and two crosses — with the quote from the
-   recording and the sticky somebody wrote, minutes apart.
-
-3. **Follow the citation.** Click the Zoom quote and the transcript opens at
-   14:12, on that line, with the four lines either side. Click the Slack quote on
-   a disagreement and the channel opens on the message, in its thread.
-
-4. **Answer it.** *Create the ticket* creates one, carrying a comment that names
-   the meeting, the rationale and both citations with their timestamps; the
-   commitment gains the key and **the alert stops firing**. The result appears
-   in place, with `choose something else` beside it — asking is not navigation
-   and neither is acting.
-
-   > The click creates rather than drafts, and the gate is not weakened by it:
-   > you are standing in front of the claim, the checklist and every citation,
-   > and a second confirmation re-asks what you have just answered. What keeps
-   > the *model* away from the button is `HUMAN_ONLY`, which governs its tool
-   > set — and this route is not a tool. The message actions still draft, because
-   > those words go out over your name.
-
-5. **Two of the four answers are "no", and they are different.** *Not needed*
-   dismisses it for good and records who decided. *Not now* asks for the note you
-   will thank yourself for and when it should come back — a date, or an event
-   like "when the sprint ends" — and it lands in Later with that note attached.
-
-6. **Nothing is self-reported.** There is no field to set to green. Every signal
-   is a by-product of work people already do: a message sent, a sticky written, a
-   status moved. The only way to change what Mission Control says is to change
-   what actually happened.
-
-The fixture contains a deliberate four-ticket cycle
-(`PAY-9041 → PAY-9042 → PAY-9043 → PAY-9044 → PAY-9041`), invisible in a
-backlog and obvious the moment something looks across it. Every planted case is
-listed in [docs/GRAPH-SCHEMA.md](docs/GRAPH-SCHEMA.md) §8 and asserted by
-`scripts/verify-graph.mts`.
-
-### Demo mode — the walkthrough, for a URL somebody opens cold
+## Demo mode — a guided walkthrough, for somebody opening it cold
 
 Everything above assumes somebody is standing next to you. `MC_DEMO=on` is for
 when they are not: a hosted link, a review, a screen at a conference. It wraps
@@ -471,11 +574,11 @@ turning it on is a restart rather than a rebuild:
 | `MC_DEMO_MINUTES` | how long a walkthrough runs before it resets for the next visitor. Default 20, clamped to 1–240 |
 
 **Unset, the app is exactly the app** — the walkthrough is a sibling of
-`AlertApp`, not a change to it, no route is added, and its stylesheet is
+`AlertApp`, not a change to it, no route is added, and its stylesheets are
 deliberately outside the seventeen `scripts/verify-design.mts` checks against
 the preview. Three checks in that verifier hold all of it in place: nothing
-under `alerts/` may import from `demo/`, every class in `demo/demo.css` must
-carry the `mcdemo-` prefix, and `demoMode()` must be off by default.
+under `alerts/` may import from `demo/`, every class in the demo's own four
+stylesheets must carry the `mcdemo-` prefix, and `demoMode()` must be off by default.
 
 The timer is a **reset, not a limit**. A demo URL opened by several people in a
 day otherwise hands the second arrival the first one's wandering as their

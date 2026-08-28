@@ -122,7 +122,7 @@ export function AskInline({ finding }: { finding: Finding }): JSX.Element {
 
       {!!shown.length && (
         <div className="thread inline">
-          <Turns turns={shown} streaming={busy} scrollOnGrow />
+          <Turns turns={shown} streaming={busy} scrollOnGrow chains />
         </div>
       )}
 

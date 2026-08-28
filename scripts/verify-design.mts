@@ -601,6 +601,11 @@ const ALLOWED_LOCAL = [
   'a.evrow',          // an anchor where the preview writes a button — CLAUDE.md
   'a.rowmain',        // the same
   'a.row',            // the same
+  // The reader's own turn with nobody named. This app has no login, so the
+  // badge is usually absent and the two-column template would leave an empty
+  // 30px track against the right edge. The preview drew a signed-in reader and
+  // therefore has no rule for it — see `alerts/identity.ts`.
+  '.turn.you[data-anon]',
 ];
 const newSelectors = STYLESHEETS.flatMap(({ path, css }) =>
   selectorsIn(css)

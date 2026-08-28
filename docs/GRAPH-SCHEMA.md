@@ -2,22 +2,41 @@
 
 One file is the seam between everything that *reads* a source and everything
 that *reasons* about one. Collectors write it; the gateway reads it. Neither
-side knows the other's language, and that is the point — the collectors are
-Python because they already work against the real instances, the gateway is
-TypeScript because that is where the product is.
+side has to know the other's language, and that is the point — the contract is
+a file on disk, so a collector written in anything at all satisfies it by
+writing one. The collectors in *this* tree are TypeScript, and every one of them
+splits in two: a `fetch-*` half that holds the credential, and an `import-*`
+half that is offline and deterministic and is the only one that decides shape.
 
 ```
-collectors (Python)                        gateway (TypeScript)
-  programme_graph (Jira)  ─┐
-  jira-cli, confluence-cli │
-  github-cli, agent-slack  ├─→  graph.json  ─→  detectors, alerts
-  zoom scrape, miro export │     records/       the interface
-  the mock generator      ─┘
+capture — the half that holds a credential
+  fetch-jira-issues · fetch-jira-sprints · fetch-confluence · fetch-slack
+  capture-zoom-notes · gh pr list · programme_graph refresh   ← external tool
+        ↓  raw JSON
+emit — the half that is offline, deterministic and verifiable
+  import-jira-issues · import-confluence-pages · import-slack-messages
+  import-zoom-notes · import-github-prs · import-programme-graph  ← the adapter
+  the two fixture generators, which write the same shape from a spec
+        ↓
+  graph.json  +  records/   ─→   gateway (TypeScript): detectors, alerts,
+                                 the interface
 ```
+
+**`programme_graph` is somebody else's tool and is not in this tree.** It is a
+Jira-side graph builder this contract was designed to *accept* — §11 is the
+adapter that reads what it already emits — which is why its vocabulary shows up
+throughout this document. Miro is the one surface with no emitter at all: it is
+read live through `MIRO_ACCESS_TOKEN`.
 
 `DIRECTION.md` says why the product is alert-first. `DESIGN.md` says what the
 screen does. This says what the data is, and it is the one document a new
 collector has to satisfy.
+
+**Who this is for.** It is an implementer's contract: if you are writing or
+adapting a collector, read all of it. If you are not — if you want to know what
+this system finds and how it proves it — §7 is the tier loop the findings rest
+on and §8 is what the committed fixtures plant and why. §9–§11 are material for
+whoever writes a collector, and nothing else depends on reading them.
 
 ---
 
@@ -191,15 +210,22 @@ collector produces the same id. That determinism is the whole precondition for
 | `issue` | `issue:PAY-12345` | the Jira key |
 | `person` | `person:jsmith@example.com` | **email, always** — see §6 |
 | `squad` `tribe` `goal` | `squad:ORG-10000011` | the field value |
-| `sprint` | `sprint:PAY-Sprint-14` | project + sprint name |
+| `sprint` | `sprint:PAY Sprint 14` | the sprint's own name, **verbatim** |
 | `release` | `release:PAY-2026.9` | project + fix version |
 | `component` | `component:PAY-payments` | project + component |
 | `message` | `message:slack/C0123/1755950400.001` | channel + `ts` |
 | `meeting` | `meeting:zoom/rec-8842` | the recording id |
 | `page` | `page:confluence/2140476323` | the page id |
-| `pr` | `pr:github/FlutterInt/fips-web-client/4210` | owner/repo/number |
+| `pr` | `pr:github/example-org/web-client/4210` | owner/repo/number |
 | `sticky` `frame` `board` | `sticky:miro/«board»/«item»` | board + item |
 | `note` | `note:dana-owns-dedupe-cache` | the vault slug |
+
+**A sprint id is not normalised, and that trips people.** `import-jira-issues`
+writes `sprint:${name}` with Jira's own sprint name unchanged — spaces and all,
+because a Jira sprint is conventionally named `PAY Sprint 14` and the name is
+the only identifier an issue carries. Hyphenating it produces a container id
+`note.container` cannot resolve against, and the flagship finding then never
+fires, silently. Both committed fixtures use the spaced form.
 
 **Jira keys are the spine and stay bare inside the `issue:` id.** The regex that
 finds them in prose is the same on both sides — `\b([A-Z][A-Z0-9]+-\d+)\b`, in
@@ -226,32 +252,60 @@ adding a hierarchy level is a value rather than a new node kind. Carries
 > workflow changes.
 
 **Containers** — the things whose closing fires an alert (`DIRECTION.md` §4).
-`sprint` and `release` carry `state` (`future` · `active` · `closed`) and
-`closedAt`. An `epic` is an `issue`, and closes like one.
+`sprint`, `release` and `component`. `sprint` and `release` carry `state`
+(`future` · `active` · `closed`) and `closedAt`. An `epic` is an `issue`, and
+closes like one.
 
-> This is what the tree does not have today: `WorkItem.sprint` is a bare string
-> with no dates and no state, so "the sprint ended" is unobservable. It is a
-> node here precisely so that it can close.
+> This is what `WorkItem` does not have: `sprint` there is a bare string with no
+> dates and no state, so "the sprint ended" is unobservable from it. It is a node
+> here precisely so that it can close.
+>
+> **And of the three, only `sprint` is live.** `release` and `component` are in
+> `STORED_NODE_KINDS` and have id forms in §3, and **nothing in this repo emits
+> either one** — no collector, neither fixture. They are declared so a collector
+> with fix versions or components to report has somewhere to put them; a reader
+> who greps for them and finds nothing is seeing the truth, not a gap. `sprint`
+> is the container the flagship finding actually fires on.
 
 **Org.** `person`, `squad`, `tribe`, `goal`. A `person` carries `email`,
 `displayName` and the per-source handles it is known by (§6).
 
 **Records.** `message` · `meeting` · `page` · `pr` · `sticky` · `frame` ·
 `board`. Each carries `at` (when it happened), `container` where it has one (a
-channel, a board), and a pointer to its `records/` file.
+channel, a board), and `recordRef`.
+
+> **`recordRef` is a declaration, not a pointer, and nothing follows it.** The
+> gateway derives the record key from the **node id** instead: `loadGraphSource`
+> keys everything it reads as `<kind>/<basename>`, and each projection strips its
+> own prefix off the id to build the lookup — `meeting:zoom/…` and
+> `page:confluence/…` lose the prefix, a `message:` id keeps only its last path
+> segment, a `pr:github/…` id loses the prefix and has its remaining `/`
+> replaced by `-`. So a file whose basename does not match what the projection
+> derives is loaded into memory and never found, and `recordRef` pointing
+> straight at it changes nothing. What `recordRef` *is* good for is
+> `verify-collector.mts`, which checks that every one resolves to a file that
+> exists — a cheap catch for the half of the mistake it can see. Name the file
+> after the derived key and the two agree.
 
 **Vault.** `note` carries `noteKind`, `status`, `recency`, `verifiedAt` and —
-new, and required by the gap detector — `owner`, `dueAt` and `container`.
+required by the gap detector — `owner`, `dueAt` and `container`.
 
 > A `commitment` with an owner, a due date and no ticket **is** the missing-ticket
-> alert. `DIRECTION.md` §5's precision gate is those two fields, and `Note` has
-> neither today.
+> alert. `DIRECTION.md` §5's precision gate is those two fields, and this section
+> asked for them when `Note` had neither. **It has all three now**, they survive a
+> write and a reload, and `verify-graph.mts` asserts each of them off disk rather
+> than out of the in-memory copy — because the bug worth catching is a field that
+> saves and never comes back.
 
 ---
 
 ## 5. Edges
 
-Every edge is `{ source, target, relation, tier, origin, why?, score?, evidence[] }`.
+Every edge is
+`{ source, target, relation, tier, origin, why?, score?, evidence[], reconciled?, validFrom?, validTo? }`
+— matching `StoredEdge` in `libs/domain/src/graph.ts`. `reconciled` is
+**dependency edges only** and is the difference between two findings existing and
+not (§11); `validFrom` / `validTo` are **`member_of` only**.
 
 **Direction is stated once, here, and every relation has exactly one.** Getting
 one backwards is the most expensive class of bug available in this system: it is
@@ -269,7 +323,7 @@ plausible, it renders, and it says the opposite of the truth.
 >
 > The graph keeps `depends_on` because `programme_graph` is the largest producer
 > and owns that convention. One flip, in one function, asserted in one test,
-> beats asking six collectors to adopt a foreign one. `CLAUDE.md` already records
+> beats asking five collectors to adopt a foreign one. `CLAUDE.md` already records
 > what the alternative costs: a prompt that read the direction backwards produced
 > *every* inferred dependency reversed, drawn confidently the wrong way round.
 
@@ -280,6 +334,14 @@ plausible, it renders, and it says the opposite of the truth.
 ### Membership — person → org, issue → container
 `member_of` · `in_sprint` · `targets_release` · `has_component` · `in_frame`
 (sticky → frame) · `on_board` (frame → board)
+
+> **Four of the twenty relations are reserved**, in the same sense as `release`
+> and `component` in §4: `has_component`, `responsible_tribe`, `co_occurs` and
+> `similar_to` are in `STORED_RELATIONS` and **nothing produces or consumes any
+> of them** — no collector, neither fixture, no detector. They are named so the
+> vocabulary is closed rather than open-ended. Everything else in this section is
+> live, and saying which is which is what stops a reader who greps for
+> `co_occurs`, finds nothing, and concludes the whole section is aspirational.
 
 > `member_of` may carry `validFrom` / `validTo`. That is the one piece of history
 > the graph keeps, and it exists for a sentence the product wants to say out
@@ -320,7 +382,7 @@ is hand-maintained until it is not:
 
 ```json
 { "jsmith@example.com": { "slack": "U024BE7LH", "jira": "jsmith",
-                             "github": "jsmith-flutter", "zoom": "John Smith" } }
+                             "github": "jsmith-dev", "zoom": "John Smith" } }
 ```
 
 Without it, a Zoom speaker, a Slack author and a Jira assignee are three
@@ -353,13 +415,26 @@ asserts it), `declared` (the source *claims* it — a dependency link), or
 
 **Declared dependency links start `AMBIGUOUS`.** They are claims to be tested,
 not facts. Reconciliation then compares them against independently reconstructed
-evidence and produces the three outcomes that are, directly, two alert types:
+evidence and produces three outcomes, two of which are directly **two coverage
+facts, counted on Sources rather than raised as alerts**:
 
 | outcome | tier | what it is |
 |---|---|---|
 | corroborated | → `EXTRACTED` | the link is real |
-| **reconstructed, never declared** | `INFERRED` | **a dependency Jira never recorded** |
-| **declared, nothing behind it** | `AMBIGUOUS` | **a stale or wrong link** |
+| **reconstructed, never declared** | `INFERRED` | **a dependency Jira never recorded** — `undetected_dependency` |
+| **declared, nothing behind it** | `AMBIGUOUS` | **a stale or wrong link** — `suspect_link` |
+
+> **Both are detected; neither interrupts anybody.** `COVERAGE_KINDS` in
+> `@mc/domain` holds exactly these two, and `isAlertKind()` is what keeps them
+> off the front door. They fall out of the tiers **one per edge**, so they scale
+> with the number of dependency links and with how well they are maintained —
+> measured on a synthetic 5,000-issue import, 840 and 268 of them, on a list
+> whose whole promise is that the top row is the one to open. So they went where
+> they belong: Sources, as *"declared links nothing corroborates"* and
+> *"dependencies the tracker never recorded"* (`DIRECTION.md` §6 — coverage,
+> never content). They are still deduplicated, still suppressed by a dismissal,
+> and still reachable through `list_findings`. This is a change of destination,
+> not a downgrade of the finding.
 
 Two rules the gateway enforces on top:
 
@@ -374,17 +449,27 @@ Two rules the gateway enforces on top:
 
 ---
 
-## 8. The fixture, and what it plants
+## 8. The fixtures, and what they plant
 
-`npm run fixture` writes `fixtures/` — `graph.json`, `observations.json` and
-`records/` — from the spec in `scripts/fixture/`. The output is **committed**,
-because the demo has to run on a machine with no credentials and a stranger
-cloning the repo is most of what is being judged.
+`npm run fixture` runs **two** generators. The first,
+`scripts/generate-fixture.mts`, writes `fixtures/` from the spec in
+`scripts/fixture/`, and it writes five things: `graph.json`, `records/`,
+`observations.json`, `events.jsonl` and `notes/`. That last one is easy to skip
+past and is the one that matters most — it is the **asserted** layer of §2,
+committed as the demo's seed: the claims somebody authored, and therefore where
+the flagship alert's subject comes from. Without it the hero alert has nothing to
+be about. The output is **committed**, because the demo has to run on a machine
+with no credentials and a stranger cloning the repo is most of what is being
+judged.
 
-It is a *generator* rather than a fixture file, and that is the whole point:
-`graph.json` here is the same artefact a real collector produces, so going live
-is a change of which collector wrote the file and never a change of layer. Every
-detector is developed against the real shape from the first day.
+It is a *generator* rather than a hand-written fixture file, and that part is the
+whole point: `graph.json` here is written through this contract and validated by
+the same `verify-collector.mts` that will be pointed at a real collector, so
+going live is a change of *which program wrote the file* and never a change of
+layer.
+
+**What it is not is the shape real collector output has, and there is a second
+committed fixture for exactly that reason.** See "Two fixtures" below.
 
 **Deterministic.** There is no randomness in it — the only derived values are
 timestamps, from the spec's own dates — so a re-run produces no diff and a demo
@@ -403,23 +488,72 @@ the violation, and nobody finds out until real data behaves differently.
 
 ### What is planted, and why each one is there
 
-Each is marked `⟨CASE⟩` in `scripts/fixture/records.ts`, and each is asserted by
+Most are marked `⟨CASE⟩` in the spec files under `scripts/fixture/`, so a reader
+can find what a detector is standing on, and most are asserted by
 `npx tsx scripts/verify-graph.mts` — because the planted cases are exactly what
 rots silently. An edit that quietly drops the unjoined commitment leaves a demo
 where the hero alert never fires, with nothing failing anywhere.
 
-| case | what it is | why it must exist |
+**"Most", not "each", and the gaps are named here on purpose.** The ⟨CASE⟩ marks
+and the assertions were added case by case and never caught up with each other,
+so the *asserted* column below is the honest one: a row that says no is a row
+where the demo can rot without a verifier noticing.
+
+| case | what it is | asserted by `verify-graph.mts`? |
 |---|---|---|
-| **missing ticket** | a commitment with an owner, a due date, a **closed** container and no key | the hero. The container closing is the trigger |
-| **the gate holds** | a commitment with no owner and no date | proves the precision gate is real and not a sentence in a document |
-| **an inferred join** | a claim naming no key, joined via speaker and sprint, carrying its `why` | the join that fires on real data when the key join does not |
-| **undetected dependency** | reconstructed from a ticket's prose, never declared in Jira | `INFERRED`, and a headline finding |
-| **suspect link** | declared, uncorroborated, and the blocker is already `Closed` | `AMBIGUOUS`, the other headline finding |
-| **a cycle** | four issues, declared *and* corroborated, so all four are `EXTRACTED` | only corroborated edges may raise a cycle (§7) |
-| **sources disagree** | "it is done" on the Tuesday, "still blocked" on the Wednesday, Jira says Code Review | the tool must not pick a winner |
-| **the URL join** | a Slack message linking a Confluence page, naming no ticket anywhere | measured on a real corpus, **no** extracted action named a key — this is the join that works |
-| **the reorg** | somebody left a squad on a date | "the person who agreed this has moved; who owns it now" |
-| **records that join to nothing** | a page naming no ticket, a sticky with no key | Sources' "what we could not read" (§7), and honest |
+| **missing ticket** | a commitment with an owner, a due date, a **closed** container and no key. The hero; the container closing is the trigger | **yes** — the unjoined claim, its closed container, and that `findMissingTickets` returns exactly one and cites at least two records |
+| **the gate holds** | a commitment with no owner and no date, proving the precision gate is real and not a sentence in a document | **yes**, both halves: the note exists and the detector leaves it alone |
+| **an inferred join** | a claim naming no key, joined via speaker and sprint, carrying its `why` — the join that fires on real data when the key join does not | **yes**, via `filedKeys`: a reconstructed key must not count as filed |
+| **undetected dependency** | reconstructed from a ticket's prose, never declared in Jira | **yes** — `INFERRED`, and a Sources coverage row, not an alert (§7) |
+| **suspect link** | declared, uncorroborated, and the blocker is already `Closed` | **yes** — `AMBIGUOUS`, and a Sources coverage row, not an alert (§7) |
+| **a cycle** | four issues, declared *and* corroborated, so all four are `EXTRACTED`; only corroborated edges may raise a cycle (§7) | **partly.** It asserts four-or-more `EXTRACTED` `depends_on` edges exist. It does **not** walk them, so it cannot tell a loop from four unrelated links |
+| **sources disagree** | "it is done" on the Tuesday, "still blocked" on the Wednesday, Jira says Code Review — the tool must not pick a winner | **no.** Nothing asserts the contradicting pair, and the `disagreement` detector is not run by any verifier |
+| **the URL join** | a Slack message linking a Confluence page, naming no ticket anywhere — the join that works when no key exists | **partly** — that a `links_to` edge exists at all, not that its ends are the planted pair |
+| **the reorg** | somebody left a squad on a date — "the person who agreed this has moved; who owns it now" | **yes** — a `member_of` edge carrying `validTo` |
+| **records that join to nothing** | a page naming no ticket, a sticky with no key | **no.** Marked ⟨CASE⟩ in `records.ts` and unasserted — this is Sources' "what we could not read", and it is honest |
+| **aging** | work carried out of a closed sprint and stuck in one status since (`scripts/fixture/programme.ts`) | **no** — the aging detector is not reached by any verifier |
+
+### Two fixtures, because the demo shape is not the arriving shape
+
+The second generator, `scripts/generate-programme-fixture.mts`, writes
+`fixtures-programme/`, and its own header states the case against treating
+`fixtures/` as collector output: *"a designed narrative … the right thing to demo
+and the wrong thing to develop a detector against, because real collector output
+looks nothing like it."* Measured on the two committed directories:
+
+| | `fixtures/` | `fixtures-programme/` | a live programme |
+|---|---|---|---|
+| nodes | 70 | 398 | 847 |
+| edges per node | 2.26 | 0.70 | 0.42 |
+| node kinds | 14 | 7 | 7 |
+| relations | 16 | 5 | 5 |
+| files | 50 | 310 | — |
+
+The right-hand column is the generator's own measurement against a live
+programme, kept here because it is what the middle column is aiming at; the
+first two were counted off the committed files.
+
+The difference is not size, it is **density**. `fixtures/` carries `squad`,
+`tribe`, `goal`, `board`, `frame` and `sticky` nodes and `owned_by` / `member_of`
+/ `attended` / `authored_by` edges, and **no collector in this repo emits any of
+them**. Everything in it joins to something. Real output is sparse: most records
+name no ticket, a status word nobody mapped falls through, a GitHub handle
+resolves to no person. A detector developed only against the first is developed
+against a world that does not arrive.
+
+So `fixtures/` is the narrative — the one the demo runs on, and the one the
+planted cases above live in. `fixtures-programme/` emits only what
+`import-jira-issues`, `import-slack-messages`, `import-confluence-pages`,
+`import-github-prs` and `import-zoom-notes` actually produce, in their
+proportions and with their failure modes, and it is where `unlinked_commitment`
+and `dropped_commitment` are planted. Both obey the same two rules — invented
+content, deterministic output — and `npm run verify` checks each twice: a
+byte-identical regenerate, and `verify-collector.mts` against the result. Run the
+app on the second with:
+
+```bash
+MC_GRAPH_DIR=./fixtures-programme npm run dev
+```
 
 ---
 
@@ -428,14 +562,18 @@ where the hero alert never fires, with nothing failing anywhere.
 1. **Collectors do not interpret.** Fetch, normalise, emit. Every rule that
    decides what is true, what fires and what is shown lives in the gateway.
    Detection split across two languages gets two definitions of "blocked".
-2. **Collectors are read-only.** `jira-cli.py` can create, transition and
-   assign; the pipeline calls none of it. Writes go through the gateway's
-   proposal path and a human pressing the button — `FIELD_OWNER` and
-   `HUMAN_ONLY` are the product, not a formality.
+2. **Collectors are read-only.** Every `fetch-*.mts` here does one authenticated
+   read and writes a file; none of them can write to a vendor. The external
+   `jira-cli.py` next to them *can* create, transition and assign, and the
+   pipeline calls none of it. Writes go through the gateway's write path and a
+   human pressing the button — `FIELD_OWNER` and `HUMAN_ONLY` are the product,
+   not a formality.
 3. **The mock is written by a generator that emits this exact shape.** Not TS
    object literals in a fixture file. Going live must be a change of *which
-   collector wrote the file*, never a change of layer — otherwise everything
-   downstream is tuned against a shape that was never real.
+   program wrote the file*, never a change of layer — otherwise everything
+   downstream is tuned against a shape that was never real. And a generator that
+   emits the contract is not the same thing as one that emits the *proportions*:
+   that is why there are two of them (§8).
 4. **Emit the vendor's own vocabulary** — its *shape*, not its contents. Project
    keys that look like project keys, the workflow's own status words
    (`Code Review`, `QA`, `Closed`), custom fields as custom fields
@@ -482,8 +620,14 @@ exit non-zero; configuration gaps only warn.
 
 ### How much each surface is worth
 
-Measured, by stripping the fixture back to Jira alone and running the findings
-pass: **seven findings became four.**
+**There used to be a count here — "seven findings became four" — and it is gone
+because it does not reproduce.** Re-run, it came back differently depending on
+what was stripped out of the graph, what the vault happened to hold, and whether
+the coverage kinds (§7) were counted as findings or as Sources rows; a figure
+nobody can reproduce weakens the claim it was meant to support. What is
+reproducible is the table, and it is not a guess either — it is the same
+per-surface reckoning `verify-collector.mts` prints from its own `SURFACE_NODES`
+list, so it can be re-derived by pointing that at any graph:
 
 | surface | without it |
 |---|---|
@@ -496,9 +640,18 @@ pass: **seven findings became four.**
 | **person nodes** | the alerts still fire, and every "who weighed in" rollup counts the same human two or three times |
 
 The two that go first — a commitment nobody tracked, and two sources
-disagreeing — are exactly the two **no single tool can produce**. Jira alone
-leaves the structural findings (`cycle`, `suspect_link`,
-`undetected_dependency`), which are real and are not the product's argument.
+disagreeing — are exactly the two **no single tool can produce**, and that is the
+product's argument stated as a dependency.
+
+What Jira alone still supports is the structural side: a `cycle`, drawn from its
+own declared and corroborated dependency links, and `aging`, which is the
+gateway reading Jira's status and its own history and needs nothing else — the
+two findings `findings.ts` describes as citing "our own reading of Jira". Both
+are real; neither is the argument. The other two structural results,
+`suspect_link` and `undetected_dependency`, also survive on Jira alone, but they
+land on Sources rather than on the front door (§7), so a Jira-only graph produces
+a coverage page and a short alert list — which is the honest picture of what one
+tracker can tell you about itself.
 
 ### Jira
 
@@ -617,7 +770,7 @@ trail.
 ### Confluence
 
 ```json
-{ "id": "page:conf/48210331", "kind": "page", "label": "ADR-014 — dedupe cache",
+{ "id": "page:confluence/48210331", "kind": "page", "label": "ADR-014 — dedupe cache",
   "recordRef": "records/page/48210331.json" }
 ```
 
@@ -629,6 +782,11 @@ trail.
 
 `keys` is the join. `extractKeys` will find them in the body as well, but a page
 that states them explicitly joins even when the prose does not name one.
+
+**The prefix is `page:confluence/`, in full.** `projectPages` strips exactly that
+string off the id to build the record key, so `page:conf/48210331` — which this
+block used to show — loads its record into memory under a name nothing looks up.
+The page then renders with metadata and no text, and nothing fails.
 
 ### Miro
 
@@ -655,10 +813,38 @@ Miro owns `position` and nothing here may write it back.
 
 ### GitHub
 
+**The id carries the owner as well as the repo** — `owner/repo/number`, per §3 —
+because a PR number is only unique inside one repository and two repos in the
+same programme will collide on `#4198` within a quarter.
+
 ```json
-{ "id": "pr:github/payments/4198", "kind": "pr", "label": "Add idempotency key",
-  "recordRef": "records/pr/4198.json" }
+{ "id": "pr:github/example-org/payments-web/4198", "kind": "pr",
+  "label": "Dedupe cache", "at": "2026-07-28T15:20:00Z",
+  "url": "https://github.com/example-org/payments-web/pull/4198",
+  "recordRef": "records/pr/example-org-payments-web-4198.json" }
 ```
+
+```json
+{ "number": 4198, "title": "Dedupe cache",
+  "branch": "feature/PAY-9012-dedupe-cache", "author": "dana",
+  "at": "2026-07-28T15:20:00Z", "merged": true }
+```
+
+**`branch` is where the join lives, and it is not optional.**
+`feature/PAY-9012-dedupe-cache` is how a pull request attaches to the spine; a
+title is routinely just `fix/login`. `import-github-prs.mts` reads both and
+`headRefName` is what it needs from the capture.
+
+**And the record's filename is derived, not declared.** For a PR the gateway
+looks it up as the id with `pr:github/` stripped and every remaining `/` turned
+into `-` — so this node's body must be at
+`records/pr/example-org-payments-web-4198.json`, which is exactly what
+`import-github-prs.mts` writes. See §4: `recordRef` is a declaration nothing
+follows, so pointing it at a differently-named file does not rescue one. The
+committed `fixtures/` disagrees here — it writes `records/pr/4198.json` — with
+the consequence that its three PR bodies are loaded and never found, and the
+inference corpus is built without them. Nothing errors; there is simply less to
+read.
 
 ### People — the one that closes the identity map
 
@@ -695,22 +881,35 @@ team of an unschedulable plan. `INFERRED` without a `why` is dropped on read.
 
 ## 11. Connecting the real sources
 
-Read against the actual tools rather than from intent. **`programme_graph` is
-the only one that produces a graph**; the rest are read/write CLIs and scrapes,
-so §10's shapes are what somebody has to emit *into*, not what already exists.
+Read against the actual tools rather than from intent. Of the outside tools this
+was designed around, **`programme_graph` is the only one that produces a graph**;
+the rest are read/write CLIs and scrapes, so §10's shapes are what somebody has
+to emit *into*, not what already exists. Every capture below is now in this repo
+except the two marked external.
 
-**All five emitters are written now**, and `ROADMAP.md`'s "The five collectors,
-run together" has the run that proves they merge into one graph. What follows is
-what each reads and what still costs something.
+**All five surface emitters are written**, and `ROADMAP.md`'s "The five
+collectors, run together" has the run that proves they merge into one graph. What
+follows is what each reads and what still costs something.
 
 | surface | capture | emitter | what still costs something |
 |---|---|---|---|
-| **Jira** | `programme_graph refresh` + `fetch-jira-sprints.mts` | `import-programme-graph.mts` | nothing — sprint state was the last gap and the fetcher closed it |
-| **Confluence** | `confluence-cli.py read <id> --format json` | `import-confluence-pages.mts` | the CLI drops `version.when`; an undated page is **refused** rather than guessed. One line upstream fixes it |
-| **Slack** | `slack-cli.py message/channel/user list` | `import-slack-messages.mts` | nothing. `--users` also closes the identity map |
+| **Jira** | `fetch-jira-sprints.mts` then `fetch-jira-issues.mts` | `import-jira-issues.mts` | nothing. This is the spine and it runs first |
+| **Jira** *(alternative)* | `programme_graph refresh` — **external tool**, not in this repo — plus `fetch-jira-sprints.mts` | `import-programme-graph.mts`, an adapter | sprint nodes, which that tool does not emit at all. See below |
+| **Confluence** | `fetch-confluence.mts` (REST, API token) | `import-confluence-pages.mts` | nothing. It was written *because* the external `confluence-cli.py` drops `version.when`, and an undated page is **refused** rather than guessed |
+| **Slack** | `fetch-slack.mts` (`--keys` search, or `--channels`) | `import-slack-messages.mts` | nothing. `--users` also closes the identity map, and search is the mode that survives Enterprise Grid |
 | **Zoom** | `capture-zoom-notes.mts` (Playwright, logged-in profile) | `import-zoom-notes.mts` | **notes, not transcripts** — the recording API is blocked, so no speakers and no offsets. See §10 |
-| **GitHub** | `gh pr list --json` | `import-github-prs.mts` | `github-cli.py` is a write tool with no `pr list`, so `gh` is the reader |
+| **GitHub** | `gh pr list --json` — **external tool** | `import-github-prs.mts` | `github-cli.py` is a write tool with no `pr list`, so `gh` is the reader |
 | **Miro** | live, via `MIRO_ACCESS_TOKEN` | — | nothing — this one was always done |
+
+**Jira has two paths and the first is the one to reach for.** The
+`programme_graph` row is kept because that tool exists, is somebody's real
+programme graph, and the whole contract was designed to accept it — but it is not
+on every machine, and where it is absent there was no way to get Jira into the
+graph at all. `fetch-jira-issues.mts` is the same job sourced from Jira itself:
+one REST read, one file, no interpretation. Its scope is **sprints, not a date
+window** (`--last-closed 3`), because a commitment's container closing is the
+trigger and a scope that does not align to sprint boundaries either misses the
+container or drags in issues no closing will ever check.
 
 Every emitter is **offline**: files in, files out, no credentials, no network, so
 `verify-collector.mts` can be pointed at the result. Every one **merges** rather
@@ -739,7 +938,7 @@ What the adapter does, and every line of it was found by reading the tool:
 |---|---|
 | `confidence` → `tier` | same three values, different name. **The single most load-bearing line** — `isStructuralDependency` tests the tier, and an absent one means no cycle detection at all |
 | `reconciled` passed through | `reconcile.py` marks every dependency edge it touched, so a reader can tell *"checked and still AMBIGUOUS"* — the stale-link finding — from *"never reconciled"*, which is not a finding. **Both reconciliation findings are silent without it** |
-| `issue_type` → `level` | Jira's own word to our fixed five; hierarchy is a value here, not a node kind |
+| `issue_type` → `level` | Jira's own word to the fixed set in §4; hierarchy is a value here, not a node kind. Anything unrecognised becomes `task`, which is the honest default — work that is not above anything |
 | `story_points` → `points`, `updated` → `updatedAt` | renames |
 | `statusCategory` **derived** | not in their output, and it is our last-resort fallback. Coarse on purpose — `MC_STATUS_MAP` is the real answer, reading the vendor word we pass through untouched |
 | `label` stripped of its key | theirs is `"PAY-9031 Emit a settled event"`; ours is the summary, because the key is already a column |
@@ -758,15 +957,27 @@ node there is no trigger, and the alert this product is built on cannot fire on
 real data — **silently**, because nothing errors and the front door simply says
 nothing needs you.
 
-Jira's agile API has all of it, so this is a fetch nobody has written rather than
-information that does not exist:
+The information was never missing — Jira's agile API has all of it — and **the
+fetch is written now**. `scripts/fetch-jira-sprints.mts` reads it and writes
+exactly the file the adapter already takes:
+
+```bash
+npx tsx scripts/fetch-jira-sprints.mts --board 42 --out sprints.json
+```
 
 ```
 GET /rest/agile/1.0/board/{boardId}/sprint
 ```
 
-Until it is written, pass it by hand — the adapter takes a `--sprints` file and
-**warns loudly when nothing is closed**:
+With no `--board` it lists the boards it can see and stops, because the board id
+is the one thing you cannot guess. It is a separate command rather than a step
+inside the adapter for the reason every collector here splits in two: the adapter
+stays offline and deterministic, so `verify-collector` can be pointed at its
+result.
+
+The `--sprints` file can also be written by hand, and the adapter **warns loudly
+when nothing in it is closed** — because a graph with no closed container fires
+no flagship finding, silently:
 
 ```json
 { "PAY Sprint 12": { "state": "closed", "endsAt": "2026-07-31",
@@ -777,10 +988,14 @@ Until it is written, pass it by hand — the adapter takes a `--sprints` file an
 
 Against a synthetic input shaped exactly as `programme_graph` writes one:
 adapter → `verify-collector` reports the contract holding → the gateway runs →
-**`undetected_dependency` and `suspect_link` both fire, quoting the tool's own
-evidence** (*"description names it as a blocker"*, *"Jira link: is blocked by"*).
-And `inspect statuses` flags `Selected for Dev` as falling through, which is the
-`MC_STATUS_MAP` entry to write first.
+**`undetected_dependency` and `suspect_link` are both detected, quoting the
+tool's own evidence** (*"description names it as a blocker"*, *"Jira link: is
+blocked by"*). They arrive as **Sources coverage rows rather than as alerts**
+(§7), which is where the reconciliation results belong and is not a weaker
+result: the tier loop ran, on somebody else's graph, and said something true
+about it. And `inspect statuses` flags `Selected for Dev` as falling through,
+which is the `MC_STATUS_MAP` entry to write first.
 
-The three findings that need the other surfaces stay absent, as measured in §10:
-Jira alone cannot produce a promise nobody ticketed, or two sources disagreeing.
+What Jira alone cannot produce stays absent, and §10 says why in each case: a
+promise nobody ticketed has to have been made in a conversation, and two sources
+disagreeing needs a second source.

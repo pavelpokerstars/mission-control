@@ -11,8 +11,15 @@ read *"nothing here has been implemented yet"* — and the rebuild happened:
 findings list, and the five vendor panes and the two lenses are gone as
 destinations. The one thing still outstanding is §1's promise that the graph,
 the timeline and the focus lens come back **as evidence**, reached by clicking
-"why?" on an alert; `buildStoryline`, `buildTimeline` and `buildRelationGraph`
-are kept as its specification.
+"why?" on an alert. `buildStoryline` is kept unused as that view's
+specification; `buildTimeline` and `buildRelationGraph` are not placeholders at
+all — both are live gateway code behind the findings pass and the dossier, and
+the `aging` finding measures with the first of them. The evidence view reuses
+the pair rather than replacing them.
+
+**It runs with no credentials at all.** `npm run dev` — the shell on :4200, the
+gateway on :8787, reading committed fixtures. `README.md` is the way in and the
+product argument; `docs/design-preview.html` is the clickable target.
 
 Read `ROADMAP.md` for what is built and what is left, `CLAUDE.md` for how to
 change it safely, and `ARCHITECTURE.md` for the rules layer underneath — field
@@ -24,9 +31,9 @@ This file is the *why*; that one is the *what*.
 
 **Both are written from `docs/design-preview.html`, and that is the one that
 decides.** It is committed, standalone and clickable — open it off disk. Its
-`every page` screen is the map of §3 below, and where any prose here or in
-`DESIGN.md` disagrees with it, the preview wins: it is the version that was
-tested in a browser. Read it before building a page.
+first tab, `every page` — captioned *Six page types* — is the map of §3 below,
+and where any prose here or in `DESIGN.md` disagrees with it, the preview wins:
+it is the version that was tested in a browser. Read it before building a page.
 
 `HACKATHON.md` (local only, not published) is where the decisions below came from — the two planning
 sessions, the argument that ran through them, the board regrouped, the video
@@ -44,7 +51,8 @@ The front door is a single line of text telling you something you did not know:
 a commitment nobody ticketed, a date that moved under you, two people who
 disagree about whether something shipped. The graph, the timeline and the focus
 lens do not disappear — they are demoted from *front door* to *evidence*, reached
-by clicking "why?" on an alert.
+by clicking "why?" on an alert. **That last clause is the one thing in this
+document not yet built**; there is no "why?" button on a shipped alert page.
 
 > We're on the ship, trying to navigate, trying to get updates as soon as
 > possible. Not to run into the iceberg and then get a report after.
@@ -107,15 +115,20 @@ drill-down** — build the detector first and the feed second.
   the work then?"* — has no answer on the record. The resolution in §4 is mine,
   not the room's.
 
-### Open
+### Open at the time — and how each was settled
 
 - **Personal alerts or program-level alerts?** The graph author assumed personal; the delivery lead read
   it as alerts against the delivery program. Personal means building a
   configuration surface, which is a whole screen nobody has budgeted.
+  **Settled program-level**, and the configuration surface was never built —
+  there is no settings route and nothing in the app is per-person.
 - **What is the layer behind the notification?** The delivery lead asked this directly on
-  21 Aug and the meeting ended without answering. §3 is a proposal, not a record.
+  21 Aug and the meeting ended without answering. §3 was the answer proposed
+  here; **it is now the shipped one**, and the checkable part of it — the route
+  set, the toolbar of three, the retired vocabulary — is asserted by
+  `scripts/verify-design.mts` on every `npm run verify`.
 - **What stops people gaming it?** The graph author's question, unanswered in the room.
-  The answer in §11 is a good one and belongs on camera.
+  **Answered in §11**, and it belongs on camera.
 
 ---
 
@@ -123,6 +136,14 @@ drill-down** — build the detector first and the feed second.
 
 Eight destinations become four. The test applied to every candidate: **can you
 name the moment somebody opens it, and what they do next?**
+
+**That eight is the count of the app being deleted** — the five vendor panes,
+the two lens panes and the storyline route. It is not a count of anything below,
+and it is not the router's: `apps/shell/src/alerts/router.ts` carries eight
+*routes*, because a note page and the Ask index hang off Later and the
+conversation. Same digit, different noun, and one must never be quoted as the
+other. (The deleted components are not named anywhere published, deliberately —
+`BUILD-PLAN.md` §2 gives the reason.)
 
 ### It arrives
 
@@ -156,10 +177,16 @@ third page shape, which is most of why the app is learnable.
 
 ### Reached only from a citation
 
-Five record views — a Slack message in its thread, a Zoom segment at its
-timestamp, a Jira issue, a Confluence page, a Miro frame. **No menu entry, no
-browse mode, no search across them.** You arrive by clicking a piece of
-evidence, and the record opens on the exact line with context either side.
+Six record views — a Slack message in its thread, a Zoom segment at its
+timestamp, a Jira issue, a Confluence page, a Miro frame, and a vault note.
+**No menu entry, no browse mode, no search across them.** You arrive by clicking
+a piece of evidence, and the record opens on the exact line with context either
+side.
+
+The vault note is the odd one, and its oddness is the point: the other five have
+a vendor behind them and offer a link out to it, and ours has nobody to link to.
+That missing link is what tells the reader which records are somebody else's and
+which are ours.
 
 A citation that drops you at the top of a ninety-minute transcript has not
 really been followed.
@@ -201,6 +228,11 @@ eight minutes later without anyone noticing.
 **Fire when a container closes.** An epic moves to done, a sprint ends, a retro
 is held. That is the only moment that is neither nagging nor too late.
 
+That is the reasoning; what shipped is narrower, and §5's table is the built
+list. The graph has exactly two kinds of thing that can close — `sprint` and
+`release` — and the detector keys on those. An epic here is a relation between
+issues, not a node with a state, and nothing models a retro at all.
+
 ---
 
 ## 5. The mechanism
@@ -220,12 +252,19 @@ what was promised — while the firing decision stays in deterministic code.
 
 A checklist item is a `commitment` note, which `@mc/domain` already defines as
 *"a promise made aloud that is not a ticket yet, and may never be one."* Its
-`relatedKeys` is the tick: keys present means tracked, empty means not.
+`relatedKeys` is the tick — but only the keys somebody actually typed. **A key we
+reconstructed is a claim about a ticket, not a ticket**, and only the first sort
+may silence the alert; `filedKeys()` in `findings.ts` is the one line that knows
+the difference, keeping the keys whose join tier is `EXTRACTED` — the tier that
+means the text named it — and discarding `INFERRED` and `AMBIGUOUS`.
 
-```ts
-// unticketed after the container closed
-n.kind === 'commitment' && n.status === 'open' && n.relatedKeys.length === 0
-```
+The shipped gate is four conditions, and each is doing work: an **open**
+`commitment` note, with **no filed key**, carrying **an owner and a due date**
+(the precision gate below), whose **container has closed**. Written as the
+predicate it is `filedKeys(n).length === 0` — and the difference between that
+and the obvious `relatedKeys.length === 0` is not cosmetic. The moment anything
+upstream starts reconstructing joins, the naive version goes quiet on exactly
+the promises that genuinely were never filed, silently, with nothing failing.
 
 **The one change that makes this possible — since done; this is why.** When this
 was written, a commitment note was only ever written *when a ticket is created* —
@@ -236,7 +275,13 @@ whether or not anyone files anything. That is the whole unlock, and `/workshop`
 now does it — ROADMAP.md **D1**.
 
 `/tidy` already handles the inverse — commitments whose ticket has moved on
-(`skills.ts`, case 2). There is no case for a commitment with no key aging.
+(`skills.ts`, case 2). And the case this once said did not exist — a commitment
+with no key, aging — turned out to be a second alert rather than a gap.
+`missing_ticket` fires when the container **closes** and says the tracker never
+got it; `dropped_commitment` fires while the container is still **open** and
+says the conversation dropped it. Different claim, different moment, different
+thing to do about it, and mutually exclusive by construction on
+`container.state`, so neither detector has to know the other exists.
 
 ### Precision gate
 
@@ -252,15 +297,28 @@ a week, which is the failure `surfaceMemory` is deliberately quiet to avoid.
 
 | Alert | Trigger | Status |
 |---|---|---|
-| missing ticket | epic closes · sprint ends · retro held | ✔ `findMissingTickets`, once D1 landed |
+| missing ticket | a sprint or a release closes | ✔ `findMissingTickets`, once D1 landed |
 | circular dependency | an arrow closes a loop | ✔ cycle detection + canvas poll |
 | sources disagree | a new record contradicts a "done" claim | ✔ `findContradictions` |
 | sprint going sideways | daily, over the active sprint | ✔ as the `aging` finding |
 
 Written as "five of six detectors already exist; the work is re-homing them
-behind one type and adding one". That is what happened — all six fire, and two
-of them live on Sources rather than the front door because they scale with the
-programme. `README.md`'s six-kind table is the built list.
+behind one type and adding one". That is what happened, and then the commitment
+half of it split in two. **`FindingKind` now carries eight**, and the arithmetic
+is worth stating once because it is easy to subtract wrongly: eight kinds fire,
+**two are coverage** — `suspect_link` and `undetected_dependency`, which fall out
+of the graph's tiers one per edge and so scale with the programme — and the
+remaining **six reach the front door**. The two coverage kinds are still
+detected, still deduplicated, still suppressed by a dismissal and still
+reachable through `list_findings`; `COVERAGE_KINDS` and `isAlertKind()` in
+`@mc/domain` only keep them off the alert list, and Sources is where they are
+read.
+
+The four in the table above plus those two coverage kinds are six. The last two
+both came out of the flagship rather than from anywhere new:
+`unlinked_commitment` — a promise whose ticket we can name and nothing on any
+surface says so, which wants a different sentence and a different button from
+"nobody filed this" — and `dropped_commitment`, above.
 
 ### A `Finding` is not a `WorkSignal`
 
@@ -277,9 +335,17 @@ type FindingSubject =
 
 ### Constraints that must not break
 
-- **The scheduler stays read-only.** A findings pass may detect and propose; it
-  must not post outward by itself. That is the property that makes a background
-  job tolerable.
+- **The scheduler reads, and its one outbound act is the notification.** It runs
+  four slots — a re-derive at 07:00, `/standup` at 08:00, a second re-derive at
+  19:00, `/tidy` at 22:00 — all of them reading skills, none of them writing a
+  vendor field or changing a note. It does send the digest, which it has to:
+  §3's "It arrives" *is* the product's front door, and a background job that
+  detected in silence would be a dashboard again. Four things hold it: it is
+  gated on `MC_SLACK_WEBHOOK_URL` and sends nothing without one, it announces
+  each finding once ever (read from the durable log, so a restart does not
+  repeat), it refuses to announce a baseline run, and it carries a pointer
+  rather than a quote. Anything beyond that — a field written, a note changed,
+  a ticket filed on a timer — is what would make a background job intolerable.
 - **`dedupeKey` on everything it emits**, or two passes leave two identical
   decisions.
 - **Check the durable log before repeating**, the way `memory.ts` does.
@@ -294,15 +360,15 @@ The rule that keeps the five vendor panes from returning through the back door:
 **Sources answers "what does it know?", never "what did they say?"**
 
 Rows show what is *in scope* — `project PAY · epic, story, bug · last 4 sprints`,
-`#eng-platform · #standup · #payments · +3`. You can see and change which
-channels are read. You cannot click through and read them. The moment a row
-expands into a message list, the Slack pane is back with an extra click in front
-of it.
+`#eng-platform · #standup · #payments · +3`. You can see which channels are
+read. You cannot click through and read them, and you cannot change the scope
+from here — Sources answers, it does not configure. The moment a row expands
+into a message list, the Slack pane is back with an extra click in front of it.
 
 **One exception: the failures.** A block listing what did *not* join — arrows
 whose ends do not both resolve to a key, pages naming no ticket, a recording with
 no transcript. This is repair, not browsing: you only ever see the records that
-failed, never the 98% that did not.
+failed, never the overwhelming majority that joined cleanly.
 
 It is nearly free. The connectors already drop exactly these
 (`listConnectors`, `listAppCards`, `listStickies`) — silently. Counting them

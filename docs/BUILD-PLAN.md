@@ -1,9 +1,13 @@
 # Build plan
 
-> **`ROADMAP.md` is the live ledger; this is the reasoning behind it.** Every
-> step below has landed, Step 1 included — it is D1 in the roadmap, and
-> `/workshop` now writes a `commitment` note when the promise is made. Read this
-> for *why* the work was sequenced this way; read `ROADMAP.md` for what is left.
+> **This is the historical sequencing record. `ROADMAP.md` is the live ledger.**
+> Every step below has landed, Step 1 included — it is D1 in the roadmap, and
+> `/workshop` now writes a `commitment` note when the promise is made. The body
+> is deliberately left in the imperative it was written in: a plan read as a
+> plan is the only way to see why the order was that order, and rewriting it
+> into past tense would turn it into a second, worse copy of the roadmap. Where
+> a step landed differently from the way it is instructed here, a note under it
+> says so. Read `ROADMAP.md` for what is built and what is left.
 
 **The approach is decided.** Mission Control becomes alert-first, exactly as
 `design-preview.html` shows. This file is the bridge from that decision to the
@@ -13,7 +17,7 @@ Read before touching code:
 
 | | |
 |---|---|
-| `HACKATHON.md` | how the direction was decided — local only, not published |
+| `ROADMAP.md` | the live ledger — what is built and what is left |
 | `DIRECTION.md` | what we are building and why |
 | `DESIGN.md` | what the screen does — the spec |
 | `design-preview.html` | what it looks like — open it, click through it |
@@ -61,16 +65,31 @@ mistake already made once, from a stale sentence in shipped code.
 
 **`WorkSignalKind` is already an alert taxonomy** — `disagreement`, `cycle`,
 `blocked_by`, `aging`, `unwritten`, `activity`, with severity ranking
-(`libs/domain/src/index.ts`). Five of six detectors exist. The work is re-homing
-them behind one type and adding the one that does not.
+(`libs/domain/src/index.ts`). Five of those six detectors exist. The work is
+re-homing them behind one type and adding the one that does not.
+
+> **The one type is `FindingKind`, and it grew past this list.** Eight kinds
+> ship, of which six reach the front door: `COVERAGE_KINDS` holds `suspect_link`
+> and `undetected_dependency`, which are detected and cited like anything else
+> but answer *"what is our coverage"* rather than *"what needs you"*, so
+> `isAlertKind` sends them to Sources instead. The six names above are a
+> different type with different members — `WorkSignalKind` still has all of
+> them, still ranking the lane an alert is read from — so neither six may be
+> quoted as the other.
 
 ---
 
 ## 3. The order to build in
 
 Each step is small enough to finish, and each ends in something you can check.
-There is no test framework here — verification is `npm run typecheck:all`,
-`npm run build`, and curling the gateway.
+There is no test framework here — verification is **`npm run verify`**, the one
+acceptance command: the typecheck, a byte-identical regenerate of both committed
+fixtures, the four verifiers and the shell build, in a few seconds with no
+credentials, no network and no server. (When this was written that command did
+not exist and the answer was `typecheck:all`, `build` and a curl.) Curling the
+gateway shows you an answer; it cannot show you that a screen works — curl is
+precisely the path that cannot notice a link going nowhere, and one that did is
+what "A wrong turn" cost. Open the browser.
 
 ### Step 1 — record a commitment when it is made
 
@@ -122,6 +141,12 @@ missing case, not a rewrite of that one.
 **Fire when a container closes** — an epic done, a sprint ended, a retro held.
 Not continuously; see `DIRECTION.md` §4.
 
+> **What shipped is narrower, and the graph is why.** Exactly two node kinds
+> carry a state that can close — `sprint` and `release` — so `findings.ts` keys
+> on those. An epic here is a relation between issues rather than a node with a
+> state, and nothing models a retro at all. The rule is unchanged; the list of
+> things it can watch is shorter than the sentence above promises.
+
 ### Step 4 — the findings route and the scheduler slot
 
 A route that returns `Finding[]`, and a slot in `apps/gateway/src/scheduler.ts`
@@ -129,12 +154,33 @@ beside `standup` and `tidy`.
 
 Three constraints, all load-bearing:
 
-- **The scheduler stays read-only.** It may detect and propose; it must not post
-  outward by itself. That is the property that makes a background job tolerable.
+- **The scheduler writes no field and changes no note.** It reads, it detects,
+  and what it produces takes a human before it becomes a vendor write. That is
+  the property that makes a background job tolerable.
 - **`dedupeKey` on everything it emits**, or two passes leave two identical
   decisions.
 - **Check the durable log before repeating**, the way `memory.ts` does — a
   restart must not re-announce a finding it already announced.
+
+> **It landed as four slots, and the first constraint had to be stated more
+> carefully.** `SCHEDULE` is `refresh` 07:00, `standup` 08:00, `refresh-pm`
+> 19:00, `tidy` 22:00 — the two edges of a working day, each re-derive followed
+> by the ceremony that reads it. The route is `GET /api/findings`; the findings
+> pass runs inside `refreshJob` rather than in a slot of its own, because a
+> notification is about something that just changed and asking on a timer of its
+> own would announce yesterday's state every morning.
+>
+> **And it does post outward — once, deliberately, through one door.** Step 6's
+> Slack transport is reached from `refreshJob` via `notify()`, so "the scheduler
+> posts nothing" is no longer the true sentence and must not be quoted as one.
+> The accurate property is the bullet above plus five gates on that single
+> outbound act: `MC_SAFE_MODE` is on unless explicitly turned off and refuses it
+> along with every vendor write; it is off again unless `MC_SLACK_WEBHOOK_URL`
+> is set; it is deduplicated against the durable log, so nothing is announced
+> twice; it refuses to announce a baseline run at all, because a first pass sees
+> a quarter of history as new; and what it sends is a **pointer** — a headline,
+> the detector's own line about why it matters, and a link to the alert. The
+> evidence stays on this machine.
 
 ### Step 5 — the front end
 
@@ -179,6 +225,13 @@ four surfaces were mock-only — days of work whose output nobody sees on camera
 > that same file — `ROADMAP.md` track B. Miro remains the only live vendor
 > client. Freezing a slice and connecting a source became the same act, which is
 > what made both affordable.
+>
+> **And there are two slices now, not one.** `fixtures/` is the demo, and
+> `fixtures-programme/` is the larger one that answers "does this hold at
+> programme size"; `npm run verify` regenerates both and fails on a byte of
+> drift in either. A second fixture is only affordable because of the paragraph
+> above — it is the same emitters writing the same file, not a second data shape
+> to maintain.
 
 Two fixture jobs are needed either way:
 
@@ -209,7 +262,10 @@ From `DESIGN.md` §8 and `KNOWN-GAPS.md`, repeated because they cost real time:
   a logged-out CLI returns it alongside `is_error: true`. The first and third
   are fixed; the second is open in `KNOWN-GAPS.md` §1. A one-sided bug reads as
   the model being stupid rather than as a wiring fault, which is what makes it
-  expensive.
+  expensive. And it is no longer two paths: `copilot.ts` and `openrouter.ts` are
+  model backends too — the second chosen by `MC_MODE=openrouter` rather than
+  fallen back to — with a scripted stub underneath them all so an empty `.env`
+  still answers. A fix on one seam has to be checked on every one of them.
 - **A class name is a namespace.** Three collisions so far, each silent.
 
 ---
@@ -218,12 +274,13 @@ From `DESIGN.md` §8 and `KNOWN-GAPS.md`, repeated because they cost real time:
 
 ```bash
 npm install          # node_modules may be empty in a fresh checkout
-npm run typecheck:all
+npm run verify       # the acceptance command — a few seconds, no credentials
 npm run dev          # shell :4200, gateway :8787
 node scripts/inspect.mjs health
 node scripts/inspect.mjs work sam
+npm run docs                        # docs/html/ is generated and gitignored
 open docs/html/everything.html      # all the documentation, one page
-open docs/design-preview.html       # the target
+open docs/design-preview.html       # the target — committed, open it off disk
 ```
 
 Then Step 1. It is the smallest change with the largest consequence, and nothing

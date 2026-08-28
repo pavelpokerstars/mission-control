@@ -169,7 +169,13 @@ export function ConversationPage({
 
       {c.turns.length ? (
         <div className="thread">
-          <Turns turns={c.turns} streaming={busy} scrollOnGrow followups={followups} />
+          <Turns
+            turns={c.turns}
+            streaming={busy}
+            scrollOnGrow
+            followups={followups}
+            chains={!!subject}
+          />
         </div>
       ) : (
         <div className="emptychat">

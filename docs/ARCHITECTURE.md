@@ -10,9 +10,10 @@
 > Confluence page and memory — see **[CEREMONY-FLOW.md](./CEREMONY-FLOW.md)**,
 > which is shorter and has diagrams.
 >
-> **Worked examples use `MC-101`–`MC-105`.** The fixture is `PAY-*`, `PLT-*` and
-> `WEB-*`, so no printed output here can be reproduced by running anything.
-> Treat every example as illustrative.
+> **Worked examples use `MC-101`–`MC-105`.** Neither committed fixture uses
+> those keys — `fixtures/` is `PAY-*`, `PLT-*` and `WEB-*`, and
+> `fixtures-programme/` is `ORB-*` and `HLX-*` — so no printed output here can
+> be reproduced by running anything. Treat every example as illustrative.
 
 ---
 
@@ -127,9 +128,10 @@ The four rules below are the specification for whatever renders it next —
 page", read "whatever renders this".
 
 - **Additive.** No provider → `createSummariser` returns `null` → the route
-  answers `unavailable` and nothing is rendered; `GET /api/issue/:key` never
-  consults it either way, so the dossier is identical with a provider and
-  without one. Never a broken box.
+  answers `unavailable` and nothing is rendered; `GET /api/issue/:key` — the
+  dossier, which from here on means that payload and not a page — never consults
+  it either way, so the dossier is identical with a provider and without one.
+  Never a broken box.
 - **Never on the critical path.** A *separate route* from the dossier, written on
   demand and cached on disk against a hash of the rendered brief. It answers
   immediately in every case — `ready`, `pending`, `empty`, `unavailable` — and
@@ -192,8 +194,9 @@ carries it, this is how:
 | Zoom | regex-extracted per transcript segment, with its time offset — except a Zoom Docs note, which has no timing: the segment is a paragraph and the offset is its index (`timed: false`) |
 
 It is also the system's blind spot, and everything downstream is shaped around
-it. The join fires only when somebody typed a key, and most text-bearing records
-carry none — in the committed fixture, *written* to make the join work, most
+it. The join fires only when somebody typed a key, and a large share of
+text-bearing records carry none — in the committed fixture, *written* to make
+the join work, most
 transcript segments and most stickies do not. *"Someone needs to own the dedupe
 cache"* is a commitment with no key in it. That is why `sources.ts` counts the
 misses out loud ("pages name no ticket", "stickies carry no key"), and why
@@ -242,6 +245,42 @@ rather than something you parse out of sticky-note text at 3am.
 Encoded as `FIELD_OWNER` in the domain lib. Anything else that changes an owned
 field is a **proposal**, not a write. Miro may not set status. Jira may not set
 position. Read this table out loud before adding any new write path.
+
+### Four gates, innermost to outermost
+
+`FIELD_OWNER` is the first of four, and it is the only one of the four that is
+about *what*. The other three are about who, what comes back, and whether this
+instance is allowed outside at all:
+
+| Gate | Question it answers | Where |
+|---|---|---|
+| `FIELD_OWNER` | which surface may write this field | `libs/domain/src/index.ts` |
+| `HUMAN_ONLY` | who may press the button — never a model | `apps/gateway/src/agent.ts` |
+| the echo token | which inbound event is our own write coming home | `apps/gateway/src/events.ts` |
+| **safe mode** | does this instance write outward at all | `apps/gateway/src/safe-mode.ts` |
+
+The last one is the one this document used to leave out, and it is the one a
+reader will actually meet: **it is ON unless `MC_SAFE_MODE` is explicitly off**,
+because the failure it prevents is irreversible and the cost of it being on is a
+line telling you to turn it off. `guardConnectors` wraps the `Connectors` object
+itself rather than each call site, so every mutating vendor method and the
+outbound Slack digest refuse, and a writer added later is covered without
+anybody remembering to cover it — the same argument as `HUMAN_ONLY` being a
+filter on the shared tool seam rather than a sentence in a prompt.
+
+It blocks nothing of ours. The vault, the event log and the proposals all still
+work, so the evidence still assembles and you can read exactly what *would* have
+happened; only the write fails.
+
+One consequence is worth stating plainly, because it is deliberate and it looks
+like a bug. When a primary action is refused by our own switch, `act.ts` catches
+it and reports the act in the past tense anyway — `pretendItWorked`, the one
+place this app says something happened that did not. It names no ticket and
+claims none of the consequences, the proposal stays **pending** on the durable
+log, and the alert is still on the list when you go back. `MC_SAFE_MODE=off` is
+the honest version: on a fixture the write is then real against the in-memory
+connectors, with no credentials and no network, and the alert genuinely stops.
+`KNOWN-GAPS.md` carries the full accounting.
 
 ### The event log
 
@@ -347,15 +386,22 @@ arrow on it is wired — inbound handlers in `webhooks.ts`, the fan-out in
 table marks. What almost none of it can do is *reach a vendor*. **Miro is the
 only surface with a live client** (`real/miro.ts`, on `MIRO_ACCESS_TOKEN`); Jira,
 Confluence, Zoom and Slack are always the graph projection, which the gateway
-says at boot: `[connectors] miro=live jira/confluence/zoom/slack=graph`. So
-`jira.createItem`, `jira.comment`, `confluence.publish` and `slack.post` land in
-that projection's own memory — which is what makes the created ticket appear in
-the demo, and is not Atlassian — and `jira.linkItems` is a deliberate no-op. The
-one outbound that leaves the process is `notify.ts`'s Slack incoming webhook,
-and it carries the findings digest rather than a mirrored write. Read the table
-as the contract each connector implements against, not as traffic you can watch
-today. What it does not show is the collector path the product runs on by
-default:
+says at boot — `[connectors] miro=mock jira/confluence/zoom/slack=graph` on a
+fresh checkout, the first word flipping to `live` the moment a
+`MIRO_ACCESS_TOKEN` is present. So `jira.createItem`, `jira.comment`,
+`confluence.publish` and `slack.post` land in that projection's own memory
+**when safe mode is off** — which is what makes the created ticket appear, and
+is not Atlassian — and `jira.linkItems` is a deliberate no-op. Under the default
+they do not land at all: `guardConnectors` refuses first, and the alert page
+reports the act without it having happened (see *Four gates* above).
+
+The one outbound *capable of* leaving the process is `notify.ts`'s Slack
+incoming webhook, carrying the findings digest rather than a mirrored write —
+and it needs both `MC_SLACK_WEBHOOK_URL` and `MC_SAFE_MODE=off`. With an empty
+`.env` the review inbox is the only transport and nothing leaves the machine at
+all. Read the table as the contract each connector implements against, not as
+traffic you can watch today. What it does not show is the collector path the
+product runs on by default:
 
 ```
   Jira ─┐
@@ -368,8 +414,15 @@ default:
 ```
 
 **Nothing here schedules a collector.** Every one is a hand-run command —
-`npx tsx scripts/import-programme-graph.mts` and its four siblings — so a new
-`graph.json` appears when somebody puts one there. What runs twice daily is the
+`npx tsx scripts/import-jira-issues.mts` and its four siblings — so a new
+`graph.json` appears when somebody puts one there. Each collector is a pair: a
+`fetch-*` or `capture-*` that reads the vendor, and a deterministic `import-*`
+that interprets what it wrote — files in, files out, no credentials and no
+network, which is what lets `verify-collector.mts` be pointed at the result
+before the gateway ever sees it. `import-programme-graph.mts` is not one of the
+five; it is the adapter for an upstream graph tool's own output.
+
+What runs twice daily is the
 gateway's own half: `refreshJob` re-reads `graph.json` off disk at 07:00 and
 19:00, diffs it against the last run's signature, and appends a summary event
 plus a `mc.container_closed` for each container that shut. It reads no vendor and
@@ -380,9 +433,11 @@ collectors read the vendors *ahead of* a turn**, not during one, which is what
 retired the four vendor MCP endpoints. **The derived layer is rebuilt rather
 than updated**, because absence is information: a rebuild can see that a link
 Jira quietly dropped is gone, where an in-place update cannot. Reading that
-absence as a finding is not wired yet — `refresh.ts` computes the removals and
-logs only their count — so a stale link is still raised from the `AMBIGUOUS` tier
-on the current graph. And **the findings pass is code, not a model**: a
+absence as a finding is not wired yet — `refresh.ts` writes the removed edge
+*identities* onto `mc.graph_refreshed`, so the change history replays and a
+vanished edge can be named; what is missing is the finding that reads them.
+Until it exists, a stale link is raised from the `AMBIGUOUS` tier on the current
+graph instead. And **the findings pass is code, not a model**: a
 model may propose candidates, but the rule that fires is deterministic, for the
 same three reasons `skills.ts` is.
 
@@ -417,6 +472,30 @@ an outbound token. Slack's line is the same shape: a slash command lands on
 `/api/webhooks/slack/commands`, becomes a `chat.command_received` event and a
 note in the vault, and reaches no vendor.
 
+### The one arrow a person draws — `act.ts`
+
+Every arrow above is machinery. The only one anybody presses is the row of
+answers on an alert, and it is `apps/gateway/src/act.ts` behind
+`POST /api/findings/:id/act`. **Four answers, and two of them are "no"**, because
+they are different answers: the primary — *Create the ticket*, or the link, or
+the message this particular alert calls for — then *Ask*, *Not now*, *Not
+needed*. "Not needed" is a decision and does not come back; "Not now" is a
+deferral and does, carrying the note somebody left so it makes sense to them when
+it returns — collapsing the two into one verb is what makes `Later` empty.
+Both land on the durable log, so a restart cannot quietly re-raise something
+already answered.
+
+`send` is not a fifth answer. It is what you press *inside* the result of one of
+them — the draft is on screen, you have read it and possibly rewritten it, and
+this posts that text. It has no button of its own and never will.
+
+The primary answer **applies** rather than promising to: `create_issue`,
+`link_issues` and `link_commitment` go through `accept_proposal`, so one click is
+the vendor write, complete with its provenance comment — subject to the outermost
+gate above. A message is only ever drafted, because those words go out over
+somebody's name. `HUMAN_ONLY` is untouched by any of this: `/api/findings/:id/act`
+is not a tool, so nothing a model can call reaches this file.
+
 Directional summary:
 
 | From → To | Trigger | What moves | Auto? |
@@ -428,6 +507,7 @@ Directional summary:
 | Miro → Jira | card field edited | *specified, not built.* The webhook collapses every non-create item event into `canvas.card_moved`, which `sync.ts` discards; there is no `canvas.card_edited`. The `update_issue` proposal branch that would receive it is written and unexercised | — |
 | Mission Control → Confluence | decision extracted + accepted | decision record page | **no — human gate** |
 | Jira → Slack | status → blocked / done | notification | yes |
+| Mission Control → Slack | a meeting's transcript is ready | a **pointer** — the topic and a link to the alert list, never a quote of what was found | yes |
 | Slack → Mission Control | message with a key, slash command | context + commands | yes |
 | Confluence → Mission Control | `page_created` / `page_updated` | context; and on an **edit** — any version past the first — a re-verify proposal for every note citing that page. A publish creates nothing to re-verify | yes → **proposal** |
 | Miro → Mission Control | connector **poll**, not webhook | new dependency arrows | yes |
@@ -464,8 +544,8 @@ recording a thought means leaving the conversation and opening another app to
 write markdown, it does not get recorded. So capture is `/mc remember …`, typed
 where the thought was had: Slack posts it to `POST /api/webhooks/slack/commands`,
 which answers inside Slack's three-second budget and files the note behind the
-reply. `POST /api/slack/capture` is the same call without Slack, and is the IN
-half of CLAUDE.md's two memory paths. There is deliberately no button in this
+reply. `POST /api/slack/capture` is the same call without Slack — those two
+routes are the whole of the way in. There is deliberately no button in this
 app: capture that requires you to already be in Mission Control is capture that
 does not happen. The kind is inferred by regex (`inferKind`) and is a starting
 guess; correcting it is a `PATCH /api/vault/notes/:id`, because the note page
@@ -481,7 +561,10 @@ edits the title, the body and when it comes back — not the kind.
   and [Confluence](https://jira.atlassian.com/browse/CONFCLOUD-66693) refuse to
   render inside another app. Miro alone ships an embed built for it
   ([Live Embed](https://developers.miro.com/docs/miro-live-embed-introduction)),
-  and nothing in the shell uses one.
+  and nothing in the shell uses one. Our own record view is
+  `apps/gateway/src/records.ts`, reached only from a citation's `RecordRef` —
+  which is the thing that can say *which* line, and so the reason the record can
+  open on it.
 - [Miro App Cards — backend flow](https://developers.miro.com/docs/backend-flow-for-app-cards) · [App card use cases](https://developers.miro.com/docs/app-card-use-cases) · [2-way sync example](https://developers.miro.com/docs/enable-2-way-sync-between-app-cards-and-github-cards)
 - **Retired (ROADMAP D5).** All four planning tools ship remote MCP servers and
   the Copilot SDK speaks MCP natively, which is why "make the agent aware of five

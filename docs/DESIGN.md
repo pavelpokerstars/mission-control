@@ -27,8 +27,25 @@ There are exactly two colour vocabularies, and nothing else is coloured at all:
 
 | | |
 |---|---|
-| **Severity** | `crit` · `warn` · `ok` — how bad, on chips and the left stripe of a row |
-| **Source** | Jira, Slack, Zoom, Confluence, Miro — which system a record came from |
+| **Severity** | `crit` · `warn` · `ok` — how bad, on chips and on the mark down a row's left edge |
+| **Source** | Jira, Slack, Zoom, Confluence, Miro, GitHub — which system a record came from |
+
+**Six, and the two counts underneath that number are different things.** Five
+collectors write the graph — Jira, Zoom, Confluence, Slack, GitHub — and Miro is
+the sixth *surface*, the one read live rather than out of `MC_GRAPH_DIR`. Never
+quote one as the other.
+
+GitHub's is the newest of the six and the narrowest: `github` is deliberately
+not an `Owner`, so no citation can carry it and no record view opens a pull
+request. Its colour appears on Sources alone — the connector row with its PR
+count, and the *"pull requests join to no ticket"* failure row. Before the token
+existed, `dotClass('github')` produced a class matching nothing and every GitHub
+dot rendered transparent: this section's rule failing in the one direction it
+can, a thing that means something drawn in no colour at all.
+
+`--s-vault` is the odd one in that family and not a seventh vocabulary: it is
+the neutral grey a citation or a quotation falls back to when what it came from
+is our own vault, or is not one of the six.
 
 Buttons are near-black on near-white (and inverted in dark). Links are
 underlined text. There is no brand accent, no decorative gradient, no coloured
@@ -36,8 +53,9 @@ heading. If something on screen is coloured, a reader is entitled to ask what it
 means — and there is an answer.
 
 This is the direct answer to *"everything has to earn its place"*. It also makes
-the alerting story legible: the only saturated thing on the front door is the
-severity stripe on a row that needs you.
+the alerting story legible: the loudest colour on the front door is the severity
+mark on a row that needs you, and the only other one is the run of 8px source
+dots beside it, naming the tools that row's claim was built from.
 
 ---
 
@@ -52,11 +70,22 @@ ground app sunk line line-2      surfaces, hairlines
 ink ink-2 ink-3                  text: body, secondary, muted
 btn btn-ink                      the one solid control colour
 crit warn ok  + …-bg             severity, and its tint
-s-jira s-slack s-zoom s-conf s-miro s-vault
+s-jira s-slack s-zoom s-conf s-miro s-github s-vault
+sans mono shadow r               the two faces, the one shadow, the corner
 gutter                           the one horizontal measure — see §3
 color-scheme                     light / dark — see §7
 ic-chev ic-cal                   icon shapes, as masks — see §6
 ```
+
+**One reference in the stylesheets has no definition, and that is a bug rather
+than an exception to the rule.** `.rowdel:hover` and `.editacts .ghostdel:hover`
+both reach for `--stop`, which no `:root` block declares — in
+`alerts/shared.css` and in the preview alike, since the app's sheets are the
+preview's copied verbatim. An undefined custom property leaves both declarations
+invalid at computed-value time, so the delete control's hover keeps the colour
+it inherited and only its tint changes. It wants defining as the crit red, and
+it wants defining **in the preview first**: `verify-design.mts` refuses to let
+the app carry a rule the preview lacks.
 
 **Type.** One sans (`Instrument Sans`) for everything a person reads, one mono
 (`IBM Plex Mono`) for anything machine-ish: timestamps, counts, labels, keys,
@@ -88,9 +117,25 @@ and the breakpoint narrowed only four of them — so on a phone half the page sa
 at 18px and half at 30px. Any new band must use the token, and the check is:
 every content edge on every screen resolves to a **single x**.
 
-**A row with a left stripe pulls its left padding back by the stripe width**
-(`calc(var(--gutter) - 3px)`), because a border adds to layout and would
-otherwise indent stripe rows 3px past every heading above them.
+### The severity mark is an inset segment, not a left border
+
+`border-left:3px` runs the full height of a row. Two critical alerts next to
+each other therefore drew one unbroken line down the page, and so did the three
+missing-ticket rows under them: the marks fused, the boundary between rows went
+with them, and a column of five became a red bar and a yellow bar. The list's
+own hairline is what separates rows; the mark is supposed to say how bad **one**
+of them is.
+
+A border cannot be inset, so the mark is an absolutely positioned
+pseudo-element instead, held 10px clear of the row's top and bottom. That
+leaves 20px between consecutive marks — more than the hairline, and it reads as
+deliberate. `.convrow` in Ask carries the same segment for the same reason.
+
+A pseudo-element occupies no layout, so the padding claw-back a border needed
+went out with the border. `calc(var(--gutter) - 3px)` now survives in exactly
+one place, `.undobar` — the one band that still carries a real left border down
+its full height — and every row's content sits on the same x as the headings
+above it with no correction at all.
 
 ### The vertical rhythm is set at real density
 
@@ -183,10 +228,23 @@ Everything else is contextual:
 door; a page you set up once does not need a permanent seat beside the pages you
 work in.
 
+### The notification is not a page
+
+The front door is a message you did not go looking for, and the preview draws
+it. **One message per run, never one per finding**: a count, the single worst
+claim, and one button that opens Mission Control. Everything that would make it
+a list was left out on purpose — three pings at 07:00 is how a channel gets
+muted, which costs every future `crit`. It carries only what has not been
+announced before, so a run with nothing new sends nothing at all, and it points
+rather than quotes: the claim is on the page the button opens.
+
 ### Two back links, and they mean different things
 
-- `← back to the list` / `← all notes` / `← all conversations` — **up** one
-  level, from a thing to the list that holds it. Always top-left.
+- `← back to the list` / `← back to the alert` / `← all notes` /
+  `← all conversations` — **up** one level, from a thing to the list that holds
+  it. Always top-left. A record opened from an alert takes the second of those:
+  it is the return leg of the product's signature move, and the outbound half is
+  the citation in the row above.
 - `Open the alert` — **across**, to a related page. Right-hand side of a context
   bar, no arrow, and it is not a "back": you may never have been there.
 
@@ -199,7 +257,8 @@ Later and Sources have no back link at all, because the toolbar is their way out
 Every page is one of two shapes. There is no third.
 
 **A list** — a page header (title, sometimes a composer, a count line), then
-rows. Mission Control, Ask, Later.
+rows. Mission Control, Ask, Later, and Sources — whose rows are connectors
+rather than work, but which is otherwise the same page.
 
 **A thing you opened** — a back link, a context bar saying what this is and
 offering a related page, then the content. An alert, a conversation, a note, a
@@ -212,16 +271,33 @@ record.
         subtitle · when                            ✕
 ```
 
-Left stripe carries severity (or neutral). The whole row is a container, not a
-button — a delete control cannot live inside the button that opens the row, so
-the row holds a `.rowmain` button plus a sibling `.rowdel`. The `✕` appears on
-hover and focus.
+A severity segment sits on the left edge — inset, never a border (§3), and
+neutral on a row that carries no severity of its own. The whole row is a
+container, not a button — a delete control cannot live inside the button that
+opens the row, so the row holds a `.rowmain` plus a sibling `.rowdel`. The `✕`
+appears on hover and focus.
+
+The preview writes `.rowmain` as a `<button>`; **the app makes it an `<a>`**, so
+middle-click and copy-link work on a row. The container-plus-sibling structure is
+untouched — making the whole row one anchor is the shortcut, and it costs both
+the delete and the styling, since `a.convrow` underlines. The change costs three
+extra rules (`a.row`, `a.rowmain`, `a.evrow`) that `verify-design.mts` whitelists
+by name, which is the only reason a difference this small is worth writing down.
 
 **Rows are labelled by what they are about.** A conversation about an issue is
 titled with the *issue*, and the question you asked becomes the subtitle. This
 was wrong for several revisions: a conversation opened from an alert was titled
 with your first question, so the page you left and the page you arrived at named
 the same thing differently.
+
+**And the chip says which alert, in that alert's own colour.** A conversation
+tied to a finding carries that finding's kind and severity, resolved live —
+every tied row used to read `Alert` in one neutral chip beside a mark that was
+`crit` whatever the alert's severity actually was, so six conversations about
+six different findings were six identical labels. When the alert has been
+answered it leaves the findings list, which is the good outcome; there is then
+no kind left to read, and the row falls back to a neutral `Alert` and a neutral
+mark rather than to nothing. The conversation is still about something.
 
 ### A context bar
 
@@ -238,6 +314,20 @@ padded out.
 **Chips** carry a kind: an alert type in its severity colour, or `General` /
 `Note` in neutral. A chip on a list row and the chip on the page it opens are
 read from the same source, so they cannot disagree.
+
+**The source rail** is a citation's surface, readable without reading it. The
+dot and the `src` label already name the tool, but neither survives a glance
+down a column of six citations — which is exactly what somebody does on an
+alert. A 3px rail on the row's left edge groups them by tool at a distance and
+costs no space; a record page wears the same rail across its top. This is §1's
+second vocabulary doing the most work it does anywhere. Two mechanics carry it,
+and both were bought: it is driven by `data-surface` and **not** a `.jira` /
+`.slack` class, because those are the *dot's* colours in `shared.css` and
+putting one on a row paints the whole row solid — an attribute cannot collide
+with a class, in any file, in any order. And it is `box-shadow: inset` rather
+than `border-left`, because the row already carries `border:1px solid
+transparent` and `:hover` sets `border-color` on all four sides, so a coloured
+left border would be wiped by the hover it shares a property with.
 
 **Composers** are the primary action wherever creating something is the point —
 Ask's `Ask anything…`, Later's `Park a note for later…`. Not a button in a
@@ -309,6 +399,17 @@ use.
 is what you press inside the result of one of them, on a draft already on
 screen. It never appears in the `.acts` row.
 
+**And by default the outcome sentence reports the act without performing it.**
+`MC_SAFE_MODE` is on unless `.env` says otherwise, so the vendor write is
+refused before it is attempted and the strip still reads *"Filed, carrying a
+comment that names the meeting, the rationale and every citation above."* This
+is deliberate and it is narrow: the sentence names the **act** and none of its
+consequences, so it never invents a ticket key and never claims the alert will
+stop firing — it does not, and it is still on the list when you go back. The
+durable log is not softened either; the decision stays recorded as uncarried-out.
+`MC_SAFE_MODE=off` makes the same write real against the in-memory connectors on
+a fixture, with no credentials and no network, and then the alert genuinely goes.
+
 ### Delete acts, and stays undoable
 
 No "are you sure?". Deleting removes the row immediately and puts an **undo strip
@@ -365,10 +466,14 @@ expensive to rediscover.
 and the Later heading were both literals; deleting a note left them lying, twice,
 on one page.
 
-**Every date derives from one `TODAY` constant.** Hand-written dates produced a
-sprint closing on a Saturday and a "Friday 22 August" that was a Saturday, and a
-"Monday morning" option that resolved to a Tuesday. There is now an assertion
-that parses each option label and checks the weekday against a real `Date`.
+**No weekday is ever written by hand.** Hand-written dates produced a sprint
+closing on a Saturday, a "Friday 22 August" that was a Saturday, and a "Monday
+morning" option that resolved to a Tuesday. The preview derives every date from
+one `TODAY` constant; the app derives them from the live clock through
+`nextWeekday()` and `fmtDay()`, which print the weekday they actually computed
+rather than one somebody typed beside it. **Nothing asserts this** — there is no
+check for it in `verify-design.mts` or anywhere else. It is honoured by never
+writing a date down, which is why the rule is phrased as a prohibition.
 
 **`color-scheme` must be declared.** Without it native controls render in the
 opposite theme — the date input's icon was invisible and its panel opened white.
@@ -397,11 +502,31 @@ the second definition silently broke the first.
 been one-sided, correct on the Messages API path and broken on the CLI path —
 which is the rung a fresh checkout reaches first. See `KNOWN-GAPS.md` §1.
 
+### What `verify-design.mts` actually holds
+
+There is no test framework here, so this file is the whole of the automated
+argument that the app still matches the design. It runs under `npm run verify`
+and prints every assertion by name. What each group of them holds, and what
+bought it:
+
+| the check | what it holds | what bought it |
+|---|---|---|
+| the routes | the `Route` union is exactly the eight routes the direction sanctions — no ninth | a destination the direction had deleted grew back once, from a stale code comment |
+| the toolbar | §4's sentence is *parsed*, and the count and the three names must match `Chrome.tsx` | a cap nothing reads is a cap that drifts. Reword that sentence and this fails |
+| the retired vocabulary | nothing in the interface is called *proposals*, *queue* or *storyline*, and no `[[wikilink]]` reaches a screen — in visible text and in identifiers alike | the removed queue. A `Proposal` is real in `act.ts` and is not a thing a person is shown |
+| the component list | every folder under `alerts/` holds exactly its own `.tsx` and `.css`, and every component is one the design names | a page nobody sanctioned is a page nobody argued for |
+| dead references | no comment in ~70 files sends a reader to a screen that was deleted | *"accept it in the queue"* survived repeated end-to-end curl verification, because curl cannot see a link that goes nowhere |
+| a failed refetch | every error branch is gated on the **absence** of data, and `useJson` keeps what it has | answering an alert can remove the finding it was about, so the reload that follows a success 404s — and the page swapped the result for *"That alert is not there"* before anybody could read it |
+| the page shapes | four actions, resolving in place, offering `choose something else`; no inline styles anywhere | §7, and the fact that every spacing bug found so far started as an inline style |
+| the seventeen stylesheets | the app introduces no selector the preview lacks **and loses none it draws**; each sheet is imported by its own component; `main.tsx` imports the layers in order; no two sheets claim one scoping class; every block has a selector | a regex removed a selector and left its declaration block, the brace count stayed even, and every conversation row silently fell back to browser-default styling |
+| drawn but not built | every class the preview draws has a consumer in the app — and this one **reports** rather than fails | unbuilt design is not drift. If it failed the build, the cheapest way to green would be deleting the class from the preview, which destroys the only record that the thing was ever designed |
+| demo mode | nothing under `alerts/` imports from `demo/`, every class the demo draws is `mcdemo-` prefixed, each of its four sheets is imported by its own component, no two claim one class, and the flag is off unless `MC_DEMO` explicitly says otherwise | the demo is not the product, and the way it stays not-the-product is that it cannot reach in |
+
 ---
 
 ## 9. What the preview does not settle
 
-> **Three of these have been built since, and three things now differ from the
+> **Three of these have been built since, and four things now differ from the
 > preview on purpose.** The list below is kept as the record of what was open at
 > the time; the current state is marked inline.
 
@@ -453,23 +578,41 @@ And one piece of the preview is **specified and not built**: Sources is where
 that page is *"safe to make the impressive one"*. There is no brain in
 `Sources.tsx`.
 
+That is the whole list of differences. Separately, and outside the comparison
+altogether, **four screens exist that the preview does not draw.** `MC_DEMO=on` wraps
+the app in a welcome card, a one-page pitch, a simulated hand-off and a sticky
+guide strip — `apps/shell/src/demo/`, off unless the variable explicitly says
+otherwise. They are not in the preview and never will be: they are not the
+product, they are the way somebody is walked through it. That distinction is
+enforced rather than asserted — nothing under `alerts/` may import from `demo/`,
+every class the demo draws is `mcdemo-` prefixed, and its four stylesheets are
+not among the seventeen. A fifth *destination* would still need a section of
+`DIRECTION.md` to sanction it; this is the precedent for "not in the interface",
+not permission to add a page.
+
 ### Open at the time the preview was drawn
 
 - **Empty and error states.** ✔ built — `explain()` turns a `TypeError: Failed to
   fetch` into "The gateway is not answering on :8787. Start it with `npm run dev`."
   Only Later had one in the preview.
-- **The notification itself** beyond one Slack card — no email, no digest, no
-  per-user preferences. Whether alerts are personal or program-level is still
-  open (`DIRECTION.md` §2).
+- **The notification itself** beyond one Slack card — no email, no per-user
+  preferences. Whether alerts are personal or program-level is still open
+  (`DIRECTION.md` §2). The **digest has come off this list**: `notify.ts` ships
+  it — one message per run rather than one per finding, announced once ever
+  against the durable log, and gated on `MC_SLACK_WEBHOOK_URL`, so a checkout
+  without one is a complete product with a quiet transport rather than a
+  broken box.
 - **Keyboard and focus order** are correct per element but no shortcuts exist and
   no focus trap is defined for the calendar panel.
 - **Loading.** Everything is instant on fixtures. A real summary takes 20–60
   seconds on the CLI provider, and nothing in the preview shows that.
-- **The inline-thread cap.** ✔ the inline thread is built (`AskInline.tsx`) —
-  asking happens on the alert and does not navigate.
+- **The inline-thread cap.** ✔ built (`AskInline.tsx`) — asking happens on the
+  alert and does not navigate, and the cap announces itself in §7's exact
+  words: `showing the last 2 of 9 · open full conversation →`.
 - **Undo.** ✔ built for a deleted note: the row goes with no "are you sure?", the
   undo strip takes **the slot it occupied**, and undo restores it at its index.
   Dismissing an *alert* is still immediate — that one is a decision, and it is
   recoverable only in the sense that the finding stops being suppressed.
-- **Mobile** below 640px changes only the gutter. The toolbar, context bars and
-  the calendar are untested at that width.
+- **Mobile** below 640px is two rules: the gutter narrows to 18px, and an alert
+  row drops to one column and hides its `open →` meta. Nothing else responds,
+  and the toolbar, context bars and the calendar are untested at that width.

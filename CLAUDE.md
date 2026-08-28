@@ -116,11 +116,14 @@ page is the review surface: the reader has the claim, the checklist and every
 citation in front of them, and a second screen re-asks what they just answered.
 
 **4 · If a word is absent from `DIRECTION.md` and `DESIGN.md`, it is not part of
-the interface.** Neither contains "proposal" or "queue" — not once. A `Proposal`
-is real and correct in `act.ts` as the mechanism of a write and its provenance;
-it is not something a person is shown. Same for wikilinks: internal to vault
-storage, absent from every screen. The one that reached the interface got there
-only via the removed queue.
+the interface.** Neither uses "proposal" or "queue" to name anything a person is
+shown — no screen, no list, no thing with a button on it. Where either word
+turns up in those two files at all it is ordinary English about the argument
+being made, never a noun in the interface, and that is the test to apply rather
+than a word count. A `Proposal` is real and correct in `act.ts` as the mechanism
+of a write and its provenance; it is not something a person is shown. Same for
+wikilinks: internal to vault storage, absent from every screen. The one that
+reached the interface got there only via the removed queue.
 
 **5 · Then run it.** `npm run verify` includes `scripts/verify-design.mts`, which
 enforces the checkable part of the above — the route set, the toolbar cap, the
@@ -133,12 +136,15 @@ for 1–4; it is what catches you when 1–4 did not.
 hand-off and a sticky guide strip — `apps/shell/src/demo/`, off unless the
 variable explicitly says otherwise. It passes rules 2 and 4 by *not being in the
 interface*: no route, no nav entry, no toolbar slot, `AlertApp` untouched and
-taking no props, and its stylesheet deliberately not one of the seventeen. Read
-it as the precedent for "this is not the product" rather than as permission to
-add a screen — a fifth destination still needs a document section, and
+taking no props, and its own stylesheets deliberately not among the seventeen.
+It has four of them, in the same folder-per-component shape as `alerts/` —
+`demo/shared.css` plus `GuideBar/`, `Intro/` and `Welcome/`. Read it as the
+precedent for "this is not the product" rather than as permission to add a
+screen — a fifth destination still needs a document section, and
 `verify-design.mts` now also asserts that nothing under `alerts/` imports from
-`demo/`, that every class in `demo.css` is `mcdemo-` prefixed, and that the flag
-defaults off.
+`demo/`, that every class those four sheets draw is `mcdemo-` prefixed, that
+each is imported by its own component, that no two of them claim the same class,
+and that the flag defaults off.
 
 And curling the gateway is not using the app. The dead "accept it in the queue"
 reference survived repeated end-to-end curl verification, because curl cannot see
@@ -156,9 +162,10 @@ the intersection of what the dependencies actually need — vite
 guess, so lowering it breaks `env.ts` before anything else.
 
 ```bash
-npm run verify              # THE acceptance command — typecheck, a byte-identical
-                            # fixture regenerate, the four verifiers, the shell
-                            # build. ~2s, no credentials, no network, no server
+npm run verify              # THE acceptance command — typecheck, two byte-identical
+                            # fixture regenerates (fixtures/ and fixtures-programme/),
+                            # the four verifiers, the shell build. A few seconds, no
+                            # credentials, no network, no server
 npm run dev                 # shell :4200 + gateway :8787 (concurrently)
 npm run typecheck           # tsc -b over the whole workspace
 npm run typecheck:affected  # only projects touched vs. main (nx)
@@ -166,7 +173,8 @@ npm run typecheck:all       # all 5 projects, cached (nx)
 npm run build               # tsc -b && vite build
 npm run graph               # open the nx project graph
 npm run docs                # re-render docs/ as styled HTML (docs/html/)
-npm run fixture             # regenerate fixtures/ from scripts/fixture/
+npm run fixture             # regenerate BOTH committed fixtures — fixtures/ from
+                            # scripts/fixture/, then fixtures-programme/
                             # (then `rm -rf vault` — an existing vault is not reseeded)
 ```
 
@@ -193,6 +201,22 @@ blocks on type errors. It deliberately does **not** run the root `tsc -b` — se
 
 Default mode is `MC_MODE=mock`: fixtures, no network, no credentials. Keep it
 working. Every change must still run with an empty `.env`.
+
+`MC_MODE` also picks the chat provider, and there are four of them plus a
+scripted stub — the Claude CLI (the default, which needs no key at all),
+`ANTHROPIC_API_KEY`, Copilot at `MC_MODE=live`, and **OpenRouter at
+`MC_MODE=openrouter`** (`apps/gateway/src/openrouter.ts`). OpenRouter is the one
+chosen *instead of* the ladder rather than inside it, because it answers the
+opposite question: the ladder asks what this developer is already logged into,
+and OpenRouter asks what a container holding one shared key can reach — a demo
+URL anybody can open, with no CLI login and no `gh` session on the host. Putting
+it in the ladder would mean a laptop with a Claude login silently spending
+somebody's OpenRouter credits, or a host that names `openrouter` on
+`/api/health` quietly answering from something else; so no `OPENROUTER_API_KEY`
+at that mode falls to the stub and says so. It also runs without the tool loop —
+cheap models are erratic at tool-calling and a stalled loop is a demo that
+hangs. `.env.example` carries the rest, including why `OPENROUTER_MODEL` is the
+one line in that file set rather than commented.
 
 **Connectors are chosen per surface, not by `MC_MODE`.** One switch for all five
 makes "real" all-or-nothing — five vendor credentials before anything is real,
@@ -252,9 +276,9 @@ is about the absence of a work item rather than about a screen.
 pattern with no leading slash matches a directory of that name at any depth. Git
 was unaffected, since ignore rules do not apply to tracked files, so nothing
 looked wrong. **nx resolves it against the filesystem**, so `@mc/vault` was
-absent from the project graph and `typecheck:all` ran five projects while
-claiming six — never checking the one library that must not reach for node
-globals in a browser. `/vault/` now. See `KNOWN-GAPS.md` §1.
+absent from the project graph and `typecheck:all` ran four of the five projects
+and reported a clean pass — never checking the one library that must not reach
+for node globals in a browser. `/vault/` now. See `KNOWN-GAPS.md` §1.
 
 Practical consequence: a change to `libs/domain/src/index.ts` invalidates all
 five projects, so `typecheck:affected` saves nothing there. It does help for
@@ -320,12 +344,35 @@ reads — Slack, transcripts, ticket bodies — is untrusted text arriving throu
 tool results, so "a human accepts it" has to be a fact about the tool set, not a
 sentence in the system prompt. Adding either tool back re-opens the gate.
 
+**Safe mode is ON unless `.env` explicitly says otherwise**, and only an
+unambiguous `off` turns it off — `safeMode()` in `apps/gateway/src/safe-mode.ts`,
+read at call time, a typo failing safe. `guardConnectors` wraps the `Connectors`
+object itself rather than each call site, so every mutating vendor call throws
+`BlockedBySafeMode` and a write path added later is covered without anybody
+remembering to cover it — the same argument as `HUMAN_ONLY` being a filter on
+the shared tool seam. It blocks the outbound Slack notification too. It does
+*not* block the vault, the event log or proposals: those are ours, nothing
+outside can see them, and a proposal is a record of an intention that writes
+nothing outward until accepted.
+
+One consequence you will meet within a minute of using the app, so read it
+before filing it as a bug. On a fixture, answering an alert reports the act —
+*"Filed, carrying a comment…"* — and writes nothing, the proposal stays
+`pending`, and **the alert keeps firing**. That is `pretendItWorked` in `act.ts`,
+it was asked for deliberately, and the long comment above it is the reasoning.
+It is narrow by construction: only our own refusal, thrown before the call is
+made, is dressed up that way — a vendor that refuses or is down still says so —
+and the sentence names no key and promises no outcome, because there is no
+outcome. `MC_SAFE_MODE=off` is the honest version: on a fixture the write is
+then real against the in-memory connectors, with no credentials and no network,
+the ticket exists, and the alert genuinely goes.
+
 **A comment is not a field.** `surfaceMemory` in `apps/gateway/src/memory.ts` is
-the one outbound write with no human gate, and `FIELD_OWNER` is why: nobody owns
-a Jira comment as *state*, so posting one changes nothing, cannot start a sync
-war, and cannot make the vault a second source of truth. It still carries an
-echo token. If you ever make it write a field, it needs a proposal like
-everything else.
+the one write into somebody else's *record* with no human gate, and `FIELD_OWNER`
+is why: nobody owns a Jira comment as *state*, so posting one changes nothing,
+cannot start a sync war, and cannot make the vault a second source of truth. It
+still carries an echo token. If you ever make it write a field, it needs a
+proposal like everything else.
 
 Accepting a `create_issue` uses the same escape hatch for **provenance**: the
 new ticket gets a comment naming the meeting, the rationale and every citation
@@ -405,13 +452,34 @@ on its note page, still counts as evidence, and still wins on a join-key match
 stale" so the agent hedges instead of asserting. Silently dropping it would make
 the vault lie by omission, which is worse than the staleness.
 
-**The scheduler only runs skills, and only reading ones.** `scheduler.ts` fires
-`/standup` at 08:00 and `/tidy` at 22:00. It posts nothing, writes no field and
-changes no note — `tidy` produces proposals and a human still presses the
-button. "Have we already run today" is answered from the durable log, not from
-memory, so a restart at 22:05 does not re-run the 22:00 pass. `MC_SCHEDULER=off`
-disables it. Adding a slot that writes outward breaks the one property that
-makes a background job tolerable.
+**The scheduler only reads, re-derives and proposes.** `scheduler.ts` fires
+**four** slots — a re-derive at 07:00 and again at 19:00, `/standup` at 08:00
+and `/tidy` at 22:00. The two re-derives are the freshness story: they reload
+the graph from disk rather than the copy `main.ts` holds, because the point of a
+scheduled re-derive is to notice that a *collector* wrote a new file, and a
+snapshot taken at boot never can. Twelve hours of latency is not a compromise
+for the hero case — a commitment that was never ticketed is a state predicate
+and is no more true at 09:00 than at 21:00 — and the transitions that announce
+themselves already have the Jira webhook and the thirty-second canvas poll. It
+writes no vendor field and changes no note: `tidy` produces proposals and a
+human still presses the button. "Have we already run today" is answered from the
+durable log, not from memory, so a restart at 22:05 does not re-run the 22:00
+pass. `MC_SCHEDULER=off` disables it. Adding a slot that writes a field breaks
+the one property that makes a background job tolerable.
+
+**It does have one outbound act, so do not repeat "the scheduler posts
+nothing".** After a re-derive it calls `notify()`, which hands the run to
+`reviewInbox` always and to a Slack incoming webhook when — and only when —
+`MC_SLACK_WEBHOOK_URL` is set. Four things make that the exception rather than a
+hole in the rule above, and all four are load-bearing. The inbox is first in
+`transports()` and it is the one that writes `mc.memory_surfaced`, which is what
+`notifiedIds` reads, so a webhook outage costs the interruption and never
+re-announces the same findings every twelve hours. A finding is announced once,
+ever. A baseline run announces nothing, or a first pass on a real programme is a
+morning of alerts about a quarter of history. And the message carries a
+**pointer** to the alert page, not the quote — the evidence stays behind the
+boundary. Safe mode blocks the webhook too. Anything you add here has to keep
+all four.
 
 **A slot stays open two hours** (`CATCH_UP_HOURS`), so a gateway that was down at
 08:00 still runs the standup when it comes back at 09:30 — the hour a gateway is
@@ -430,11 +498,14 @@ differently every morning is worthless. The brief lands in the transcript, so
 the *next* question is asked against it; that is where the agent comes in.
 
 The one model-backed part is **additive and stays behind that floor**.
-`extract.ts` reads action items the cue regexes miss — traced against the
-fixtures, `ACTION_CUE` drops "the provider **owes** us a sandbox" (`\bowns\b`
-does not match "owes") and "we **should** write it down as a pattern", the
-second of which is the vault's flagship feature being asked for aloud. Recall,
-not precision, is what limits the pack, and a word list cannot fix it. So:
+`extract.ts` reads action items the cue regexes miss, and you can run the trace
+yourself — `ACTION_CUE` in `skills.ts` against the committed transcripts under
+`fixtures/records/meeting/`. It drops *"Dana **takes** the settled event end to
+end, publisher and the consumer contract"* (`\btake\b` does not match "takes")
+and *"We **should** write down why we went with the cache rather than a database
+constraint"* (no cue word at all), the second of which is the vault's flagship
+feature being asked for aloud and missed. Recall, not precision, is what limits
+the pack, and a word list cannot fix it. So:
 
 - `SkillContext.extract` is `undefined` when nothing on the machine can answer,
   and every skill still runs. The regexes are the floor, never the fallback.
@@ -449,8 +520,9 @@ not precision, is what limits the pack, and a word list cannot fix it. So:
   the transcript's *content*. That is what keeps "same input, same brief" true
   across re-runs; delete the file to re-ask.
 
-This is also what the scheduler will stand on when it exists — nightly
-consolidation is `tidy` on a timer, not new machinery.
+This is also what the scheduler stands on — nightly consolidation is `tidy` on a
+timer, not new machinery, which is why `scheduler.ts` is the smallest file in the
+gateway.
 
 **The board is two halves and only one of them is Jira.** `listAppCards` returns
 work that is already a ticket; `listStickies` returns what people actually wrote
@@ -467,11 +539,15 @@ is a second proposal to reject, a false merge silently drops an action item.
 Only stickies in a frame the team labelled "Actions" become proposals; a "went
 badly" sticky is not a ticket.
 
-**A workshop is about one meeting AND one board.** `/workshop zoom-003
+**A workshop is about one meeting AND one board.** `/workshop sprint-12-retro
 board=uXjVK…` states the pairing; it is then recorded as `miro` evidence on that
 meeting's brief note (the literal label `board <id>`, which `BOARD_EVIDENCE`
-parses back), so every later `/workshop zoom-003` finds the same board without
-the argument. `MIRO_BOARD_ID` is the last resort, not the default it used to be:
+parses back), so every later `/workshop sprint-12-retro` finds the same board
+without the argument. (The meeting ids that exist are the filenames under
+`fixtures/records/meeting/` — `sprint-12-planning`, `sprint-12-retro` and
+`sprint-14-planning`. There is no `zoom-00N`; a `zoom-003` in an example
+elsewhere is a leftover from an older fixture set and will return nothing.)
+`MIRO_BOARD_ID` is the last resort, not the default it used to be:
 one process-wide board makes every retro look like it was drawn on the same
 canvas, and a sticky from another meeting merging with a sentence from this one
 is stamped "said and written" — a *false* corroboration, which is worse than a
@@ -532,8 +608,13 @@ reproduce weakens the claim it was meant to support.) A
 real Confluence space, Miro board and Zoom archive are worse, because nobody
 writing a runbook or a sticky thinks in ticket numbers. Two lines from the
 Sprint 14 planning call, the meeting the demo is built on, are invisible to
-`buildRelationGraph`: *"Someone needs to own the dedupe cache"* and *"Riya, can
-you take the decision record in Confluence?"*
+`buildRelationGraph` — read them in
+`fixtures/records/meeting/sprint-14-planning.json`: *"Dana takes the settled
+event end to end, publisher and the consumer contract."* and *"Settlement lag
+alerting is mine. I do not know what it depends on yet."* Each names a
+commitment and neither names a key, while the segment sitting between them
+— *"…so PAY-9032 waits on PAY-9031"* — joins on sight. That is the whole
+difference, side by side in one file.
 
 So a model reads the corpus and proposes the rest. Six rules hold it:
 
@@ -568,10 +649,17 @@ So a model reads the corpus and proposes the rest. Six rules hold it:
   `gatherCorpus` reads all five surfaces before a model is even asked — inline,
   that is a multi-second stall on the front door.
 
-It walks the same provider ladder as the agent, so **it costs nothing in a fresh
-checkout**: the Claude CLI first, `ANTHROPIC_API_KEY` second, `null` third — and
-`null` is a supported state, not a degraded one. Answers are cached on a hash of
-the corpus *content* (`vault/raw/inference-cache.json`) for the reason
+It walks the same `structured.ts` ladder as everything else model-backed here, so
+**it costs nothing in a fresh checkout**. Five backends in `BACKENDS`, in order:
+`sdk-mcp` (the Claude CLI over the in-process MCP transport), `messages-api`
+(`ANTHROPIC_API_KEY`), `copilot`, `openrouter` — ahead of the last one because a
+provider that honours `response_format` beats asking a model to hand-write a
+fenced object, behind the other three because it is the only one that spends
+somebody's money — and `prompt-json`, which is the CLI again without MCP, for a
+workspace whose policy forbids it. `MC_STRUCTURED` pins one and then *fails*
+rather than falling through, because a pin that silently degrades is not a pin.
+`null` when nothing on the machine can answer, and `null` is a supported state,
+not a degraded one. Answers are cached on a hash of the corpus *content* (`vault/raw/inference-cache.json`) for the reason
 `extract.ts` is: an answer that changed per load would move the graph under
 somebody reading it mid-sentence. Delete the file to re-ask.
 

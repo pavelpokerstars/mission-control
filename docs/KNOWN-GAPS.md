@@ -7,15 +7,44 @@ mistakes a scaffold for a product.
 Verified against the tree, not recalled. Where something is a *decision* rather
 than a defect it is in the last section, because the difference matters.
 
+> **How to read this, because the shape is misleading.** Most of what follows is
+> **closed** — a heading states a defect, and its body says "Fixed" and explains
+> what the fix taught. The headings are written that way so the lesson is
+> findable by the symptom you would search for, which makes the document look
+> like a longer bug list than it is. Two conventions tell them apart: a resolved
+> heading is in the **past tense** and opens with **Fixed**; an open one is in
+> the present tense.
+>
+> If you want the current state rather than the history:
+>
+> | | |
+> |---|---|
+> | **§6, "Deliberate, not defects"** | **start here** — things that look like gaps and are decisions, with the argument for each |
+> | §3, Security | the largest genuinely open area: no authentication, permissive CORS, unverified webhook signatures |
+> | §2, Scale | what is fine on a fixture and wrong on a real programme |
+> | §4, Testing | what `npm run verify` does and does not cover |
+>
+> Nothing here is hidden from the reader on purpose, and none of it is a
+> surprise to the authors. A document that only listed strengths would
+> contradict the product's own argument, which is that nothing should be
+> asserted without a source.
+
 ---
 
 ## 1. Correctness and data integrity
 
 ### A commitment note written before `zoomEvidence` cites without linking
 
-**The fix is forward-looking, and the notes already in the vault do not get it
-retroactively.** `Evidence.ref` is what makes a citation a link — `quote` is
-not — and five sites in `skills.ts` and `tools.ts` built zoom evidence by hand
+> **Scope: a vault that has been running since before the fix.** It is *not*
+> true of anything in this repository — all ten evidence-bearing notes in
+> `fixtures/` and all ten in `fixtures-programme/` carry a `ref`, so on a fresh
+> checkout every citation opens its record at the cited line, exactly as
+> `README.md`'s second rule says. This entry is about migrating an existing
+> vault, not about the shipped behaviour.
+
+**The fix is forward-looking, and the notes already in a long-lived vault do not
+get it retroactively.** `Evidence.ref` is what makes a citation a link — `quote`
+is not — and five sites in `skills.ts` and `tools.ts` built zoom evidence by hand
 with a quote and no ref. So the flagship alert named a meeting, showed the
 sentence somebody said, and clicking it did nothing.
 
@@ -819,17 +848,29 @@ as a plain header when set, and when unset every webhook is accepted. Real
 Jira/Miro/Slack/Zoom endpoints sign their payloads; none of those signatures are
 checked.
 
-**`docs/HACKATHON.md` is out of the TREE and not out of the HISTORY.** It is
-gitignored and untracked, so every document calling it "local only" is right
-about the working tree and wrong about the repository. It is 278 lines with four
-named colleagues, verbatim quotes and meeting times, and it is one command away:
+**`docs/HACKATHON.md` is out of the TREE and out of the PUBLISHED history — but
+still in the local one.** It is gitignored and untracked, so every document
+calling it "local only" is right about the working tree. It is 278 lines with
+four named colleagues, verbatim quotes and meeting times.
+
+Where it survives is the *unpublished* branches in this clone — `main`,
+`roadmap-tail-and-pane-cleanup` and `vault-second-brain` — from which a
+`git show <commit>:docs/HACKATHON.md` still resolves. It is reachable from none
+of `origin/main`, `origin/judge-demo`, `origin/demo-v2` or
+`origin/upstream-fixes`, so a clone does not carry it and neither does any
+published branch. Deleting it removed it from the tree only, and **private does
+not fix this** — anyone invited to a private repo can run `git log -p` on
+whatever was pushed.
+
+**The remaining exposure is a copy of the folder rather than a clone.** A zip or
+an `rsync` of the working directory ships `.git` — and therefore those local
+branches — along with `.env`, any `.env.backup*`, `apps/shell/.env`, the live
+`vault/`, and `docs/HACKATHON.md` itself. Hand somebody an archive built from
+the published branch instead, which carries none of them:
 
 ```bash
-git show 0fdb184:docs/HACKATHON.md    # still works from HEAD today
+git archive --format=zip -o mission-control.zip latest-main
 ```
-
-Deleting it removed it from the tree only, and **private does not fix this** —
-anyone invited to a private repo can run `git log -p`.
 
 **So publication is a lineage that starts at a squashed snapshot, and never the
 original history.** The orphan commit is still the root — `publish` points at
@@ -892,12 +933,38 @@ tell the model to distrust them. Both are worth doing before live mode.
 
 ## 4. Testing
 
-**There is no test framework.** Verification is `typecheck`, `build`, and
-curling the gateway. The interesting bugs here are wiring bugs, and two of them
-in this codebase's history were caught only by manual end-to-end runs: an
-outbound echo token stamped on our own log entry silently suppressed
-`workitem.linked`, and proposals held in an in-memory map vanished on restart,
-so a decision somebody had been promised was still waiting had quietly gone.
+**There is no test framework, and that is the gap.** What stands in for one is
+`npm run verify` — ten checks in a few seconds, reading no credential, opening
+no socket and starting no server: the workspace typechecks, **both** committed
+fixtures regenerate byte-identically, the graph contract holds *and the
+detectors still find what was planted*, the refresh baselines and diffs, the app
+still matches `DIRECTION.md` and `DESIGN.md` (27 assertions in
+`verify-design.mts`), both fixtures read as a collector's output should, and the
+shell builds.
+
+That is a real acceptance gate and it catches real regressions — a fixture that
+has stopped producing alerts, a route the design does not sanction, a stylesheet
+rule that fell out of one of seventeen files. **What it is not is a unit test
+suite.** There is no assertion on most individual functions, no coverage
+measure, and nothing exercises a code path that needs a credential. Adding cases
+means editing a verifier script rather than writing a test file, so the cost of
+a new assertion is higher than it should be and the ones that exist cluster
+where somebody was already debugging.
+
+The interesting bugs here are wiring bugs, and two of them in this codebase's
+history were caught only by manual end-to-end runs: an outbound echo token
+stamped on our own log entry silently suppressed `workitem.linked`, and
+proposals held in an in-memory map vanished on restart, so a decision somebody
+had been promised was still waiting had quietly gone. Neither would have been
+caught by a unit test either — but both are the reason "curl it and watch"
+remains part of the process.
+
+**Two detectors are not asserted.** `verify-graph.mts` runs the findings pass
+over the fixture and checks that `missing_ticket`, `undetected_dependency` and
+`suspect_link` fire, but nothing asserts that the **cycle** or the
+**disagreement** finding does — the two `crit` rows on the front door. The
+fixture plants both and the app shows both; the guard against them silently
+disappearing is the one that is missing.
 
 **The Claude CLI provider is the one that has actually answered.**
 `claude-cli.ts` runs through `@anthropic-ai/claude-agent-sdk`, authenticating

@@ -206,7 +206,7 @@ export function findMissingTickets(notes: Note[], graph: StoredGraph, now = Date
      *
      * `/workshop` lets a promise made inside a sprint inherit the sprint's
      * close, because teams name owners and almost never name dates — but an
-     * inherited date must not be read back as an agreed one. "Agreed by Jerry,
+     * inherited date must not be read back as an agreed one. "Agreed by Riya,
      * due 20 August" is a quotation; if nobody said 20 August it is a
      * fabricated one, on the page whose whole argument is that it never
      * asserts anything a record does not support.
@@ -244,7 +244,7 @@ export function findMissingTickets(notes: Note[], graph: StoredGraph, now = Date
        * front door may not become.
        *
        * So the cap is explicit rather than arithmetic. It is also the honest
-       * ranking: "Jerry said the twelfth and it is three weeks past" is a
+       * ranking: "Riya said the twelfth and it is three weeks past" is a
        * stronger claim than "nobody gave a date and the sprint has closed", and
        * the first should outrank the second. `warn` still counts on the front
        * door — only `ok` does not — so nothing is hidden by this.

@@ -386,6 +386,13 @@
 
   /* The cross-document nav. Distinct from nav.toc, which jumps within a page:
      this one moves between documents, so no page in the set is a dead end. */
+  /* THE NAV WRAPS; IT MUST NOT SCROLL.
+     It used to be `overflow-x:auto` over a `min-width:max-content` row, which
+     with sixteen documents measured 1536px inside an 892px column: seven of
+     them sat past the right edge with no scrollbar, no fade and no affordance
+     of any kind, so more than a third of the set was simply unreachable. A
+     horizontal scroller is the wrong shape for a table of contents — wrapping
+     to a second line costs one row of height and can never hide an entry. */
   nav.docnav {
     position: sticky;
     top: 0;
@@ -394,15 +401,22 @@
     backdrop-filter: blur(8px);
     border-bottom: 1px solid var(--line);
     margin-bottom: 48px;
-    overflow-x: auto;
   }
   nav.docnav ul {
     display: flex;
-    gap: 4px;
+    flex-wrap: wrap;
+    gap: 2px 4px;
     list-style: none;
     margin: 0;
-    padding: 10px 0;
-    min-width: max-content;
+    padding: 8px 0;
+  }
+  /* The working notes are a different audience from the documents above them —
+     a thin rule opens that group so the wrap reads as a division rather than an
+     accident of the column width. */
+  nav.docnav li.group-start {
+    border-left: 1px solid var(--line);
+    margin-left: 6px;
+    padding-left: 6px;
   }
   nav.docnav a {
     font-family: var(--mono);

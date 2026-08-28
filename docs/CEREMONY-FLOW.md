@@ -1,15 +1,22 @@
 # From a meeting to a decision
 
-> Still accurate about `/workshop` and the proposal path, which are unchanged.
-> Written before the alert-first direction, so the *destination* of a ceremony is
-> surfaced as a finding on the alert list. See `ROADMAP.md`.
+> **Current, and this is the document that joins a meeting to the front door.**
+> The promise somebody makes aloud is written into the vault as it is made
+> (step 5), and that note is the subject of the flagship alert weeks later.
+>
+> `/workshop` is a gateway skill and **not a screen**. Nothing in the four pages
+> calls it; it is run over `POST /api/skills/workshop` or `inspect.mjs`, and what
+> a person eventually sees is an alert on Mission Control. Read every mention of
+> a *proposal* below as `act.ts`'s mechanism for carrying a write and its
+> provenance — there is no list of them anybody works through, and there must not
+> be one.
 
 
 How a retro or a planning session becomes tickets, a Confluence page, and
 memory — and where a human stands in the middle of it.
 
-`ARCHITECTURE.md` explains the six surfaces and the rules between them. This is
-the one flow that uses all of them at once.
+`ARCHITECTURE.md` explains what each surface owns and the rules between them.
+This is the one flow that uses all of them at once.
 
 ---
 
@@ -31,7 +38,8 @@ the *next* retro any easier.
 
 ![How a meeting becomes tickets, a page, and memory](./ceremony-flow.svg)
 
-Read it in four steps.
+Read it in five. The diagram draws the first four; the fifth happens inside
+`/workshop` and is the one that reaches the front door.
 
 **1 · Gather.** `/workshop` reads the transcript, the board's stickies and
 arrows, Confluence page bodies, and the vault. The board is the one the
@@ -49,31 +57,63 @@ folds them into one ask per cluster, and records which records asked for it:
 | said only | one sentence in a recording | 0.5 |
 | inferred | a model read it; no cue, no sticky | 0.35 |
 
-Matching is lexical and **tuned to split rather than merge**: a false split is a
-second proposal to reject in one click, a false merge silently loses an action
-item.
+Matching is lexical and **tuned to split rather than merge**: a false split is
+one more thing to say no to, a false merge silently loses an action item.
 
 **3 · The pack becomes a note you can edit.** The brief is written to a vault
-note (`workshop-<transcriptId>`), and the publish proposal points *at that note*
-rather than carrying a copy of the text. So the page that reaches Confluence is
-what you wrote after reading the pack — not what the skill first assembled.
+note (`workshop-<transcriptId>`), and the `publish_doc` proposal points *at that
+note* rather than carrying a copy of the text. So the page that reaches
+Confluence is what you wrote after reading the pack — not what the skill first
+assembled.
 
 The note is **never overwritten by a re-run**. Re-running re-renders the brief
 in the chat transcript (always current) and leaves your copy alone. Delete it if
 you want a fresh one.
 
-**4 · Nothing leaves without a button.** Every outbound write is a proposal.
-Accepting a ticket also writes back into the vault — which is the only part of
-this that compounds.
+**4 · Nothing leaves without a button.** Every outbound write *that changes a
+field* is a proposal; a Jira comment is the one exception, and the table below
+says why. Accepting a ticket also writes back into the vault — which is the only
+part of this that compounds.
+
+`MC_SAFE_MODE` is on unless `.env` explicitly says otherwise, and it refuses
+every vendor write. Accepting under it does not create the ticket, the proposal
+stays pending, and the vault loop below never runs. `MC_SAFE_MODE=off` on a
+fixture makes the same write real against the in-memory connectors — no
+credentials, no network. (On the alert page the primary action still reports the
+act in the past tense under safe mode; that is deliberate and `act.ts`'s
+`pretendItWorked` is where the cost of it is written down.)
+
+**5 · The promise becomes a note whether or not anybody files anything.** Not on
+the diagram, and the step everything at the front door rests on. While
+`/workshop` reconciles, every action item carrying a **named owner and a date**
+is written straight into the vault as a `dated` `commitment` note whose
+`relatedKeys` are deliberately **empty** — `skills.ts`, section *4b*. Owner and
+date or no note: an ungated version nags about everything anyone said aloud and
+gets muted in a week. The date may be inherited from the sprint the promise was
+made in, tagged `due-from-sprint` so no later screen can quote back a deadline
+nobody spoke.
+
+That empty `relatedKeys` is the entire point, because it is the state no vendor
+tool can represent. When the sprint closes, `findMissingTickets` walks the open
+commitments and raises every one whose container has closed and which no ticket
+somebody typed references — `missing_ticket` if nothing in the sprint looks like
+it, `unlinked_commitment` if something does. That is the alert at the top of
+Mission Control, and this is the step that wrote its subject. Until this writer existed
+the only thing that made a commitment note was `accept_proposal`, which stamps
+the new key in as it goes — so every note had keys and the state the alert is
+about was unreachable in a live system.
 
 ## Why the loop matters
 
 ![The four movements, and why only one of them compounds](./ratchet.svg)
 
-Movements 1–3 are what any meeting-notes tool does. Movement 4 is the difference:
+Movements 1–3 are what any meeting-notes tool does. Movement 4 is the
+difference, and it happens at both ends of the story: step 5 records the promise
+the moment it is made, and accepting a ticket closes the same loop —
 
-- if the vault already holds the promise, the new Jira key is attached to it, so
-  `/tidy` can retire the note once the work moves on
+- if the vault already holds the promise — normally the note step 5 wrote — the
+  new Jira key is attached to it, so `/tidy` can retire the note once the work
+  moves on, and the alert stops firing because the checklist is now ticked
 - if nothing held it, a `dated` `commitment` note is created carrying the
   evidence
 
@@ -95,9 +135,10 @@ curl -sX POST localhost:8787/api/skills/workshop \
 ```
 
 The response carries `noteId` (the pack) and `boardId` (which board the run was
-about, so a caller can say so — the pairing is a fact about the run, and
-embed). A skill run writes proposals to the durable log, so clean up after a
-probe — delete the note and drop the events with `POST /api/vault/log/delete`.
+about, so a caller can say so — the pairing is a fact about the run rather than
+a setting). A run writes proposals to the durable log **and creates notes**, so
+clean up after a probe: delete the pack note and any `commitment` notes step 5
+wrote, then drop the events with `POST /api/vault/log/delete`.
 
 ## Pairing a meeting to a board
 
@@ -120,10 +161,10 @@ The skill returns `boardId` so a caller knows which board the run was about.
 
 | rule | why |
 |---|---|
-| The model never holds the accept button | `HUMAN_ONLY` withholds `accept_proposal` from every provider. Everything the agent reads is untrusted text. |
+| The model never holds the accept button | `HUMAN_ONLY` withholds `accept_proposal` *and* `reject_proposal` from every provider. Everything the agent reads is untrusted text. |
 | A comment is not a field | Provenance lands as a Jira comment — nobody owns it as *state*, so it needs no proposal and cannot start a sync war. |
 | One ceremony is one decision | Proposals from a run share a `batch`, so a ceremony is not twelve separate asks. |
-| Reject-the-rest, never accept-the-rest | A bulk reject costs a proposal that returns next run. A bulk accept creates a dozen real tickets from one click. |
+| Reject-the-rest, never accept-the-rest — **not built; a rule for whenever a batch is next put in front of somebody** | Nothing implements it, because nothing shows a batch. Written down in advance because a bulk reject costs a proposal that comes back next run, and a bulk accept would create a dozen real tickets from one click. |
 | Briefs are never recalled | A pack is assembled *from* the notes underneath it; injecting one would crowd out every note that holds a claim. |
 | Skills work with no LLM | Model extraction is additive, behind the cue regexes, and cached so a re-run renders identically. |
 
@@ -131,7 +172,8 @@ The skill returns `boardId` so a caller knows which board the run was about.
 
 | concern | file |
 |---|---|
-| the ceremony, reconciliation, the pack | `apps/gateway/src/skills.ts` |
+| the ceremony, reconciliation, the pack, the commitment note (*4b*) | `apps/gateway/src/skills.ts` |
+| the alert that commitment eventually raises | `apps/gateway/src/findings.ts` |
 | proposals, accept/reject, provenance, the vault loop | `apps/gateway/src/tools.ts` |
 | model-assisted extraction (optional) | `apps/gateway/src/extract.ts` |
 | batching and confidence (`batch`, `confidence`, `dedupeKey` — no UI) | `apps/gateway/src/tools.ts` |
@@ -151,6 +193,13 @@ The skill returns `boardId` so a caller knows which board the run was about.
 ## Known limits
 
 See [KNOWN-GAPS.md](./KNOWN-GAPS.md) — in particular: matching is lexical with
-no synonyms, `update_issue`/`link_issues`/`post_message` have working accept
-branches but nothing emits them yet, and the extractor has never run against a
-live API key.
+no synonyms, and the extractor has never run against a live API key.
+
+`update_issue` is the one proposal kind left with a working accept branch and
+nothing that emits it; a producer needs extraction good enough to name a
+specific field change. The other two caught up. `post_message` is what
+`act.ts`'s `askProposal` builds, which is the primary action on a
+`disagreement`, a `cycle`, an `aging` ticket and a `dropped_commitment` — four
+of the six kinds that reach the alert list — and `link_issues` is emitted for an
+`undetected_dependency`, which is still detected and still reachable from
+`list_findings` and Sources, only kept off the list itself.

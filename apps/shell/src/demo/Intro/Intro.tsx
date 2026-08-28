@@ -47,6 +47,133 @@ const SURFACES = [
   { key: 'github', label: 'GitHub' },
 ];
 
+/**
+ * A stable pseudo-random source. Mulberry32 — small, fast, and identical on
+ * every machine, which is the only property that matters here.
+ */
+function mulberry(seed: number): () => number {
+  let a = seed;
+  return () => {
+    a |= 0;
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+interface GNode {
+  x: number;
+  y: number;
+  r: number;
+  surface: string;
+}
+
+/**
+ * Six clusters, one per surface, laid out across the canvas and then wired
+ * together — records inside a tool are dense, and the links BETWEEN tools are
+ * the ones this product is about, so those are drawn lighter and longer.
+ *
+ * The three unconnected points on the right are the alerts. They are placed by
+ * hand rather than scattered: the whole picture is arguing that they are the
+ * exception, and an exception that lands somewhere different on each build is
+ * not making the argument.
+ */
+const GRAPH = (() => {
+  const rnd = mulberry(20260828);
+  /**
+   * SPARSE ENOUGH TO READ AT 420px WIDE, which is the width that set these
+   * numbers. The graph is shown at every size now rather than hidden on a
+   * phone, and a 720-unit canvas drawn into a 420px column is scaled to 0.58 —
+   * so every dot, gap and line is a little over half the size it is here.
+   * Sixty-seven records and ninety-eight links survived that as a smudge. These
+   * counts are the most that still read as individual points and connections at
+   * the smallest width, which makes them the right number at every width.
+   */
+  const CLUSTERS: { surface: string; x: number; y: number; n: number; spread: number }[] = [
+    { surface: 'zoom', x: 78, y: 104, n: 4, spread: 48 },
+    { surface: 'slack', x: 130, y: 238, n: 5, spread: 52 },
+    { surface: 'conf', x: 240, y: 52, n: 4, spread: 44 },
+    { surface: 'jira', x: 296, y: 166, n: 7, spread: 62 },
+    { surface: 'github', x: 414, y: 248, n: 4, spread: 48 },
+    { surface: 'miro', x: 438, y: 62, n: 3, spread: 42 },
+  ];
+
+  const nodes: GNode[] = [];
+  const hubs: GNode[] = [];
+
+  /**
+   * NOTHING TOUCHES ANYTHING, and it is rejection sampling rather than a nudge.
+   *
+   * A plain scatter puts two dots on top of each other often enough to notice —
+   * at a phone's scale a merged pair reads as one larger node, which is exactly
+   * the thing the hubs use to mean something. So a candidate is thrown away and
+   * redrawn until it clears every dot already placed by both radii plus a gap.
+   * Bounded, because an unbounded search over a full disc is a hang: after
+   * `TRIES` it takes the last candidate and the layout is still readable, and
+   * with these counts and spreads it has never come close.
+   */
+  const GAP = 4;
+  const TRIES = 60;
+  const clears = (x: number, y: number, r: number): boolean =>
+    nodes.every((n) => Math.hypot(n.x - x, n.y - y) >= n.r + r + GAP);
+
+  for (const c of CLUSTERS) {
+    const hub: GNode = { x: c.x, y: c.y, r: 8, surface: c.surface };
+    hubs.push(hub);
+    nodes.push(hub);
+    for (let i = 0; i < c.n; i++) {
+      const r = 4.6 + rnd() * 1.8;
+      let x = c.x;
+      let y = c.y;
+      for (let t = 0; t < TRIES; t++) {
+        const angle = rnd() * Math.PI * 2;
+        // sqrt keeps the scatter even across the disc rather than bunched at
+        // the centre, which is what a plain radius gives you.
+        const dist = Math.sqrt(rnd()) * c.spread;
+        x = Math.round(c.x + Math.cos(angle) * dist);
+        y = Math.round(c.y + Math.sin(angle) * dist * 0.95);
+        if (clears(x, y, r)) break;
+      }
+      nodes.push({ x, y, r, surface: c.surface });
+    }
+  }
+
+  const edges: { a: GNode; b: GNode; weak?: boolean }[] = [];
+  // every record to its own tool's hub
+  let at = 0;
+  for (const c of CLUSTERS) {
+    const hub = nodes[at]!;
+    at += 1;
+    for (let i = 0; i < c.n; i++) edges.push({ a: nodes[at + i]!, b: hub });
+    at += c.n;
+  }
+  // the tools to each other — the joins that make it one graph
+  for (let i = 0; i < hubs.length; i++) {
+    for (let j = i + 1; j < hubs.length; j++) edges.push({ a: hubs[i]!, b: hubs[j]!, weak: true });
+  }
+  // and the long cross-tool links a shared key actually produces
+  const loose = nodes.filter((n) => n.r < 7);
+  for (let i = 0; i < 9; i++) {
+    const a = loose[Math.floor(rnd() * loose.length)]!;
+    const b = loose[Math.floor(rnd() * loose.length)]!;
+    if (a !== b && a.surface !== b.surface) edges.push({ a, b, weak: true });
+  }
+
+  return {
+    nodes,
+    edges,
+    gaps: [
+      { x: 580, y: 118 },
+      { x: 628, y: 180 },
+      { x: 556, y: 216 },
+    ],
+    // End-anchored: the label grows LEFTWARDS from the canvas edge, so the
+    // larger type it takes at phone widths cannot run off the right of it.
+    flag: { x: 706, y: 262 },
+  };
+})();
+
 const POINTS = [
   {
     n: '01',
@@ -193,6 +320,73 @@ export function Intro({
           <strong>Find what needs a human</strong>
           <small>Alert · evidence · action</small>
         </div>
+      </section>
+
+      {/**
+        * THE ARGUMENT AS A PICTURE, between the claim above it and the three
+        * points below.
+        *
+        * The pills above say which tools are read; the points below say what
+        * comes out. Neither shows the thing in between, which is the whole idea:
+        * every record carries the same ticket key, so hundreds of them join into
+        * ONE graph — and the alert is the handful of places that join does not
+        * close.
+        *
+        * NO LABELS, DELIBERATELY. This is not a diagram anybody is meant to read
+        * node by node; it is the scale of the thing. Naming forty boxes would
+        * invite reading them and there is nothing there to read. A dot in its
+        * source's colour is the same vocabulary as the connector dots in the
+        * toolbar, so the palette is already familiar by the time it appears.
+        *
+        * THE LAYOUT IS SEEDED, NOT RANDOM. `Math.random` here would redraw the
+        * graph on every render and every reload — the picture would move under a
+        * reader mid-sentence, and two people at the same demo would be looking
+        * at different pictures. `MULBERRY` off a fixed seed gives an organic
+        * scatter that is the same everywhere, forever, and it is computed once
+        * at module scope rather than per render.
+        */}
+      <section className="mcdemo-graph" aria-labelledby="mcdemo-graphcap">
+        <p className="mcdemo-graphcap" id="mcdemo-graphcap">
+          Every record carries the same ticket key, so all of it joins into one
+          graph. <span>The alerts are the few places it does not.</span>
+        </p>
+        <svg
+          className="mcdemo-svg"
+          viewBox="0 0 720 320"
+          role="img"
+          aria-label="A dense connection graph: several hundred records from Zoom, Slack, Miro, Confluence, Jira and GitHub, joined to one another by the ticket keys they carry. Three points sit apart from it, unconnected — promises that no ticket references, which is what the product raises as an alert."
+        >
+          {GRAPH.edges.map((e, i) => (
+            <line
+              key={`e${i}`}
+              className="mcdemo-gedge"
+              x1={e.a.x}
+              y1={e.a.y}
+              x2={e.b.x}
+              y2={e.b.y}
+              {...(e.weak ? { 'data-weak': '' } : {})}
+            />
+          ))}
+          {GRAPH.nodes.map((n, i) => (
+            <circle
+              key={`n${i}`}
+              className="mcdemo-gnode"
+              data-surface={n.surface}
+              cx={n.x}
+              cy={n.y}
+              r={n.r}
+            />
+          ))}
+          {GRAPH.gaps.map((g, i) => (
+            <g key={`g${i}`} className="mcdemo-ggap">
+              <circle className="mcdemo-ghalo" cx={g.x} cy={g.y} r={14} />
+              <circle className="mcdemo-gdot" cx={g.x} cy={g.y} r={5} />
+            </g>
+          ))}
+          <text className="mcdemo-gflag" x={GRAPH.flag.x} y={GRAPH.flag.y}>
+            nothing references these
+          </text>
+        </svg>
       </section>
 
       <section className="mcdemo-points">

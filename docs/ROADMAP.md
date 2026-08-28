@@ -2,7 +2,20 @@
 
 What is built, what is next, and why in that order.
 
-This is where the work stands and what remains.
+> **This is a ledger, not an explanation, and it is long because the work was.**
+> If you are reading to find out *what exists*, three sections answer that and
+> the rest is a build log kept for the reasoning inside it:
+>
+> | | |
+> |---|---|
+> | **Status at a glance** | every tracked item and its state — immediately below |
+> | **What is NOT built** | the honest short list, and the only one that changes what the product *does* |
+> | **Where it stands** | what has been run end to end against the fixture |
+>
+> Tracks A, B and D and "What verification found" are closed items. They are
+> kept because each records *why* a thing was built the way it was, and that
+> reasoning is what a later change has to argue with — but nothing in them is
+> outstanding. `README.md` is the front door; `docs/DIRECTION.md` is the why.
 
 **Nothing here carries a date.** The order is a dependency order, not a
 schedule — each phase ends in something demonstrable, and a phase you can skip
@@ -119,6 +132,20 @@ field only that method ever wrote all went with it. Dropping an entry
 (`DELETE /api/vault/log/:id`, `POST /api/vault/log/delete`) survives, because
 removing evidence is a different act from falsifying it.
 
+### Built after this ledger's tracks closed
+
+Five subsystems ship and appear on no A/B/D row, because they were not on the
+plan those tracks came from. Listed here so "what is built" is answerable from
+this document alone:
+
+| | |
+|---|---|
+| **Safe mode** | `MC_SAFE_MODE`, **on unless explicitly off** — `safe-mode.ts` wraps the connectors so every *vendor* write is refused while the vault, the log and proposals still work. It is the outermost of the four write gates and the only one a reader will watch fire. On a fixture the primary action reports the act and performs nothing; `act.ts:509` argues that choice at length |
+| **Demo mode** | `MC_DEMO`, off unless explicitly on — a welcome card, a one-page pitch, a simulated hand-off and a guide strip, in `apps/shell/src/demo/`. No route, no nav entry, `AlertApp` untouched. Three `verify-design.mts` checks hold it outside the interface |
+| **The OpenRouter provider** | `MC_MODE=openrouter` — a fourth chat provider and a fifth `MC_STRUCTURED` backend, for a host nobody is logged into, where the CLI's own login and a `gh` session both fail |
+| **The programme fixture** | `fixtures-programme/` — a second, larger committed corpus with its own generator and its own vault, regenerated and checked byte-identically by `npm run verify` alongside the first |
+| **A single-service deployment** | `railway.json` — the gateway serves the built shell, so a deep link resolves and the shell stops addressing `localhost`. See the amendment on **D4** below |
+
 ---
 
 ## Where it stands
@@ -130,9 +157,9 @@ Working, verified end to end against `fixtures/`:
 | the graph contract | `docs/GRAPH-SCHEMA.md`, `libs/domain/src/graph.ts`, `scripts/verify-graph.mts` |
 | the fixture generator | `npm run fixture` — graph, records, events, claims, deterministic |
 | graph-backed connectors | `createGraphConnectors`; `MC_GRAPH_DIR` is the live switch |
-| the findings pass | `GET /api/findings` — the four alert kinds; the two `COVERAGE_KINDS` are detected and shown on Sources |
+| the findings pass | `GET /api/findings` — the six alert kinds; the two `COVERAGE_KINDS` are detected and shown on Sources |
 | the four pages, the records and Sources | `apps/shell/src/alerts/` — eight routes |
-| structured output, MCP-free | `MC_STRUCTURED` with four backends |
+| structured output, MCP-free | `MC_STRUCTURED` with five backends |
 
 Load-bearing underneath, all of it: the dossier, the contradiction
 detector, the summariser and its citations, the vault, the durable event log,
@@ -1034,6 +1061,20 @@ and "inside the evidence boundary" was false on any shared network.
 - **`MC_APP_URL` staying `http://localhost:4200`** in a Slack message is
   *correct* under this decision and must not be "fixed" to a public host.
 
+> **Since amended, and the amendment is `railway.json`.** A hosted single-service
+> deployment now ships — the gateway serves the built shell, because a static
+> deploy has no `/api` behind it. That is the deliberate act this section says it
+> would be, not a contradiction of it, and it does not retract anything above:
+> the loopback bind is still the default, and every sentence about the evidence
+> boundary still describes the self-hosted case. What a hosted instance gives up
+> is exactly the property named above — the evidence is on a host rather than on
+> one person's machine — which is why it runs on the **committed fixture**, where
+> every name is invented, with `MC_SAFE_MODE` on so a visitor writes nothing.
+> A hosted instance pointed at a real `MC_GRAPH_DIR` would be the thing this
+> section forbids, and it is still forbidden. `MC_APP_URL` may name the public
+> origin *for that deployment*, so a notification's link resolves; it stays
+> `localhost` for a self-hosted one.
+
 **What it does NOT do, and this is the line that stops the scope creeping.** It
 does not make the gateway safe to expose; it makes exposing it a deliberate act.
 There is still no authentication, `cors()` still allows every origin, and webhook
@@ -1070,7 +1111,7 @@ is "no credentials, no network, no server". Both halves were exercised:
 `health.host` reads `{bind: "127.0.0.1", loopback: true}`; `curl localhost:8787`,
 `curl -4 127.0.0.1:8787` both answer and `http://[::1]:8787` is refused (curl
 falls back from `::1`, which is why the bind is `127.0.0.1` and not `::1`);
-`curl http://10.0.0.196:8787` from the LAN address is **refused**; and with
+a curl at the machine's own LAN address is **refused**; and with
 `MC_BIND=0.0.0.0` the same LAN curl answers, the listener is `*:8787`, and the
 boot warning names the missing authentication. The two memory paths
 (`/api/slack/capture`, `/api/webhooks/jira`) still work from localhost.
@@ -1686,7 +1727,10 @@ the same "we do not know beats a fabricated zero" rule the lane already follows.
 
 ### Left alone deliberately
 
-- **Eleven gateway routes have no caller**, and they are three different cases.
+- **Ten gateway routes have no caller**, and they are three different cases.
+  *(This sweep was taken when `PATCH /api/vault/log/:id` still existed; it has
+  since been deleted — see "What is NOT built" above — so the count is one
+  lower than the sweep reported and the third row below is now a single route.)*
   A route is an interface and this gateway is documented as something you curl,
   so "uncalled" is not by itself a reason to delete — but it is a reason to say
   which kind each one is, because the previous count here said *four* and named
@@ -1696,7 +1740,7 @@ the same "we do not know beats a fabricated zero" rule the lane already follows.
   |---|---|
   | **the vendor read-throughs** — `GET /api/confluence/pages`, `/api/zoom/transcripts`, `/api/zoom/transcripts/:id`, `/api/slack/channels`, `/api/slack/channels/:id/messages`, `/api/jira/items/:key`, its `/comments` | kept as curl targets — "what does it actually see on Zoom?" is worth being able to ask. `main.ts` says so where they are defined |
   | **the human gate's own door** — `GET /api/proposals`, `POST /api/tools/:name` | **kept deliberately, and do not delete these.** `accept_proposal` is how a person creates a ticket from an alert, and `HUMAN_ONLY` is what keeps it away from every provider. They have no shell caller because there is no queue screen and must not be one — the design working, not residue |
-  | **the log-mutation pair** — `PATCH /api/vault/log/:id`, `DELETE /api/vault/log/:id` | the odd ones out. `DELETE` is documented for cleaning up after a probe; `PATCH` mutates an **append-only** log, which is contrary to the model everything durable rests on. Worth removing |
+  | **the log drop** — `DELETE /api/vault/log/:id` | documented for cleaning up after a probe, and kept. Its former partner `PATCH /api/vault/log/:id` **was** the odd one out — it mutated an **append-only** log, contrary to the model everything durable rests on — and it is gone. Removing an entry and falsifying one are different acts; only the first survives |
 
   `GET /api/skills` is a twelfth — a ceremony launcher `DIRECTION.md` §3
   sanctions no page for. `POST /api/skills/:name` is live and stays.

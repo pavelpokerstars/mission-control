@@ -30,6 +30,7 @@
  */
 
 import { useEffect, useState, type JSX, type ReactNode } from 'react';
+import { setViewer } from '../alerts/identity';
 import { API } from '../alerts/api';
 import { useConversations } from '../alerts/conversations';
 import { forgetDemoConversations } from '../alerts/demo';
@@ -94,6 +95,25 @@ export function DemoShell({ children }: { children: ReactNode }): JSX.Element {
     useConversations.getState().clearAll();
     go({ name: 'alerts' });
   };
+
+  /**
+   * TELL THE APP WHO IS READING — the one thing demo mode knows and the product
+   * does not.
+   *
+   * `alerts/` may not import from `demo/` (`verify-design.mts` asserts it), so
+   * this runs the only way round that is allowed: the wrapper pushes the name
+   * in, and `Turns` reads it without knowing where it came from. Cleared when a
+   * walkthrough ends, so the next visitor in this tab does not inherit the last
+   * one's initials on their own questions.
+   */
+  useEffect(() => {
+    setViewer(session?.name);
+    return () => setViewer(undefined);
+  }, [session?.name]);
+
+  // ABOVE EVERY EARLY RETURN. `if (!config?.on) return` sits just below, and a
+  // hook placed after it runs on some renders and not others — React #310, and
+  // the whole app renders blank. Hooks first, branches after.
 
   if (!config?.on) return <>{children}</>;
 

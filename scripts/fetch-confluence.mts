@@ -32,7 +32,11 @@ const opt = (name: string): string | undefined => {
   return i >= 0 ? args[i + 1] : undefined;
 };
 
-const BASE = (opt('base') ?? process.env.CONFLUENCE_BASE_URL ?? 'https://flutteruki.atlassian.net/wiki').replace(/\/+$/, '');
+// NO DEFAULT TENANT. A real instance hostname was hard-coded here, which both
+// named an organisation in a published repo and made a `--base`-less run point
+// somewhere the caller did not choose. Ask for it instead: a fetcher with no
+// target must say so rather than pick one.
+const BASE = (opt('base') ?? process.env.CONFLUENCE_BASE_URL ?? '').replace(/\/+$/, '');
 const EMAIL = opt('email') ?? process.env.CONFLUENCE_EMAIL ?? '';
 const TOKEN = opt('token') ?? process.env.CONFLUENCE_API_TOKEN ?? '';
 const outDir = opt('out') ?? 'live-raw/pages';
@@ -42,12 +46,12 @@ const since = opt('since');
 const perKey = Number(opt('per-key') ?? '5');
 const cap = Number(opt('limit') ?? '400');
 
-if (!EMAIL || !TOKEN) {
+if (!BASE || !EMAIL || !TOKEN) {
   console.error(
-    'Missing credentials:\n' +
+    'Missing configuration:\n' +
+      '  CONFLUENCE_BASE_URL   your wiki, e.g. https://your-org.atlassian.net/wiki  (--base)\n' +
       '  CONFLUENCE_EMAIL      the Atlassian account            (--email)\n' +
       '  CONFLUENCE_API_TOKEN  https://id.atlassian.com/manage-profile/security/api-tokens (--token)\n' +
-      '  CONFLUENCE_BASE_URL   optional; defaults to the wiki above (--base)\n' +
       '\n' +
       'Read-only: this calls GET /rest/api/search and /rest/api/content.',
   );

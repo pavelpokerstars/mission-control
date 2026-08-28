@@ -30,7 +30,7 @@
  * rather than the product with a wrapper switched off inside it.
  */
 
-import { useEffect, useState, type JSX } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type JSX } from 'react';
 import { useRoute } from '../../alerts/router';
 import { useConversations } from '../../alerts/conversations';
 
@@ -156,6 +156,50 @@ export function GuideBar({
   });
   const [left, setLeft] = useState(() => remainingMs(session));
 
+  /**
+   * HOW FAR DOWN THE FLOATING CLOCK HAS TO SIT, measured rather than guessed.
+   *
+   * Collapsed, the clock is `fixed` in the top-right corner — and the app's own
+   * toolbar ends in the six connector dots, which are the only way in to
+   * Sources. So it floats BELOW that band rather than on it. The band's height
+   * is not a constant: `.topbar` wraps, and at 800px it is three rows and 99px
+   * against roughly 53px on a wide screen, so any hard-coded offset is wrong at
+   * most widths. A media query cannot help either, because where it wraps
+   * depends on the width of its own contents.
+   *
+   * A DOM READ RATHER THAN AN IMPORT. `verify-design.mts` forbids `alerts/`
+   * importing from `demo/`; this is the other direction and reads nothing but a
+   * height. It is still a coupling to a class name the demo layer does not own,
+   * so it fails safe: no toolbar found — the introduction, or a rename — and the
+   * fallback clears the tallest toolbar measured.
+   */
+  const laneRef = useRef<HTMLDivElement | null>(null);
+  useLayoutEffect(() => {
+    const lane = laneRef.current;
+    if (!lane) return;
+    const measure = (): void => {
+      /**
+       * ONE RULE ON BOTH SURFACES: sit 11px under whatever chrome the page has
+       * at the top of it. The app's is `.topbar`, the introduction's is its own
+       * `.mcdemo-pagehead` — different elements, same relationship, so the clock
+       * does not jump when a reader moves from one to the other.
+       *
+       * The bottom is taken in PAGE coordinates (`top + scrollY`) rather than
+       * viewport ones. This runs on resize as well as at layout, and a resize
+       * halfway down the page would otherwise measure a chrome that has scrolled
+       * off and pin the clock somewhere near the top of the viewport.
+       */
+      const chrome = document.querySelector(over === 'app' ? '.topbar' : '.mcdemo-pagehead');
+      const bottom = chrome
+        ? Math.round(chrome.getBoundingClientRect().bottom + window.scrollY)
+        : 0;
+      lane.style.setProperty('--mcdemo-float-top', `${(bottom || 108) + 11}px`);
+    };
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  });
+
   const complete = (key: ActionKey): void =>
     setDone((prev) => {
       if (prev.includes(key)) return prev;
@@ -230,15 +274,47 @@ export function GuideBar({
     </span>
   );
 
+  /**
+   * COLLAPSED: the panel goes, and the clock becomes the way back.
+   *
+   * Hiding used to leave the full-width band in place carrying a quiet bar, so
+   * "hide" removed the gradient and the sentence and kept the furniture — the
+   * section did not collapse, it just went grey. Now the band drops to a thin
+   * transparent lane and the clock is the only thing in it, pinned right.
+   *
+   * THE LANE IS RESERVED RATHER THAN FLOATED OVER, and that is deliberate. The
+   * obvious version is `position: fixed` in the corner, which is what an earlier
+   * revision did and what the header above still warns about: the app's own
+   * toolbar ends in the six connector dots at the top right — the only way in to
+   * Sources — so a chip pinned there covers the one control it lands on. The
+   * lane keeps the strip `sticky`, so the clock still follows the page down and
+   * still reads as floating above it, while occupying space of its own that
+   * nothing else is drawn in. It cannot overlap anything at any width.
+   *
+   * The whole pill is the control. A separate `Show guide` button next to a
+   * clock is two things to aim at where one will do, and the clock is already
+   * the thing a reader's eye goes to.
+   */
   if (!guidance || hidden || !step) {
+    const restorable = guidance && hidden;
     return (
-      <div className="mcdemo-strip" data-over={over}>
-        <div className="mcdemo-bar" data-quiet="">
-          {clock}
-          {guidance && hidden && (
-            <button type="button" className="mcdemo-toggle" onClick={show}>
-              Show guide
+      <div className="mcdemo-strip" data-over={over} data-collapsed="">
+        <div className="mcdemo-lane" ref={laneRef}>
+          {restorable ? (
+            <button
+              type="button"
+              className="mcdemo-recall"
+              onClick={show}
+              title="Show the walkthrough guide again"
+              aria-label={`${session.name} — ${clockOf(left)} left. Show the guide again.`}
+            >
+              {clock}
+              <span className="mcdemo-recallhint" aria-hidden="true">
+                Show guide
+              </span>
             </button>
+          ) : (
+            clock
           )}
         </div>
       </div>

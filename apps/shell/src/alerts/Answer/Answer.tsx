@@ -261,7 +261,32 @@ function inlineFrom(text: string, from: number, depth: number, base = 0): ReactN
  * Anything unsupported falls through as a paragraph, which is what the panel
  * did before — this is never worse than plain text.
  */
-export function Answer({ text }: { text: string }): JSX.Element {
+export function Answer({
+  text,
+  chains = false,
+}: {
+  text: string;
+  /**
+   * MAY THIS ANSWER DRAW A CHAIN, and it defaults to NO.
+   *
+   * A drawn chain reads as a verified shape — boxes, arrows, per-node state —
+   * and that is the whole point of drawing it. But the model writes the node
+   * names and the states itself, so the drawing is only as good as what the
+   * gateway put in front of it. On an alert that is the detector's own ordered
+   * walk (`Finding.impact`) and the shape is exactly right. In a conversation
+   * about nothing in particular there is no walk, and a small model asked for a
+   * shape will supply one: measured on the deployed demo, a general question
+   * produced `ORB-1627 · done -> ORB-1641 · to do -> ORB-1669 · to do ->
+   * ORB-1627`, three tickets with no dependency edge between any of them and
+   * three invented statuses, drawn with the same authority as the real thing.
+   *
+   * So this is a fact about the caller rather than a sentence in the prompt:
+   * only a caller holding a subject passes `true`. Everywhere else the fence
+   * still renders — as its own text, monospaced and unstyled — because
+   * swallowing it would hide that the model answered with a shape at all.
+   */
+  chains?: boolean;
+}): JSX.Element {
   const blocks: JSX.Element[] = [];
   const lines = text.split('\n');
   let para: string[] = [];
@@ -305,7 +330,15 @@ export function Answer({ text }: { text: string }): JSX.Element {
      */
     if (/^\s*`{3,}/.test(line)) {
       if (fence) {
-        blocks.push(<Chain key={blocks.length} lines={fence} />);
+        blocks.push(
+          chains ? (
+            <Chain key={blocks.length} lines={fence} />
+          ) : (
+            <p key={blocks.length} className="quiet">
+              <code>{fence.join(' ')}</code>
+            </p>
+          ),
+        );
         fence = undefined;
       } else if (/^\s*`{3,}\s*chain\b/i.test(line)) {
         flushPara();
@@ -337,8 +370,20 @@ export function Answer({ text }: { text: string }): JSX.Element {
   }
   flushPara();
   flushList();
-  // Truncated mid-chain, or still streaming: draw what arrived.
-  if (fence?.length) blocks.push(<Chain key={blocks.length} lines={fence} />);
+  // Truncated mid-chain, or still streaming: draw what arrived — under the same
+  // permission as the closed fence above, or a chain the caller may not draw
+  // would appear while the answer streamed and be replaced when it closed.
+  if (fence?.length) {
+    blocks.push(
+      chains ? (
+        <Chain key={blocks.length} lines={fence} />
+      ) : (
+        <p key={blocks.length} className="quiet">
+          <code>{fence.join(' ')}</code>
+        </p>
+      ),
+    );
+  }
 
   return <Fragment>{blocks}</Fragment>;
 }

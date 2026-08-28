@@ -44,6 +44,14 @@
    track — so `minmax(0,1fr)` still does its job on a long one and the box can
    never overflow the column. */
 .turn.you { grid-template-columns:minmax(0,1fr) 30px; }
+/* AND ONE COLUMN WHEN NOBODY IS NAMED, which is the product's normal state.
+   This app has no login (`identity.ts`), so the reader's badge is usually not
+   drawn at all — and the two-column template then reserved 30px plus a 13px gap
+   of empty track, leaving every message the reader sent floating 43px clear of
+   the right edge that the agent's answers sit against. The preview drew a
+   signed-in reader and so has no rule for this; it is listed in
+   `verify-design.mts`'s ALLOWED_LOCAL with the same reason. */
+.turn.you[data-anon] { grid-template-columns:minmax(0,1fr); }
 .turn .badge {
   width:30px; height:30px; border-radius:7px; display:grid; place-items:center;
   font-family:var(--mono); font-size:10px; font-weight:600;

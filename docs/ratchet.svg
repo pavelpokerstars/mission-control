@@ -2,22 +2,59 @@
   <title id="rtTitle">The four movements, and why only one of them compounds</title>
   <desc id="rtDesc">Four stages run in order. First, a continuous unattended substrate of webhooks and capture keeps the event log and vault current. Second, before the meeting, skills assemble a pack from that substrate. Third, the meeting happens and the workshop skill reconciles the recording with the board. Fourth, what was decided is written back into the vault. An arrow returns from the fourth stage to the second, because the next ceremony assembles from what the last one learned. Only that return arrow makes the system improve over time.</desc>
   <defs>
-    <marker id="rah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#6b6a65"/></marker>
-    <marker id="rahA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#c15f3c"/></marker>
+    <marker id="rah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" class="head"/></marker>
+    <marker id="rahA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" class="headA"/></marker>
   </defs>
   <style>
-    .box{fill:#faf9f5;stroke:#d9d7d0;stroke-width:1.25}
-    .spine{fill:#faf9f5;stroke:#c15f3c;stroke-width:1.75}
-    .t{fill:#141413;font-size:13.5px;font-weight:600}
-    .s{fill:#6b6a65;font-size:11px}
-    .lbl{fill:#6b6a65;font-size:10.5px}
-    .lblA{fill:#c15f3c;font-size:10.5px;font-weight:600}
-    .ln{stroke:#6b6a65;stroke-width:1.4;fill:none}
-    .lnA{stroke:#c15f3c;stroke-width:1.8;fill:none}
-    .tag{fill:#8f8d86;font-size:9.5px}
-    .num{fill:#c15f3c;font-size:11px;font-weight:700}
+    /* THE DIAGRAM BORROWS THE PAGE'S TOKENS, AND FALLS BACK TO ITS OWN.
+       Inlined into docs/html, `var(--panel)` and friends resolve against
+       doc.css, so the diagram follows the page — including an explicit
+       [data-theme] toggle. Opened on its own, or loaded as an image, those
+       names are undefined and the fallback applies; the media query below then
+       supplies the dark half. One palette, three contexts, no second copy.
+
+       KEEP MARKUP OUT OF THIS COMMENT. Inside an inline SVG the HTML parser
+       does NOT treat `style` as raw text, so a literal tag written here is
+       parsed as markup — and an `img` tag is one of the names that forces a
+       breakout from foreign content, which truncates the diagram at this line
+       and leaves every shape below it as stray HTML. It renders as a blank
+       gap, with no error anywhere. */
+    svg{
+      --d-bg:     var(--panel,   #ffffff);
+      --d-box:    var(--bg,      #f7f9fc);
+      --d-hub:    var(--panel-2, #eef2f8);
+      --d-line:   var(--line,    #dfe5ee);
+      --d-text:   var(--text,    #131922);
+      --d-muted:  var(--muted,   #5d6b7d);
+      --d-accent: var(--accent,  #2463cd);
+    }
+    @media (prefers-color-scheme: dark){
+      svg{
+        --d-bg:     var(--panel,   #151a21);
+        --d-box:    var(--bg,      #0e1116);
+        --d-hub:    var(--panel-2, #1b222b);
+        --d-line:   var(--line,    #262e3a);
+        --d-text:   var(--text,    #e6edf3);
+        --d-muted:  var(--muted,   #8b98a9);
+        --d-accent: var(--accent,  #4c8dff);
+      }
+    }
+    .bg{fill:var(--d-bg)}
+    .rule{stroke:var(--d-line);stroke-width:1}
+    .head{fill:var(--d-muted)}
+    .headA{fill:var(--d-accent)}
+    .box{fill:var(--d-box);stroke:var(--d-line);stroke-width:1.25}
+    .spine{fill:var(--d-box);stroke:var(--d-accent);stroke-width:1.75}
+    .t{fill:var(--d-text);font-size:13.5px;font-weight:600}
+    .s{fill:var(--d-muted);font-size:11px}
+    .lbl{fill:var(--d-muted);font-size:10.5px}
+    .lblA{fill:var(--d-accent);font-size:10.5px;font-weight:600}
+    .ln{stroke:var(--d-muted);stroke-width:1.4;fill:none}
+    .lnA{stroke:var(--d-accent);stroke-width:1.8;fill:none}
+    .tag{fill:var(--d-muted);font-size:9.5px;opacity:.8}
+    .num{fill:var(--d-accent);font-size:11px;font-weight:700}
   </style>
-  <rect x="0" y="0" width="880" height="320" fill="#ffffff"/>
+  <rect class="bg" x="0" y="0" width="880" height="320"/>
 
   <rect class="box" x="30" y="52" width="190" height="96" rx="9"/>
   <text class="num" x="48" y="76">1</text>
@@ -54,7 +91,7 @@
   <path class="lnA" d="M 770 152 L 770 218 L 345 218 L 345 154" marker-end="url(#rahA)"/>
   <text class="lblA" x="557" y="208" text-anchor="middle">the next ceremony assembles from what the last one learned</text>
 
-  <line x1="30" y1="248" x2="850" y2="248" stroke="#d9d7d0" stroke-width="1"/>
+  <line x1="30" y1="248" x2="850" y2="248" class="rule"/>
   <text class="tag" x="30" y="270">Movements 1–3 are what every meeting-notes tool does. Movement 4 — and the arrow back — is the only part that compounds.</text>
   <text class="tag" x="30" y="288">Cut that arrow and each retro re-derives the same findings from nothing, which is what "third sprint running" costs you.</text>
 </svg>

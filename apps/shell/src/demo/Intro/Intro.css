@@ -11,11 +11,17 @@
  * `mcdemo-` prefixed.
  */
 
+/* The top padding is 33 rather than 42 so this page's own header ends at the
+   same height the app's toolbar does — 61px at every width above the wrap.
+   `GuideBar` places the floating clock 11px under whichever of the two a page
+   has, so matching the chrome is what stops the clock moving when a reader
+   crosses from the introduction into the app. Nine pixels; the header still
+   has room above it. */
 .mcdemo-page {
   width: min(100%, 1000px);
   min-height: 100vh;
   margin: 0 auto;
-  padding: 42px 24px 80px;
+  padding: 33px 24px 80px;
 }
 
 .mcdemo-pagehead {
@@ -398,4 +404,120 @@
   .mcdemo-copy .mcdemo-lede { max-width: none; }
   .mcdemo-msg { grid-template-columns: 32px minmax(0, 1fr); padding: 14px; }
   .mcdemo-avatar { width: 32px; height: 32px; }
+}
+
+
+/* ---------- the connection graph ---------- */
+
+/**
+ * One picture between "here are the tools" and "here is what comes out".
+ *
+ * Every colour is a token, so it follows the page into dark without a second
+ * palette — the same rule `docs/ceremony-flow.svg` follows. Nothing here is
+ * hard-coded, including the two greys, because a diagram that only works on one
+ * background is a diagram that will be wrong half the time.
+ */
+.mcdemo-graph {
+  margin: 22px auto 0;
+  max-width: 760px;
+  width: 100%;
+}
+
+.mcdemo-graphcap {
+  margin: 0 0 10px;
+  font-size: 0.92rem;
+  color: var(--ink-2);
+}
+
+.mcdemo-graphcap span {
+  color: var(--ink-3);
+}
+
+.mcdemo-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  overflow: visible;
+}
+
+/* A record is a dot in its source's colour — the same vocabulary as the
+   connector dots in the toolbar, so the palette is already learned. */
+.mcdemo-gnode {
+  fill: var(--ink-3);
+  opacity: 0.9;
+}
+
+.mcdemo-gnode[data-surface='jira'] { fill: var(--s-jira); }
+.mcdemo-gnode[data-surface='slack'] { fill: var(--s-slack); }
+.mcdemo-gnode[data-surface='zoom'] { fill: var(--s-zoom); }
+.mcdemo-gnode[data-surface='conf'] { fill: var(--s-conf); }
+.mcdemo-gnode[data-surface='miro'] { fill: var(--s-miro); }
+.mcdemo-gnode[data-surface='github'] { fill: var(--s-github); }
+
+/* Two weights, and the quiet one carries the argument: a link INSIDE a tool is
+   ordinary, and a link between two of them is the thing no single vendor tool
+   can draw. There are more of the second kind than the first on purpose. */
+.mcdemo-gedge {
+  stroke: var(--ink-3);
+  stroke-width: 0.9;
+  opacity: 0.42;
+}
+
+.mcdemo-gedge[data-weak] {
+  stroke-width: 0.65;
+  opacity: 0.2;
+}
+
+/* The exceptions. A ring rather than a bigger dot, because the point is that
+   there is nothing attached to it. */
+.mcdemo-ghalo {
+  fill: none;
+  stroke: var(--warn);
+  stroke-width: 1.2;
+  stroke-dasharray: 3 3;
+}
+
+.mcdemo-gdot {
+  fill: var(--warn);
+}
+
+.mcdemo-gflag {
+  font-family: var(--mono);
+  font-size: 10px;
+  fill: var(--warn);
+  letter-spacing: 0.06em;
+  text-anchor: end;
+}
+
+/**
+ * IT IS SHOWN AT EVERY WIDTH, and the graph was thinned so it can be.
+ *
+ * It used to be hidden below 620px, which removed the one picture of what this
+ * reads from the only screen size where a reader has nothing else to look at.
+ * The fix was fewer nodes rather than a breakpoint — see `CLUSTERS`.
+ *
+ * The one thing scaling does break is the label: `font-size` is in user units,
+ * so 10px on a 720-wide canvas drawn into a 420px column renders at under 6px.
+ * It is set in units that survive the division instead. Everything else is a
+ * dot or a line and reads small.
+ */
+@media (max-width: 620px) {
+  .mcdemo-gflag {
+    font-size: 14px;
+    letter-spacing: 0.01em;
+  }
+
+  .mcdemo-gedge {
+    stroke-width: 1.2;
+    opacity: 0.5;
+  }
+
+  .mcdemo-gedge[data-weak] {
+    stroke-width: 0.9;
+    opacity: 0.26;
+  }
+
+  .mcdemo-ghalo {
+    stroke-width: 1.8;
+  }
 }

@@ -30,11 +30,11 @@ exactly that mistake and had to be removed.
 npm run verify
 ```
 
-Typecheck, a byte-identical fixture regenerate, four verifiers and the shell
-build. No credentials, no network, no server. It is the closest this repo has to
-a test suite, because there is no test framework — so **do not claim a change
-works because it typechecks**, and do not claim it works because you curled it
-either. The interesting bugs here are wiring bugs. Open the browser.
+Typecheck, both committed fixtures regenerating byte-identically, four verifiers
+and the shell build. A few seconds, no credentials, no network, no server. It is
+the closest this repo has to a test suite, because there is no test framework —
+so **do not claim a change works because it typechecks**, and do not claim it
+works because you curled it either. The interesting bugs here are wiring bugs. Open the browser.
 
 ## Two things that differ outside Claude Code
 
@@ -43,6 +43,14 @@ either. The interesting bugs here are wiring bugs. Open the browser.
   any edit under `apps/` or `libs/` and blocks on type errors. Nothing does that
   automatically here, so run `npm run typecheck:all` yourself after editing —
   it is the authoritative one, stricter than the root `tsc -b`.
-- **The agent provider on this machine is Copilot**, which is only reachable at
-  `MC_MODE=live`. `CLAUDE.md`'s provider section has what that costs; the short
-  version is that chat works and structured output does not.
+- **The provider ladder starts with a login you may not have.** The Claude CLI
+  is first and authenticates from a developer's own login, so a machine without
+  one falls straight past it to `ANTHROPIC_API_KEY`, and past that to a scripted
+  stub; `MC_MODE=live` picks Copilot instead of the ladder and
+  `MC_MODE=openrouter` picks OpenRouter. **No rung of it is required** — an
+  empty `.env` still runs the whole product over the fixtures, which is the
+  headline claim and not a degraded mode. Copilot answers chat *and* structured
+  output once `gh auth login` is done: the "structured output does not work"
+  this file used to record was two auth gates passing while the turn failed,
+  both fixed. `CLAUDE.md`'s provider section and the Copilot entries in
+  `KNOWN-GAPS.md` have the detail.
