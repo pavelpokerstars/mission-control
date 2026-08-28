@@ -118,10 +118,39 @@ export function explain(error: string): string {
   if (/Failed to fetch|NetworkError|ERR_CONNECTION/i.test(error)) {
     return GATEWAY_UNREACHABLE;
   }
+  /**
+   * The timeout in `useJson`, which arrives as `TimeoutError` or `AbortError`
+   * depending on the browser. Both mean the same thing and neither says it: the
+   * connection was accepted and the answer never came, which is what a service
+   * mid-restart looks like from here.
+   */
+  if (/TimeoutError|AbortError|signal timed out|aborted/i.test(error)) {
+    return 'The gateway accepted the request and did not answer. It may be restarting — try again.';
+  }
   if (/\b404\b/.test(error)) return 'The gateway does not have it.';
   if (/\b5\d\d\b/.test(error)) return 'The gateway failed while reading it.';
   return error.replace(/^Error:\s*/, '');
 }
+
+/**
+ * HOW LONG A READ MAY HANG BEFORE IT COUNTS AS A FAILURE.
+ *
+ * `fetch` has no timeout of its own: a socket the server accepted and never
+ * answered leaves the promise pending for as long as the tab is open, so
+ * `loading` stays true and the page sits on its loading headline — "Counting…",
+ * "Looking…" — with no error, no content, and nothing the reader can do. Seen on
+ * a deployed instance while its container was restarting, which is exactly when
+ * a person is most likely to be looking at it.
+ *
+ * A REFUSED CONNECTION IS NOT THIS. That rejects immediately and always did;
+ * this is the case where the connection succeeds and the answer never comes.
+ *
+ * 20 seconds because it has to be longer than the slowest honest read — the
+ * findings pass over a whole graph — and shorter than a person's patience with
+ * a screen that is not saying anything. Nothing here streams: `/api/chat` has
+ * its own loop, and every path this hook serves is a small JSON GET.
+ */
+const READ_TIMEOUT_MS = 20_000;
 
 export function useJson<T>(path: string | undefined): Loaded<T> {
   const [state, setState] = useState<Omit<Loaded<T>, 'reload'>>({ loading: !!path });
@@ -146,7 +175,7 @@ export function useJson<T>(path: string | undefined): Loaded<T> {
      * under somebody reading it.
      */
     setState((prev) => ({ ...prev, loading: true, error: undefined }));
-    fetch(`${API}${path}`)
+    fetch(`${API}${path}`, { signal: AbortSignal.timeout(READ_TIMEOUT_MS) })
       .then(async (r) => {
         if (!r.ok) throw new Error(`${r.status} ${r.statusText}`);
         return (await r.json()) as T;
