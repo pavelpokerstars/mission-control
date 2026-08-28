@@ -1,0 +1,206 @@
+/* ---------- the strip ---------- */
+
+/**
+ * Sticky, and one element rather than two.
+ *
+ * An instruction you have to scroll back up for is not guidance, so it stays on
+ * screen. It carries the clock as well because the two were separate elements
+ * once — a bar centred on the 1000px column and a chip pinned top-right — and
+ * they overlapped at every viewport width between those two anchors, which is
+ * most laptops. `z-index` clears `.proto` (20) and the app's own sticky bands.
+ */
+/**
+ * THE BAND BEHIND THE BAR, AND ITS ONLY JOB IS ITS COLOUR.
+ *
+ * The bar is a centred pill on a 1000px column; the strip is what fills the
+ * width either side of it. Without this the pill sat directly on the BODY,
+ * which is `--ground` — and everything from the toolbar down is `--app`, so at
+ * any width above 1000px the walkthrough was announced by two darker margins
+ * that belonged to no surface on the page. `--app` here puts the pill on the
+ * same ground as the app it is introducing.
+ *
+ * It carries the stickiness as well, because the thing that must stay on screen
+ * is the band and not just the pill floating out of it.
+ *
+ * A wrapper rather than a background on `body`: the body's `--ground` is
+ * `app.css`'s, one of the seventeen this file is deliberately outside of, and
+ * repainting the whole page from the demo layer to move one strip is exactly
+ * the reach this separation exists to prevent.
+ */
+.mcdemo-strip {
+  position: sticky;
+  top: 0;
+  /* Clears `.proto` (20) and the app's own sticky bands. */
+  z-index: 80;
+}
+
+/**
+ * AND THE SURFACE IS NOT THE SAME ON EVERY SCREEN, which is the whole reason
+ * this is an attribute rather than one colour.
+ *
+ * `AlertApp` paints `.app-shell` with `--app` edge to edge, so over the app the
+ * band is `--app`. The introduction is not the app: it is a plain page on the
+ * BODY, which is `--ground`. A single value was right for one of them and wrong
+ * for the other — over the pitch the strip was a lighter block with `--ground`
+ * beginning underneath it, which is the seam this was supposed to remove.
+ */
+.mcdemo-strip[data-over='app'] {
+  background: var(--app);
+}
+
+.mcdemo-strip[data-over='intro'] {
+  background: var(--ground);
+}
+
+/**
+ * Sticky, and one element rather than two.
+ *
+ * An instruction you have to scroll back for is not guidance, so the strip
+ * stays on screen. The bar carries the clock as well because the two were
+ * separate elements once — a bar centred on a 1000px column and a chip pinned
+ * to the top-right corner — and they overlapped at every width between those
+ * two anchors, which is most laptop widths.
+ */
+.mcdemo-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 10px 14px;
+  border-radius: 0 0 12px 12px;
+  color: #fff;
+  font-size: 0.9rem;
+  line-height: 1.35;
+  background: linear-gradient(96deg, var(--s-jira) 0%, var(--s-slack) 52%, var(--s-conf) 100%);
+  box-shadow: var(--shadow);
+}
+
+/**
+ * The quiet variant recedes instead of disappearing.
+ *
+ * Hiding the guide used to remove the strip and move the clock to a corner, so
+ * the one control that brings it back was somewhere the reader had not been
+ * looking. Same element, same place, less of it — and no gradient, because
+ * something switched off should not go on shouting.
+ */
+.mcdemo-bar[data-quiet] {
+  background: var(--app);
+  color: var(--ink-2);
+  border: 1px solid var(--line);
+  border-top: 0;
+  box-shadow: none;
+}
+
+.mcdemo-step {
+  flex: none;
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  padding: 4px 9px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.22);
+}
+
+
+.mcdemo-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.mcdemo-clock {
+  flex: none;
+  /* Pushed right by itself, not by whatever happens to sit to its left. It used
+     to rely on an empty `.mcdemo-text` spacer with `flex: 1`, which stopped
+     growing the moment the narrow-width rule below gave that span a
+     `flex-basis` — so the clock silently walked back to the middle of the bar
+     at exactly the widths the rule was written for. */
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.03em;
+  padding: 3px 4px 3px 10px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.mcdemo-bar[data-quiet] .mcdemo-clock {
+  background: var(--sunk);
+}
+
+.mcdemo-who {
+  font-weight: 600;
+  max-width: 14ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Tabular, or the strip twitches once a second as the digits change width. */
+.mcdemo-time {
+  font-variant-numeric: tabular-nums;
+  padding: 1px 8px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.mcdemo-bar[data-quiet] .mcdemo-time {
+  background: var(--ok-bg);
+  color: var(--ok);
+}
+
+/* Amber, then red. The walkthrough ending resets the demo; it loses nothing. */
+.mcdemo-clock[data-left='low'] .mcdemo-time {
+  background: var(--warn-bg);
+  color: var(--warn);
+}
+
+.mcdemo-clock[data-left='out'] .mcdemo-time {
+  background: var(--crit-bg);
+  color: var(--crit);
+}
+
+.mcdemo-toggle {
+  flex: none;
+  border: 0;
+  padding: 4px 11px;
+  border-radius: 99px;
+  font-size: 0.8rem;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.mcdemo-toggle:hover {
+  background: rgba(255, 255, 255, 0.32);
+}
+
+.mcdemo-bar[data-quiet] .mcdemo-toggle {
+  color: var(--ink-2);
+  background: var(--sunk);
+  border: 1px solid var(--line);
+}
+
+.mcdemo-bar[data-quiet] .mcdemo-toggle:hover {
+  color: var(--ink);
+  border-color: var(--line-2);
+}
+
+/* Under ~760px the instruction and the clock cannot share a line legibly, so
+   the text wraps to its own row rather than being squeezed to two words. */
+@media (max-width: 760px) {
+  .mcdemo-bar {
+    flex-wrap: wrap;
+    row-gap: 8px;
+  }
+  .mcdemo-text {
+    order: 3;
+    flex-basis: 100%;
+  }
+}
+

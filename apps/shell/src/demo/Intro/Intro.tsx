@@ -22,9 +22,11 @@
  */
 
 import { useEffect, useState, type JSX } from 'react';
-import { KIND_LABEL } from '../alerts/AlertList/AlertList';
-import { useFindings } from '../alerts/api';
-import { go } from '../alerts/router';
+import { KIND_LABEL } from '../../alerts/AlertList/AlertList';
+import { useFindings } from '../../alerts/api';
+import { go } from '../../alerts/router';
+
+import './Intro.css';
 
 /**
  * What it reads, in judge-demo's order, plus the one that came later.

@@ -1,0 +1,52 @@
+/* ===========================================================================
+ * The demo layer's stylesheet — and it is deliberately NOT one of the seventeen.
+ *
+ * `verify-design.mts` reads `app.css` plus every `.css` under `alerts/` and
+ * asserts that between them they hold exactly the rules `docs/design-preview.html`
+ * draws: nothing invented, nothing lost. That check is the reason the interface
+ * still matches the design it was rebuilt to, and a walkthrough — a welcome
+ * card, a pitch, a simulated notification, a strip of tips — is not in the
+ * preview and must never be added to it. Putting these rules in `app.css` would
+ * have meant either failing that check or widening it until it stopped meaning
+ * anything.
+ *
+ * So the demo styles itself, out here, and pays for the separation by using
+ * only the tokens `app.css` declares. Every colour below is a `var(--…)`: no
+ * second palette, no hard-coded hex that would drift from the product's, and
+ * light and dark both work because the tokens already do. The one exception is
+ * the strip's gradient — `#fff` and the translucent whites sitting on it — and
+ * it is safe precisely because that gradient is the same in both themes.
+ *
+ * EVERY CLASS IS PREFIXED `mcdemo-`, AND SO IS EVERY MODIFIER — which is the
+ * half that was got wrong first. `.mcdemo-pill.jira` reads as scoped and is
+ * not: `alerts/shared.css` styles the connector dots with a BARE
+ * `.jira{background:var(--s-jira)}`, so the pills came out as solid colour
+ * blocks with their labels invisible inside them. `.quiet`, `.crit`, `.warn`,
+ * `.ok` and `.inline` were all taken too. Modifiers are `data-` attributes
+ * here for that reason: an attribute selector cannot collide with a class
+ * whatever any other file declares, and there is no list to keep checking.
+ *
+ * The rest of the prefix argument. The scoping-class check that keeps two
+ * component stylesheets from fighting does not reach this file, so the prefix
+ * is what does the same job by construction: nothing in here can collide with
+ * anything the app draws, whichever order the bundler emits them in.
+ *
+ * THIS FILE IS THE LAYER, and it holds one rule. `alerts/shared.css` exists for
+ * what more than one screen draws; the same split applies here, and the same
+ * test decides what lands in it — a class TWO components render. Exactly one
+ * qualifies: the lede paragraph under a heading, which the welcome card and the
+ * introduction both use and the introduction then widens.
+ *
+ * Everything else lives beside the component that draws it, one folder per
+ * pair, which is the shape `alerts/` already has and the reason a class cannot
+ * quietly come to mean two things in two places.
+ * ========================================================================= */
+
+
+/* ---------- what more than one screen draws ---------- */
+
+.mcdemo-lede {
+  margin: 0 0 22px;
+  color: var(--ink-2);
+  font-size: 0.95rem;
+}

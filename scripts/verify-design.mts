@@ -1053,8 +1053,8 @@ section('demo mode wraps the app and cannot reach into it');
  * three things hold, and every one of them breaks quietly.
  *
  * The stylesheet check above reads `app.css` and everything under `alerts/`, so
- * it does not see `demo/demo.css` at all — which is the point, and also the
- * hazard: nothing up there would notice the demo growing into the product.
+ * it does not see the demo's stylesheets at all — which is the point, and also
+ * the hazard: nothing up there would notice the demo growing into the product.
  */
 
 /**
@@ -1092,16 +1092,78 @@ section('demo mode wraps the app and cannot reach into it');
  * `.quiet`, `.crit`, `.warn`, `.ok` and `.inline` were all taken as well.
  * Modifiers are `data-` attributes now, and this is what keeps them that way.
  */
+const DEMO = 'apps/shell/src/demo';
+
+/**
+ * The demo layer is one folder per component with its `.tsx` and `.css`
+ * together, plus a `shared.css` layer and the flat modules that draw nothing —
+ * the same shape as `alerts/`, read off disk the same way so it cannot drift.
+ */
+const DEMO_DIRS = readdirSync(join(ROOT, DEMO), { withFileTypes: true })
+  .filter((e) => e.isDirectory())
+  .map((e) => e.name)
+  .sort();
+
+const DEMO_SHEETS = [
+  `${DEMO}/shared.css`,
+  ...DEMO_DIRS.map((d) => `${DEMO}/${d}/${d}.css`),
+].filter((f) => existsSync(join(ROOT, f)));
+
 {
-  const demoCss = 'apps/shell/src/demo/demo.css';
-  const stray = selectorsIn(read(demoCss))
-    .flatMap((sel) => [...sel.matchAll(/\.([a-zA-Z][\w-]*)/g)].map((m) => m[1]!))
-    .filter((c) => !c.startsWith('mcdemo-'));
-  check('every class in demo.css is mcdemo- prefixed', stray.length === 0,
-    `unprefixed: ${[...new Set(stray)].sort().join(', ')}\n` +
+  const stray = DEMO_SHEETS.flatMap((f) =>
+    selectorsIn(read(f))
+      .flatMap((sel) => [...sel.matchAll(/\.([a-zA-Z][\w-]*)/g)].map((m) => m[1]!))
+      .filter((c) => !c.startsWith('mcdemo-'))
+      .map((c) => `${f}  .${c}`),
+  );
+  check(`every class the demo draws is mcdemo- prefixed (${DEMO_SHEETS.length} files)`,
+    stray.length === 0,
+    `unprefixed:\n${[...new Set(stray)].sort().join('\n')}\n` +
     'A bare modifier is not scoped by the prefix on the class beside it. Use a\n' +
     '`data-` attribute for a variant — it cannot collide with any class, in any\n' +
     'file, whatever order the bundler emits them in.');
+}
+
+/**
+ * TWO-AND-A-HALF — THE SPLIT PAYS FOR ITSELF THE SAME WAY `alerts/` DOES.
+ *
+ * One stylesheet could not have an orphan or an internal collision; four can.
+ * A `.css` nothing imports is invisible to both typechecks and simply stops
+ * applying, and two demo sheets claiming one class makes the winner whichever
+ * order the bundler happened to emit them in. `shared.css` is exempt as the
+ * layer — `DemoShell` imports it above the components on purpose.
+ */
+{
+  const unwired = DEMO_DIRS.filter((d) => {
+    const css = join(ROOT, DEMO, d, `${d}.css`);
+    if (!existsSync(css)) return true;
+    return !new RegExp(`import '\\./${d}\\.css'`).test(read(`${DEMO}/${d}/${d}.tsx`));
+  });
+  check('every demo stylesheet is imported by its own component', unwired.length === 0,
+    `${unwired.join(', ')}\n` +
+    'An unimported .css is invisible to both typechecks: its rules never arrive\n' +
+    'and the screen renders without them. `<Name>.css` is imported by\n' +
+    '`<Name>.tsx`; `shared.css` is imported by DemoShell, above the components.');
+
+  const scopes = new Map<string, Set<string>>();
+  for (const f of DEMO_SHEETS) {
+    const file = f.split('/').pop()!;
+    if (file === 'shared.css') continue;
+    const bare = read(f).replace(/\/\*[\s\S]*?\*\//g, ' ');
+    for (const m of bare.matchAll(/(^|\}|\{)([^{}]+)\{/g)) {
+      for (const sel of m[2]!.split(',')) {
+        const c = /\.([a-zA-Z][\w-]*)/.exec(sel);
+        if (!c) continue;
+        if (!scopes.has(c[1]!)) scopes.set(c[1]!, new Set());
+        scopes.get(c[1]!)!.add(file);
+      }
+    }
+  }
+  const contested = [...scopes].filter(([, files]) => files.size > 1);
+  check('no demo scoping class is claimed by two stylesheets', contested.length === 0,
+    contested.map(([c, f]) => `  .${c} — ${[...f].sort().join(' and ')}`).join('\n') + '\n' +
+    'Whichever file the module graph imports last wins, and nothing pins that\n' +
+    'order. A class two demo screens draw belongs in demo/shared.css.');
 }
 
 /**

@@ -31,15 +31,17 @@
  */
 
 import { useEffect, useState, type JSX } from 'react';
-import { useRoute } from '../alerts/router';
-import { useConversations } from '../alerts/conversations';
+import { useRoute } from '../../alerts/router';
+import { useConversations } from '../../alerts/conversations';
+
+import './GuideBar.css';
 import {
   clockOf,
   remainingMs,
   GUIDE_DONE_KEY,
   GUIDE_HIDDEN_KEY,
   type DemoSession,
-} from './session';
+} from '../session';
 
 type ActionKey = 'alert' | 'evidence' | 'ask';
 

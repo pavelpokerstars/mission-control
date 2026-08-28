@@ -47,8 +47,11 @@ import AlertApp from './alerts/AlertApp/AlertApp';
 /**
  * THE DEMO IMPORT IS LAST, AND IT IS NOT A FOURTH LAYER.
  *
- * `demo/demo.css` arrives through this component rather than as a line beside
- * the three above, and both halves of that are deliberate. It is not one of the
+ * The demo's stylesheets arrive through this component rather than as lines
+ * beside the three above, and both halves of that are deliberate. There are
+ * four of them now — a `shared.css` layer and one per screen, the same pairing
+ * `alerts/` uses — and `DemoShell` orders them internally, which is exactly why
+ * they are none of this file's business. It is not one of the
  * seventeen `verify-design.mts` checks against the preview — a welcome card and
  * a strip of tips are not in the design and must not be added to it — so it
  * must not sit in the layer list that check reads. And last in evaluation order

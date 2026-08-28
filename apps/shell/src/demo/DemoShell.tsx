@@ -34,9 +34,22 @@ import { API } from '../alerts/api';
 import { useConversations } from '../alerts/conversations';
 import { forgetDemoConversations } from '../alerts/demo';
 import { go } from '../alerts/router';
-import { GuideBar } from './GuideBar';
-import { Intro } from './Intro';
-import { Welcome } from './Welcome';
+
+/**
+ * THE LAYER, THEN THE COMPONENTS — and the order of these lines is the contract,
+ * exactly as it is in `main.tsx` one level up.
+ *
+ * CSS is emitted in module-EVALUATION order, which is depth-first, so an import
+ * of `./GuideBar/GuideBar` above this line puts `GuideBar.css` in the bundle
+ * BEFORE `shared.css` — and the shared layer then wins against the component
+ * files it is supposed to lose to. It was written that way for a few minutes and
+ * typechecked perfectly, because nothing in the toolchain can see it.
+ */
+import './shared.css';
+
+import { GuideBar } from './GuideBar/GuideBar';
+import { Intro } from './Intro/Intro';
+import { Welcome } from './Welcome/Welcome';
 import {
   cachedConfig,
   endSession,
@@ -48,8 +61,6 @@ import {
   type DemoConfig,
   type DemoSession,
 } from './session';
-
-import './demo.css';
 
 export function DemoShell({ children }: { children: ReactNode }): JSX.Element {
   const [config, setConfig] = useState<DemoConfig | undefined>(() => cachedConfig());

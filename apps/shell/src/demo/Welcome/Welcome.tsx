@@ -19,6 +19,8 @@
 
 import { useEffect, useRef, useState, type JSX } from 'react';
 
+import './Welcome.css';
+
 export function Welcome({
   minutes,
   onEnter,
