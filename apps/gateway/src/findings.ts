@@ -262,18 +262,37 @@ export function findMissingTickets(notes: Note[], graph: StoredGraph, now = Date
       claim: reconstructed
         ? `${asClause(n.title)} is probably ${reconstructed.key}, and nothing says so`
         : `${asClause(n.title)} was never filed`,
+      /**
+       * TWO CLAUSES, AND THE CONTAINER NAMED ONCE.
+       *
+       * It was three, and the middle one repeated the last: *"Taken by Esme
+       * Ellis, with no date given · checked against Orbit 29's close · Orbit 29
+       * has closed and no issue references it"* — the sprint twice, its closing
+       * twice, wrapping to two lines under every one of six near-identical rows
+       * on the front door. A line that reads as boilerplate is a line nobody
+       * reads, which costs the alert the one sentence that explains it.
+       *
+       * The inherited-date distinction survives the cut, and it has to: an
+       * inherited date never reaches `crit` (above), because "Sanjay said the
+       * twelfth and it is three weeks past" is a stronger claim than "nobody
+       * gave a date and the sprint has closed". `no date given` beside the
+       * container's close says exactly that, without spelling out the
+       * arithmetic.
+       *
+       * The owner by NAME, through the map already built above — a note's
+       * `owner` is whatever the meeting called them, which on a real graph is
+       * an email.
+       */
       impact: [
         dueFromSprint
-          ? `Taken by ${n.owner}, with no date given`
-          : `Agreed by ${n.owner}, due ${n.dueAt.slice(0, 10)}`,
-        dueFromSprint
-          ? `checked against ${container.label}'s close`
+          ? `Taken by ${identities.nameOf(n.owner) ?? n.owner}, no date given`
           : overdueDays > 0
-            ? `${overdueDays} day${overdueDays === 1 ? '' : 's'} past due`
-            : 'not yet due',
+            ? `Agreed by ${identities.nameOf(n.owner) ?? n.owner}, due ${shortDate(n.dueAt)} and ` +
+              `${overdueDays} day${overdueDays === 1 ? '' : 's'} past`
+            : `Agreed by ${identities.nameOf(n.owner) ?? n.owner}, due ${shortDate(n.dueAt)}`,
         reconstructed
-          ? `${container.label} has closed and no record connects the two`
-          : `${container.label} has closed and no issue references it`,
+          ? `${container.label} closed and no record connects the two`
+          : `${container.label} closed with no issue referencing it`,
       ].join(' · '),
       // When the container closed, not when this pass ran. A finding that
       // restamps itself every pass cannot be aged, ranked or deduplicated, and
@@ -395,6 +414,9 @@ export function findDroppedCommitments(args: {
 }): Finding[] {
   const { notes, graph, corpus, now = Date.now() } = args;
   if (!corpus.length) return [];
+
+  /** So the owner is named the way every other surface names them. */
+  const names = buildIdentities(graph);
 
   const containers = new Map(
     graph.nodes
@@ -522,10 +544,17 @@ export function findDroppedCommitments(args: {
       // into a morning ping; "nobody has mentioned this" does not earn that.
       severity: 'warn',
       claim: `${asClause(n.title)} has gone quiet`,
+      /**
+       * The surfaces it searched used to be spelled out here — "with nothing on
+       * Slack, Confluence or a later meeting naming it" — on every one of these,
+       * in the same words. The row already carries a dot per surface the finding
+       * was read from, so the sentence was saying in twelve words what the page
+       * says in six pixels.
+       */
       impact: [
-        `Taken by ${n.owner}`,
+        `Taken by ${names.nameOf(n.owner) ?? n.owner}`,
         `${since.length} meeting${since.length === 1 ? '' : 's'} since`,
-        `${quietDays} day${quietDays === 1 ? '' : 's'} with nothing on Slack, Confluence or a later meeting naming it`,
+        `${quietDays} day${quietDays === 1 ? '' : 's'} with nothing naming it`,
       ].join(' · '),
       /**
        * The moment the first meeting ran without it — a dated fact off a graph
@@ -761,6 +790,21 @@ function agingFiredAt(
  * once a clause follows, so they go the same way. A closing bracket or quote
  * stays — it is part of the title rather than the end of it.
  */
+/**
+ * A date as this app writes them elsewhere: `12 Aug`, not `2026-08-12`.
+ *
+ * The impact line was the only place in the interface still printing an ISO
+ * stamp at a reader. `describeWhen` in `act.ts` is the other server-side date
+ * and uses the long month; this one is short because it sits inside a clause
+ * that is already carrying a name and a count.
+ */
+function shortDate(iso: string): string {
+  const t = Date.parse(iso);
+  return Number.isFinite(t)
+    ? new Date(t).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })
+    : iso.slice(0, 10);
+}
+
 function asClause(title: string): string {
   return title.trim().replace(/[.!?:;,]+$/, '');
 }

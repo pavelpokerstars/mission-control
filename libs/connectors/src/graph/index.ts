@@ -357,13 +357,22 @@ export function buildIdentities(g: StoredGraph): Identities {
      * `StoredPerson.label` is what a collector wrote for a reader and is
      * usually the same string as `displayName`; on a graph that carries only
      * one of them it is the one that is there. It is skipped when it is just
-     * the handle or the email again, because "Jonas Jost" and "jonas.jost" are
-     * different answers and returning the second is worse than returning
-     * nothing — a caller that gets `undefined` shows the handle, which is
-     * exactly what it would have shown anyway.
+     * the canonical handle or the email again, because "Jonas Jost" and
+     * "jonas.jost" are different answers and returning the second is worse than
+     * returning nothing — a caller that gets `undefined` shows the handle, which
+     * is exactly what it would have shown anyway.
+     *
+     * AGAINST THE CANONICAL HANDLE, NOT AGAINST EVERY HANDLE. The first version
+     * rejected the name whenever it matched ANY entry in `handles`, and on
+     * `fixtures/` that is every person: a Zoom handle is a display name, so
+     * `handles.zoom` is literally "Sanjay Rao". Six of six people were indexed
+     * with no name at all and the front door went on printing
+     * `sanjay@example.com` — silently, because falling through to the raw
+     * identifier is this function's designed behaviour when it does not know
+     * somebody.
      */
     const shown = person.displayName ?? person.label;
-    const isName = !!shown && shown !== person.email && !Object.values(handles).includes(shown);
+    const isName = !!shown && shown !== person.email && shown !== canonical;
 
     for (const alias of aliases) {
       byAlias.set(alias.toLowerCase(), canonical);

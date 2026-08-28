@@ -115,6 +115,18 @@ It falls through to the identifier when nobody is known, and `nameOf` returns
 we do not have is not a name to invent. The `label` fallback is skipped when it
 is just the handle or the email again, for the same reason.
 
+**And the first version of the name test rejected everybody on `fixtures/`.**
+It skipped the display name whenever it matched ANY entry in `handles`, meaning
+to catch a `label` that is only the login back again. On that graph a Zoom handle
+IS a display name — `handles.zoom` is literally "Sanjay Rao" — so six of six
+people were indexed with no name and the front door went on printing
+`sanjay@example.com`. Silently, because falling through to the raw identifier is
+this function's designed behaviour when it does not know somebody, so there was
+nothing to notice. The test is against the CANONICAL handle now, which is the
+one that is a login by construction. Found by running the other fixture; the
+programme one has `handles.slack === handles.jira === the login` and passed
+either way.
+
 **Changed at the display sites only.** `m.author`, `item.assignee` and
 `cm.author` stay handles everywhere they are compared — `classifySignalFor`, the
 lane's assignee filter, `?assignee=`, the identity map itself — because they are
@@ -126,6 +138,29 @@ The seeded demo conversations froze the old wording in `localStorage`, so
 `demo.ts` gained a `SEED_VERSION`: a history of nothing but `demo-` rows is a
 previous vintage and is replaced, and anything else is a conversation somebody
 had and is never touched.
+
+### The commitment alerts said the sprint twice
+
+**Fixed.** `missing_ticket`'s impact was three clauses and the middle one
+repeated the last: *"Taken by Esme Ellis, with no date given · checked against
+Orbit 29's close · Orbit 29 has closed and no issue references it"* — the sprint
+twice, its closing twice, wrapping to two lines under each of six near-identical
+rows on the front door. A line that reads as boilerplate is a line nobody reads,
+which costs the alert the one sentence that explains it.
+
+Two clauses now, the container named once, and the owner by NAME rather than
+whatever the meeting called them — on a real graph, an email. The
+inherited-date distinction survives the cut and had to: an inherited date never
+reaches `crit`, because "Sanjay said the twelfth and it is three weeks past" is
+a stronger claim than "nobody gave a date and the sprint has closed". `no date
+given` beside the container's close says exactly that without spelling out the
+arithmetic.
+
+`dropped_commitment` lost its surface list for the same reason — *"with nothing
+on Slack, Confluence or a later meeting naming it"*, in those words, every time,
+while the row already carries a dot per surface the finding was read from. And
+the due date stopped being an ISO stamp: `shortDate` writes `Aug 12`, which is
+how every other date in this interface is written.
 
 ### Every alert with a conversation opened part-way down itself
 
