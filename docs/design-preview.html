@@ -219,12 +219,35 @@
   .row {
     display:grid; grid-template-columns:minmax(0,1fr) auto; gap:14px 20px; align-items:center;
     width:100%; text-align:left; background:transparent; border:0; border-bottom:1px solid var(--line);
-    padding:18px var(--gutter) 18px calc(var(--gutter) - 3px);
-    border-left:3px solid transparent;
+    padding:18px var(--gutter);
+    position:relative;
   }
-  .row:hover { background:var(--sunk); border-left-color:var(--line-2); }
-  .row.crit { border-left-color:var(--crit); }
-  .row.warn { border-left-color:var(--warn); }
+  /* ---------- the severity mark is a SEGMENT, not a border ----------
+   *
+   * It was `border-left:3px`, which runs the full height of the row. Two
+   * critical alerts next to each other therefore drew one unbroken line down
+   * the page, and so did the three "missing ticket" rows under them — the marks
+   * fused, the boundary between rows disappeared, and a column of five became a
+   * red bar and a yellow bar. The list's own hairline is what separates rows;
+   * the mark is supposed to say how bad ONE of them is.
+   *
+   * A border cannot be inset, so it is an absolutely positioned pseudo-element
+   * instead, held 10px clear of the row's top and bottom. That leaves 20px
+   * between consecutive marks, which is more than the hairline and reads as
+   * deliberate.
+   *
+   * The 3px came out of the padding at the same time: a border occupies layout
+   * and the old `calc(var(--gutter) - 3px)` existed to give it back, while a
+   * pseudo-element occupies none. Both together keep the content on exactly the
+   * x it was on. */
+  .row::before {
+    content:""; position:absolute; left:0; top:10px; bottom:10px; width:3px;
+    border-radius:2px; background:transparent;
+  }
+  .row:hover { background:var(--sunk); }
+  .row:hover::before { background:var(--line-2); }
+  .row.crit::before { background:var(--crit); }
+  .row.warn::before { background:var(--warn); }
   .row .meta { display:flex; align-items:center; gap:10px; margin-bottom:7px; flex-wrap:wrap; }
   .row h3 { margin:0 0 5px; font-size:1.02rem; font-weight:600; letter-spacing:-.01em; }
   .row .sub { margin:0; font-size:.845rem; color:var(--ink-3); }
