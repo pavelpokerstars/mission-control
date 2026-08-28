@@ -14,7 +14,10 @@
  * second copy survives long enough to disagree with the first.
  */
 interface ImportMetaEnv {
-  /** Where the gateway is. Unset means `http://localhost:8787`. */
+  /**
+   * Where the gateway is. Unset means `http://localhost:8787` under `npm run
+   * dev` and same-origin in a build — see `API` in `alerts/api.ts`.
+   */
   readonly VITE_MC_GATEWAY?: string;
 }
 

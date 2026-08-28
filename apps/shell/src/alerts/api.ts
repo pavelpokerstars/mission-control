@@ -22,8 +22,42 @@ import type { AskAudience, Evidence, Finding, Note, WorkItem } from '@mc/domain'
  * `VITE_` prefixed because that is what vite exposes to the browser; anything
  * else is silently undefined at build time, which is the trap this shape
  * avoids.
+ *
+ * EMPTY MEANS SAME-ORIGIN, AND THAT IS THE DEPLOYED CASE. A built shell is
+ * served BY the gateway — `main.ts` serves `apps/shell/dist` after every
+ * `/api/*` route — so the API is wherever this page itself came from, and a
+ * relative `/api/…` is correct on any host, any port and behind any proxy. The
+ * literal was baked into the bundle instead, which asks the READER's machine
+ * for the API: the shell loads, every fetch in it fails, and "Cannot reach the
+ * gateway" is the whole of the diagnosis. Nothing on the server looks wrong,
+ * because nothing on the server IS wrong — which is why curling it cannot find
+ * this and opening it in a browser finds it immediately.
+ *
+ * `import.meta.env.DEV` is the discriminator because it is exactly the question
+ * being asked — is a vite dev server serving this page? — and it is a
+ * build-time constant, so the deployed bundle keeps no branch and no mention of
+ * localhost at all. `npm run dev` is the one arrangement where the two differ:
+ * vite on :4200, gateway on :8787.
+ *
+ * `vite preview` is the case neither branch fits — a built bundle (so `DEV` is
+ * false) served by vite with no gateway behind it. Give it one explicitly:
+ * `VITE_MC_GATEWAY=http://localhost:8787`. That is what the override is for.
  */
-export const API = import.meta.env.VITE_MC_GATEWAY ?? 'http://localhost:8787';
+export const API =
+  import.meta.env.VITE_MC_GATEWAY ?? (import.meta.env.DEV ? 'http://localhost:8787' : '');
+
+/**
+ * One sentence, in one place, for "the gateway did not answer at all".
+ *
+ * It read ":8787, start it with `npm run dev`" everywhere, which is true of a
+ * developer's machine and false of every deployment — where the gateway is
+ * this page's own origin and the reader has nothing to start. Two copies of it
+ * had already drifted apart in wording; deriving both from `API` keeps the
+ * advice attached to where the shell is actually looking.
+ */
+export const GATEWAY_UNREACHABLE = import.meta.env.DEV
+  ? 'The gateway is not answering on :8787. Start it with `npm run dev`.'
+  : 'The gateway is not answering. It serves this page too, so it is likely restarting.';
 
 export interface FindingDetail {
   finding: Finding;
@@ -82,7 +116,7 @@ export interface Loaded<T> {
  */
 export function explain(error: string): string {
   if (/Failed to fetch|NetworkError|ERR_CONNECTION/i.test(error)) {
-    return 'The gateway is not answering on :8787. Start it with `npm run dev`.';
+    return GATEWAY_UNREACHABLE;
   }
   if (/\b404\b/.test(error)) return 'The gateway does not have it.';
   if (/\b5\d\d\b/.test(error)) return 'The gateway failed while reading it.';

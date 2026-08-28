@@ -11,6 +11,9 @@
 // in the gateway sees defaults. See env.ts for the full account.
 import './env.js';
 
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import express from 'express';
 import cors from 'cors';
 import {
@@ -951,6 +954,53 @@ async function main(): Promise<void> {
   });
 
   app.use('/api/webhooks', webhookRouter((input) => capture(vault, input)));
+
+  /**
+   * SERVE THE BUILT SHELL, so one deployed process is the whole app.
+   *
+   * The shell is a Vite build in `apps/shell/dist` and the gateway already owns
+   * the API. Serving those files from here makes a deployment one service, one
+   * origin and one URL — which is also what makes `MC_APP_URL` in `notify.ts` a
+   * single host rather than two that have to be kept agreeing, and what stops
+   * `cors()` being load-bearing in production.
+   *
+   * THE CATCH-ALL IS THE POINT, not a convenience. The shell routes on
+   * `location.pathname` (`apps/shell/src/alerts/router.ts`), and `notify.ts`
+   * sends `/alert/<id>` as a path for exactly that reason — a hash would open
+   * the front door instead of the one alert the notification was about. So
+   * every deep link arrives as a request for a file that does not exist, and
+   * anything that is not `/api/*` and not a real asset has to answer
+   * `index.html` and let the router read the path. `spaFallback` in the shell's
+   * vite config is this same rule for the dev server and `vite preview`; this
+   * is it for a built deployment, and without it every citation link and every
+   * notification 404s on a reload.
+   *
+   * Registered AFTER every `/api/*` route so it cannot shadow one, and the
+   * pattern excludes `/api/` so an unknown API path still 404s as itself rather
+   * than being handed HTML with a 200 — which is the failure that looks like a
+   * broken client instead of a wrong URL.
+   *
+   * `MC_SERVE_STATIC=0` opts out for the local pairing: `npm run dev` runs vite
+   * on :4200 with its own fallback and the gateway on :8787, and there a second
+   * copy of the shell served from a `dist/` nobody rebuilt is a way to spend an
+   * afternoon debugging the wrong build.
+   */
+  if ((process.env.MC_SERVE_STATIC ?? '1') !== '0') {
+    const dist = fileURLToPath(new URL('../../shell/dist', import.meta.url));
+    if (existsSync(dist)) {
+      app.use(express.static(dist));
+      app.get(/^(?!\/api\/).*/, (_req, res) => {
+        // Absolute: `res.sendFile` resolves a relative path against cwd, which
+        // is whatever directory the process was started from.
+        res.sendFile(join(dist, 'index.html'), (err) => {
+          if (err) res.status(404).send('Mission Control shell not built. Run `npm run build`.');
+        });
+      });
+      console.log(`[static] serving the shell from ${dist}`);
+    } else {
+      console.warn(`[static] ${dist} not found — run \`npm run build\`. Serving the API only.`);
+    }
+  }
 
   const server = app.listen(PORT, BIND, (err?: Error) => {
     /**

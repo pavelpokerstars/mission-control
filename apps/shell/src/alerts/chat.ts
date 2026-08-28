@@ -12,7 +12,7 @@
  */
 
 import type { ChatTurn, ContextEnvelope } from '@mc/domain';
-import { API } from './api';
+import { API, GATEWAY_UNREACHABLE } from './api';
 import { useConversations } from './conversations';
 
 
@@ -122,7 +122,7 @@ export async function ask(
       }
     }
   } catch (err) {
-    replaceLast(id, `Could not reach the gateway. Is it running on :8787?\n\n${String(err)}`);
+    replaceLast(id, `${GATEWAY_UNREACHABLE}\n\n${String(err)}`);
   } finally {
     setStreaming(id, false);
   }
