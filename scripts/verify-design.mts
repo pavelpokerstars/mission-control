@@ -28,6 +28,10 @@
 
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
+// Pure, and imported rather than pattern-matched: "the product is the default"
+// is a fact about what the function RETURNS, and a regex looking for the word
+// `off` in the source would pass on a file that had been inverted.
+import { demoMinutes, demoMode } from '../apps/gateway/src/demo.js';
 
 const ROOT = new URL('..', import.meta.url).pathname;
 const read = (p: string): string => readFileSync(join(ROOT, p), 'utf8');
@@ -1033,6 +1037,109 @@ if (byScreen.size === 0) {
   console.log('         Design that is drawn and not built — NOT a failure, and not');
   console.log('         drift. See ROADMAP.md "What verification found" (G1) before');
   console.log('         deleting any of it: the preview is the record that it was designed.');
+}
+
+// ---------------------------------------------------------------------------
+
+section('demo mode wraps the app and cannot reach into it');
+
+/**
+ * WHY THIS IS CHECKED AT ALL.
+ *
+ * `MC_DEMO` adds four screens that are deliberately NOT in
+ * `docs/design-preview.html` and must never be added to it: a welcome card, a
+ * one-page pitch, a simulated hand-off and a strip of tips. Letting them exist
+ * beside a design system this file checks rule-for-rule is only safe while
+ * three things hold, and every one of them breaks quietly.
+ *
+ * The stylesheet check above reads `app.css` and everything under `alerts/`, so
+ * it does not see `demo/demo.css` at all — which is the point, and also the
+ * hazard: nothing up there would notice the demo growing into the product.
+ */
+
+/**
+ * ONE — THE DEPENDENCY RUNS ONE WAY.
+ *
+ * The walkthrough reads the product's route, its conversation store and its
+ * findings; the product knows nothing about the walkthrough. That asymmetry is
+ * the whole of "`MC_DEMO` unset means the product": the moment a component
+ * under `alerts/` imports from `demo/`, turning the flag off stops meaning the
+ * app is unchanged and starts meaning a wrapper is disabled inside it. It is
+ * also how `AlertApp` grows demo props, which is what happened the first time
+ * this was built somewhere else.
+ */
+{
+  const reaching = sourcesUnder('apps/shell/src/alerts')
+    .filter((f) => /from '[^']*\/demo\/[^']*'/.test(stripComments(read(f))))
+    .map((f) => `  ${f}`);
+  check('nothing under alerts/ imports from demo/', reaching.length === 0,
+    `${reaching.join('\n')}\n` +
+    'The walkthrough depends on the product, never the reverse. With an import\n' +
+    'the other way, MC_DEMO=off no longer means "the app as designed" — it means\n' +
+    'the app with a demo switched off inside it, which is a different claim and a\n' +
+    'much weaker one. Read what you need from the public route/store instead.');
+}
+
+/**
+ * TWO — EVERY CLASS THE DEMO DRAWS IS PREFIXED, MODIFIERS INCLUDED.
+ *
+ * This one is a scar. `demo.css` is outside the scoping-class check that stops
+ * two component stylesheets fighting, so the prefix is the only thing keeping
+ * it from colliding with the app — and `.mcdemo-pill.jira` reads as scoped
+ * while being nothing of the kind: `alerts/shared.css` styles the connector
+ * dots with a bare `.jira{background:var(--s-jira)}`, so the source pills
+ * rendered as solid colour blocks with their labels invisible inside them.
+ * `.quiet`, `.crit`, `.warn`, `.ok` and `.inline` were all taken as well.
+ * Modifiers are `data-` attributes now, and this is what keeps them that way.
+ */
+{
+  const demoCss = 'apps/shell/src/demo/demo.css';
+  const stray = selectorsIn(read(demoCss))
+    .flatMap((sel) => [...sel.matchAll(/\.([a-zA-Z][\w-]*)/g)].map((m) => m[1]!))
+    .filter((c) => !c.startsWith('mcdemo-'));
+  check('every class in demo.css is mcdemo- prefixed', stray.length === 0,
+    `unprefixed: ${[...new Set(stray)].sort().join(', ')}\n` +
+    'A bare modifier is not scoped by the prefix on the class beside it. Use a\n' +
+    '`data-` attribute for a variant — it cannot collide with any class, in any\n' +
+    'file, whatever order the bundler emits them in.');
+}
+
+/**
+ * THREE — AND THE DEFAULT IS THE PRODUCT.
+ *
+ * Read from the function rather than from the file: whether an unset variable
+ * means "off" is a fact about what `demoMode()` returns, and a source scan for
+ * the word `off` passes just as happily on a version that has been inverted.
+ * The minutes are here too because a `0` from a mistyped variable would expire
+ * the walkthrough on the tick after it started, which reads as the app being
+ * broken rather than as the variable being wrong.
+ */
+{
+  const before = process.env.MC_DEMO;
+  const beforeMinutes = process.env.MC_DEMO_MINUTES;
+  delete process.env.MC_DEMO;
+  const offByDefault = demoMode() === false;
+  const typoIsOff = ['onn', 'enabled', 'maybe', 'off', ''].every((v) => {
+    process.env.MC_DEMO = v;
+    return demoMode() === false;
+  });
+  process.env.MC_DEMO = 'on';
+  const onWhenAsked = demoMode() === true;
+  delete process.env.MC_DEMO_MINUTES;
+  const sane = demoMinutes() === 20;
+  process.env.MC_DEMO_MINUTES = '0';
+  const zeroIsRefused = demoMinutes() === 20;
+  if (before === undefined) delete process.env.MC_DEMO;
+  else process.env.MC_DEMO = before;
+  if (beforeMinutes === undefined) delete process.env.MC_DEMO_MINUTES;
+  else process.env.MC_DEMO_MINUTES = beforeMinutes;
+
+  check('demo mode is off unless MC_DEMO explicitly says otherwise',
+    offByDefault && typoIsOff && onWhenAsked && sane && zeroIsRefused,
+    'MC_DEMO must be an allow-list, not `!== "off"`. What it adds is not the\n' +
+    'product, so a typo has to fall to the product — the opposite of safe mode,\n' +
+    'which is on unless explicitly turned off because what IT prevents is\n' +
+    'irreversible. See apps/gateway/src/demo.ts.');
 }
 
 // ---------------------------------------------------------------------------

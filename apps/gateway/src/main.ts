@@ -54,6 +54,7 @@ import {
 import { findingDetail, runAlertFindings, runFindings } from './findings.js';
 import { actOnFinding, forgetAnswered, indexAnswer, type ActionInput } from './act.js';
 import { describeSafeMode, safeMode } from './safe-mode.js';
+import { demoConfig, demoMode } from './demo.js';
 import { readRecord } from './records.js';
 import { buildSources } from './sources.js';
 import { webhookRouter } from './webhooks.js';
@@ -354,6 +355,15 @@ async function main(): Promise<void> {
        */
       notify: transports().map((t) => t.name),
       safeMode: safeMode(),
+      /**
+       * The walkthrough, and whether this instance is wearing it.
+       *
+       * The shell asks this before it decides what to mount, so the answer has
+       * to be here rather than in the bundle — see `demo.ts` for why a `VITE_`
+       * flag was the wrong shape. `on: false` is the product, which is the
+       * answer for every instance nobody has deliberately turned it on for.
+       */
+      demo: demoConfig(),
       vault: { dir: VAULT_DIR, notes: vault.list().length },
     });
   });
@@ -1020,6 +1030,14 @@ async function main(): Promise<void> {
     const reach = LOOPBACK ? `http://localhost:${PORT}` : `http://${BIND}:${PORT}`;
     console.log(`mission-control gateway  mode=${MODE}  ${reach}`);
     console.log(`  ${describeSafeMode()}`);
+    // Said out loud for the same reason the bind warning is: demo mode changes
+    // the first screen a visitor sees, and a wrapper the operator forgot they
+    // switched on is indistinguishable from the app behaving strangely.
+    if (demoMode()) {
+      const { minutes } = demoConfig();
+      const each = `${minutes} minute${minutes === 1 ? '' : 's'}`;
+      console.log(`  MC_DEMO is on — the walkthrough wraps the app, ${each} a session.`);
+    }
     if (MODE === 'mock') {
       console.log('running on fixtures — no credentials needed. set MC_MODE=live to go real.');
     }

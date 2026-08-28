@@ -44,11 +44,31 @@ import './app.css';
 import './alerts/shared.css';
 
 import AlertApp from './alerts/AlertApp/AlertApp';
+/**
+ * THE DEMO IMPORT IS LAST, AND IT IS NOT A FOURTH LAYER.
+ *
+ * `demo/demo.css` arrives through this component rather than as a line beside
+ * the three above, and both halves of that are deliberate. It is not one of the
+ * seventeen `verify-design.mts` checks against the preview — a welcome card and
+ * a strip of tips are not in the design and must not be added to it — so it
+ * must not sit in the layer list that check reads. And last in evaluation order
+ * means its rules are emitted after every component stylesheet, so nothing the
+ * app draws can win against the strip by accident. Its classes are all
+ * `mcdemo-` prefixed as well; the order is the belt and the prefix is the
+ * braces.
+ *
+ * With `MC_DEMO` unset this renders `<AlertApp />` and nothing else. That is
+ * the whole of the contract: demo mode is a wrapper around the product, never a
+ * change to it.
+ */
+import { DemoShell } from './demo/DemoShell';
 
 const el = document.getElementById('root');
 if (!el) throw new Error('missing #root');
 createRoot(el).render(
   <StrictMode>
-    <AlertApp />
+    <DemoShell>
+      <AlertApp />
+    </DemoShell>
   </StrictMode>,
 );

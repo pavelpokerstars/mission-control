@@ -31,6 +31,15 @@
         "4300"
       ],
       "port": 4300
+    },
+    {
+      "name": "mission-control-demo",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": [
+        "-c",
+        "MC_DEMO=on PORT=8787 npm run dev"
+      ],
+      "port": 4200
     }
   ]
 }

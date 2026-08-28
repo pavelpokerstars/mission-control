@@ -63,6 +63,24 @@ const SEEDED_KEY = 'mc-demo-seeded';
  */
 const SEED_VERSION = '2';
 
+/**
+ * Forget that the offer was made, so the next walkthrough gets a fresh history.
+ *
+ * The demo shell resets the browser between visitors — a shared demo URL
+ * otherwise hands the second arrival the first one's wandering as their
+ * starting state. Clearing the conversations is not enough on its own: the flag
+ * above says the offer has already been made, and without dropping it the reset
+ * would leave `Ask` genuinely empty, which is the state this whole file exists
+ * to avoid. The key name stays in this one file; the shell calls this.
+ */
+export function forgetDemoConversations(): void {
+  try {
+    localStorage.removeItem(SEEDED_KEY);
+  } catch {
+    // Storage denied. Nothing was persisted, so there is nothing to forget.
+  }
+}
+
 const HOUR = 3_600_000;
 const DAY = 24 * HOUR;
 

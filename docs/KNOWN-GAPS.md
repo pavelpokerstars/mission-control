@@ -1211,6 +1211,27 @@ envelope — the event is used, it just has no side effect.
 **`@mc/vault` is absent from the vite aliases.** It touches `node:fs`; a browser
 import must fail loudly. See CLAUDE.md.
 
+**`apps/shell/src/demo/demo.css` is not one of the seventeen stylesheets, and
+the demo's four screens are not in the preview.** `verify-design.mts` reads
+`app.css` plus everything under `alerts/` and asserts they hold exactly the
+rules `docs/design-preview.html` draws — nothing invented, nothing lost. Demo
+mode's welcome card, pitch, simulated hand-off and guide strip are none of the
+app's business and must never be added to the preview to make that check pass,
+so they style themselves outside it, from the same tokens. Three checks in the
+same verifier pay for the separation: nothing under `alerts/` may import from
+`demo/`, every class in `demo.css` must carry the `mcdemo-` prefix (bare
+modifiers are not scoped — `.mcdemo-pill.jira` collided with `shared.css`'s
+connector dots and rendered the source pills as solid colour blocks), and
+`demoMode()` must be off unless `MC_DEMO` explicitly says otherwise.
+
+**Demo mode adds no route, and the walkthrough is a SIBLING of `AlertApp`.**
+`DIRECTION.md` §3 lists the destinations and the toolbar is capped at three, so
+the welcome card and the pitch are screens rendered *instead of* the app before
+it mounts, and the guide strip is rendered *above* it — none of them addressable,
+none of them in the router. `AlertApp` takes no demo props. That is what makes
+`MC_DEMO` unset mean "the app as designed" rather than "the app with a demo
+switched off inside it".
+
 **A folded reference loses its position in time, and its note-to-note links.**
 `buildStoryline` folds an `annotates` / `documents` / `mentions` edge onto the
 work item it points at, so a Confluence page naming four tickets is four marks

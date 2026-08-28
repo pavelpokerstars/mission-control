@@ -128,6 +128,18 @@ retired vocabulary, the component list, the stylesheets and how they layer. It
 is not a substitute
 for 1–4; it is what catches you when 1–4 did not.
 
+**Demo mode is the one thing outside all of this, and it is outside on purpose.**
+`MC_DEMO=on` wraps the app in a welcome card, a one-page pitch, a simulated
+hand-off and a sticky guide strip — `apps/shell/src/demo/`, off unless the
+variable explicitly says otherwise. It passes rules 2 and 4 by *not being in the
+interface*: no route, no nav entry, no toolbar slot, `AlertApp` untouched and
+taking no props, and its stylesheet deliberately not one of the seventeen. Read
+it as the precedent for "this is not the product" rather than as permission to
+add a screen — a fifth destination still needs a document section, and
+`verify-design.mts` now also asserts that nothing under `alerts/` imports from
+`demo/`, that every class in `demo.css` is `mcdemo-` prefixed, and that the flag
+defaults off.
+
 And curling the gateway is not using the app. The dead "accept it in the queue"
 reference survived repeated end-to-end curl verification, because curl cannot see
 a link that goes nowhere. **Open the browser.**

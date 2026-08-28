@@ -444,3 +444,41 @@ The fixture contains a deliberate four-ticket cycle
 backlog and obvious the moment something looks across it. Every planted case is
 listed in [docs/GRAPH-SCHEMA.md](docs/GRAPH-SCHEMA.md) §8 and asserted by
 `scripts/verify-graph.mts`.
+
+### Demo mode — the walkthrough, for a URL somebody opens cold
+
+Everything above assumes somebody is standing next to you. `MC_DEMO=on` is for
+when they are not: a hosted link, a review, a screen at a conference. It wraps
+the app in four things the product deliberately does not have.
+
+```bash
+MC_DEMO=on npm run dev
+```
+
+| | |
+|---|---|
+| **A welcome card** | what this is, and a name — used only to address the notification on the next screen |
+| **A one-page pitch** | the problem, what it reads, and what it produces |
+| **A simulated hand-off** | the morning message, naming the **real top three alerts** off `/api/findings`. Clicking one opens that alert |
+| **A guide strip** | sticky along the top: open the top alert → open the evidence → ask about this alert. It names the first step still outstanding, then ends and leaves the clock |
+
+Two variables, both read by the gateway and reported by `/api/health`, so
+turning it on is a restart rather than a rebuild:
+
+| | |
+|---|---|
+| `MC_DEMO` | `on` / `true` / `1` / `yes` turns it on. **Anything else, a typo included, is off** |
+| `MC_DEMO_MINUTES` | how long a walkthrough runs before it resets for the next visitor. Default 20, clamped to 1–240 |
+
+**Unset, the app is exactly the app** — the walkthrough is a sibling of
+`AlertApp`, not a change to it, no route is added, and its stylesheet is
+deliberately outside the seventeen `scripts/verify-design.mts` checks against
+the preview. Three checks in that verifier hold all of it in place: nothing
+under `alerts/` may import from `demo/`, every class in `demo/demo.css` must
+carry the `mcdemo-` prefix, and `demoMode()` must be off by default.
+
+The timer is a **reset, not a limit**. A demo URL opened by several people in a
+day otherwise hands the second arrival the first one's wandering as their
+starting state; expiry clears the walkthrough, the conversation history and the
+address. It is not a security boundary — `MC_SAFE_MODE` is on by default and is
+what stops a visitor writing to anything.
