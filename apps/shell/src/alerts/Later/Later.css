@@ -28,6 +28,19 @@
 .later-row:hover { background:var(--sunk); }
 .later-row .rowdel { margin-top:2px; }
 .later-row .notetext { margin:8px 0 0; font-size:.97rem; color:var(--ink); line-height:1.5; }
+/* The chip and the title share a line, so the line has to be a row. Left as
+   inline flow they touched — a measured 0px between the chip's right edge and
+   the title's first letter — and a title long enough to wrap came back to the
+   left margin UNDER the chip instead of staying in its own column.
+   `nowrap` and not `wrap`: wrapping drops a long title onto its own line and
+   leaves the chip stranded on the one above, so some rows read chip-then-title
+   and others chip-alone. Held on one line the title wraps INSIDE its own
+   column, which is the hanging indent it should have had. The chip cannot be
+   squashed by it — `white-space:nowrap` in `shared.css` makes its min-content
+   width its full width, and a flex item will not shrink past that.
+   Baseline, not centre: centred, the chip drifts to the middle of a
+   two-line title. */
+.later-row .top { display:flex; align-items:baseline; gap:9px; flex-wrap:nowrap; }
 .later-row .m { display:flex; align-items:baseline; gap:9px; margin-top:8px; }
 .later-row .when { font-family:var(--mono); font-size:11px; color:var(--ink-3); }
 .editnote-hint {
