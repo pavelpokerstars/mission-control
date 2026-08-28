@@ -831,20 +831,33 @@ git show 0fdb184:docs/HACKATHON.md    # still works from HEAD today
 Deleting it removed it from the tree only, and **private does not fix this** —
 anyone invited to a private repo can run `git log -p`.
 
-**So publication is a squashed snapshot, and never this history.** `origin/main`
-is a single orphan commit; the local `publish` branch points at it and is
-deliberately **not** an ancestor of `main`. Verified: `git rev-list --count publish`
-is 1, `git merge-base --is-ancestor publish HEAD` fails, and `HEAD` carries 84
-commits. Publishing later work means rebuilding the snapshot rather than pushing:
+**So publication is a lineage that starts at a squashed snapshot, and never the
+original history.** The orphan commit is still the root — `publish` points at
+`1a37663 "Mission Control — an alerting system that can prove itself"` — but the
+work since is committed on top of it rather than re-squashed each time, on the
+branch `latest-main`, which is what `origin/main` now holds.
+
+**The rule stands, and it is about the OLD history.** `main` locally still
+carries the 84-commit lineage that contains `docs/HACKATHON.md`, and it is not
+an ancestor of anything published. Before any push, these four must hold:
 
 ```bash
-git branch -D publish
-git checkout --orphan publish && git commit -m "Mission Control"
-git push -f origin publish:main
-git rev-list --count origin/main      # must print 1
+git merge-base --is-ancestor main HEAD          # must FAIL
+git rev-list HEAD -- docs/HACKATHON.md | wc -l  # must print 0
+git rev-list --max-parents=0 HEAD               # must be the orphan root
+git rev-list --left-right --count origin/main...HEAD   # must be 0 behind
 ```
 
-**Never push `main`, or anything descended from it, to `origin`.**
+**Never push `main`, or anything descended from it, to `origin`.** That is the
+line, and it is not the same as "never push" — a branch rooted at the snapshot
+carries none of what the rule exists to keep back, and the four checks above are
+how you tell the two apart rather than remembering which is which.
+
+Worth knowing about the numbers this section used to quote: they were a snapshot
+too. It said `origin/main` was one commit and that publishing meant rebuilding
+the orphan; both were true when written and neither is now. A safety rule that
+has drifted from the repository it describes is the kind that gets somebody to
+ignore it, so it states the CHECKS rather than the counts.
 
 **Nothing sanitises Confluence HTML.** A page body is stored as the API returned
 it, and `RecordView` renders it as text — there is no `dangerouslySetInnerHTML`
