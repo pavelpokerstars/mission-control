@@ -10,5 +10,41 @@
     "Esme Ellis",
     "Finn Frost"
   ],
-  "body": "Orbit Sprint Review 2026-08-08\n\nSame as yesterday.\n\nNumbers look fine.\n\nNo update today.\n\nMorning all.\n\nI will pick that up after standup.\n\nNumbers look fine."
+  "segments": [
+    {
+      "at": 60,
+      "speaker": "unattributed",
+      "text": "Orbit Sprint Review 2026-08-08"
+    },
+    {
+      "at": 151,
+      "speaker": "unattributed",
+      "text": "Same as yesterday."
+    },
+    {
+      "at": 242,
+      "speaker": "unattributed",
+      "text": "Numbers look fine."
+    },
+    {
+      "at": 333,
+      "speaker": "unattributed",
+      "text": "No update today."
+    },
+    {
+      "at": 424,
+      "speaker": "unattributed",
+      "text": "Morning all."
+    },
+    {
+      "at": 515,
+      "speaker": "unattributed",
+      "text": "I will pick that up after standup."
+    },
+    {
+      "at": 606,
+      "speaker": "unattributed",
+      "text": "Numbers look fine."
+    }
+  ]
 }

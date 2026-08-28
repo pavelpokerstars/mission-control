@@ -48,7 +48,7 @@ import {
   loadGraphSource,
   loadStatusWords,
 } from './graph-source.js';
-import { findingDetail, runFindings } from './findings.js';
+import { findingDetail, runAlertFindings, runFindings } from './findings.js';
 import { actOnFinding, forgetAnswered, indexAnswer, type ActionInput } from './act.js';
 import { describeSafeMode, safeMode } from './safe-mode.js';
 import { readRecord } from './records.js';
@@ -519,12 +519,17 @@ async function main(): Promise<void> {
    * open" into a wall. They are coverage facts and they live on Sources now —
    * see `COVERAGE_KINDS`. Still detected, still suppressed by a dismissal, and
    * still reachable through `list_findings`; they simply stop interrupting.
+   *
+   * TWO ARRAYS, AND ONLY THE FIRST IS THE LIST. `findings` is unchanged and
+   * still free of everything a human has answered; `parked` carries those, for
+   * the one thing that has to name an alert it is not listing — a `Later` row
+   * showing the chip of the alert its note was parked from. See
+   * `runAlertFindings` for why they are not one array with a flag.
    */
   app.get('/api/findings', async (_req, res) => {
     try {
       const items = await connectors.jira.listItems();
-      const all = await runFindings({ source: currentGraph(), vault, items, connectors });
-      res.json({ findings: all.filter((f) => isAlertKind(f.kind)) });
+      res.json(await runAlertFindings({ source: currentGraph(), vault, items, connectors }));
     } catch (err) {
       res.status(500).json({ error: String(err) });
     }

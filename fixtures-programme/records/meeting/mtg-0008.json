@@ -10,5 +10,41 @@
     "Esme Ellis",
     "Finn Frost"
   ],
-  "body": "Orbit Backlog Refinement 2026-07-03\n\nMorning all.\n\nLet us take that offline.\n\nSame as yesterday.\n\nMorning all.\n\nNo update today.\n\nAgreed."
+  "segments": [
+    {
+      "at": 60,
+      "speaker": "unattributed",
+      "text": "Orbit Backlog Refinement 2026-07-03"
+    },
+    {
+      "at": 135,
+      "speaker": "unattributed",
+      "text": "Morning all."
+    },
+    {
+      "at": 210,
+      "speaker": "unattributed",
+      "text": "Let us take that offline."
+    },
+    {
+      "at": 285,
+      "speaker": "unattributed",
+      "text": "Same as yesterday."
+    },
+    {
+      "at": 360,
+      "speaker": "unattributed",
+      "text": "Morning all."
+    },
+    {
+      "at": 435,
+      "speaker": "unattributed",
+      "text": "No update today."
+    },
+    {
+      "at": 510,
+      "speaker": "unattributed",
+      "text": "Agreed."
+    }
+  ]
 }

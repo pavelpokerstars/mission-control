@@ -12,5 +12,41 @@
     "Greta Gale",
     "Hugo Hart"
   ],
-  "body": "Orbit Retro 2026-06-30\n\nCan we come back to this on Thursday?\n\nSame as yesterday.\n\nI will pick that up after standup.\n\nNo update today.\n\nCan we come back to this on Thursday?\n\nNo update today."
+  "segments": [
+    {
+      "at": 60,
+      "speaker": "unattributed",
+      "text": "Orbit Retro 2026-06-30"
+    },
+    {
+      "at": 154,
+      "speaker": "unattributed",
+      "text": "Can we come back to this on Thursday?"
+    },
+    {
+      "at": 248,
+      "speaker": "unattributed",
+      "text": "Same as yesterday."
+    },
+    {
+      "at": 342,
+      "speaker": "unattributed",
+      "text": "I will pick that up after standup."
+    },
+    {
+      "at": 436,
+      "speaker": "unattributed",
+      "text": "No update today."
+    },
+    {
+      "at": 530,
+      "speaker": "unattributed",
+      "text": "Can we come back to this on Thursday?"
+    },
+    {
+      "at": 624,
+      "speaker": "unattributed",
+      "text": "No update today."
+    }
+  ]
 }

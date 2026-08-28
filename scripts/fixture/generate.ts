@@ -129,6 +129,120 @@ function buildNotes(): Note[] {
   });
 }
 
+
+/**
+ * ⟨DEMO STATE⟩ What somebody already parked, so `Later` opens on something.
+ *
+ * `Later` lists what `isParked` matches: a note carrying `about` — deferred
+ * from an alert by `act.ts` — or the `parked` tag, which is what the page's own
+ * composer writes. Neither is anything a collector produces, so a fresh
+ * checkout opens `Later` on *"Nothing parked right now"* and `DIRECTION.md`
+ * §7 — "not needed" and "not now" are different answers — is invisible until
+ * somebody defers something by hand.
+ *
+ * These are `idea` notes in exactly the shape `defer` and `parkNote` write, so
+ * nothing downstream can tell them from ones a person made. They are demo STATE
+ * rather than claims about the programme, which is why they are built here and
+ * not in `CLAIMS`: a claim becomes a `note` node in the graph and is read by
+ * every commitment detector, and what somebody wrote to themselves at 5pm is
+ * neither.
+ *
+ * EVERY TIED NOTE'S REMINDER IS IN THE PAST, and that is what keeps them
+ * honest. A deferral suppresses its alert (`suppressedIds` in `act.ts`) and
+ * nothing here seeds a `mc.finding_deferred` event, so a future date would draw
+ * a note claiming to hold an alert that is still on the front door. A LAPSED
+ * deferral is the coherent shape — it came back, the alert is in the list, and
+ * the note says why it was pushed away in the first place. An untied note holds
+ * no alert, so it is free to carry a future date or none at all, which is also
+ * how all three branches of `Later`'s `due()` come to be drawn.
+ */
+function buildParked(claims: Note[]): Note[] {
+  const settled = claims.find((n) => n.id === 'platform-owns-settled-topic')!;
+
+  const parked = (
+    id: string,
+    fields: Partial<Note> & Pick<Note, 'title' | 'body' | 'createdAt'>,
+  ): Note =>
+    ({
+      id,
+      kind: 'idea',
+      status: 'open',
+      recency: 'dated',
+      relatedKeys: [],
+      links: [],
+      tags: [],
+      evidence: [],
+      updatedAt: fields.createdAt,
+      verifiedAt: fields.createdAt,
+      ...fields,
+    }) as Note;
+
+  return [
+    /**
+     * Parked from the flagship alert. `about` is the finding's id and the title
+     * is its claim — `act.ts` copies both, which is what lets `Later` say what a
+     * note is about rather than showing a sentence typed at 5pm three weeks ago.
+     * The claim mirrors `asClause`: the promise's own title, trailing stop off.
+     */
+    parked('parked-settled-topic', {
+      about: 'missing_ticket:platform-owns-settled-topic',
+      title: `${settled.title.replace(/[.!?:;,]+$/, '')} was never filed`,
+      createdAt: at('2026-08-14', 16),
+      dueAt: at('2026-08-18', 9),
+      evidence: settled.evidence,
+      body:
+        'Sanjay moved to Payments Core on 31 July, so filing this against the platform team names ' +
+        'somebody who no longer owns it. Ask at the platform sync who picks it up, then file it with ' +
+        'a date they have actually agreed to.',
+    }),
+
+    /** Parked from the disagreement, whose claim `claimFor` builds from the key. */
+    parked('parked-9031-disagreement', {
+      about: 'disagreement:PAY-9031',
+      title: 'PAY-9031 is called done and not done',
+      relatedKeys: ['PAY-9031'],
+      createdAt: at('2026-08-18', 17),
+      dueAt: at('2026-08-22', 9),
+      evidence: [{
+        surface: 'jira',
+        label: 'PAY-9031',
+        ref: { surface: 'jira', id: 'PAY-9031' },
+      }],
+      body:
+        'Sam is away until the 27th and dana wrote the later of the two messages. Not worth chasing ' +
+        'either of them for a status until Sam is back to say which reading is the current one.',
+    }),
+
+    /**
+     * Typed into the composer, with a reminder still ahead of it.
+     *
+     * NAMED, and it has to be: the composer writes `title: ''` and `decodeNote`
+     * falls a missing title back to the note's ID, so an unnamed note seeded
+     * from disk would render its slug as its title. Naming it is what a person
+     * does on the note page anyway.
+     */
+    parked('parked-retro-recording', {
+      title: 'Chase the Sprint 12 retro recording',
+      tags: ['parked'],
+      createdAt: at('2026-08-21', 11),
+      dueAt: at('2026-09-06', 9),
+      body:
+        'Ask whether the Sprint 12 retro was recorded anywhere. The promises out of it should be in ' +
+        'here before the next planning, and right now I am going on memory.',
+    }),
+
+    /** And one with no date at all — nothing brings it back until you ask. */
+    parked('parked-owner-and-date-rule', {
+      title: 'Write the owner-and-date rule down',
+      tags: ['parked'],
+      createdAt: at('2026-08-22', 8),
+      body:
+        'Write it down where the team reads it: a promise with no owner and no date is not a ' +
+        'commitment, it is a wish. We keep re-deciding that in the room and losing it again.',
+    }),
+  ];
+}
+
 /**
  * The history the graph cannot hold.
  *
@@ -574,7 +688,8 @@ function build(): Built {
     if (c.owner) edge(id, personId(c.owner), 'assigned_to', 'EXTRACTED', 'structural');
   }
 
-  return { nodes, edges, records, events: buildEvents(), notes: buildNotes() };
+  const claims = buildNotes();
+  return { nodes, edges, records, events: buildEvents(), notes: [...claims, ...buildParked(claims)] };
 }
 
 // ---------------------------------------------------------------------------

@@ -128,7 +128,135 @@ export function optionLabel(label: string, value: string): string {
   return `${label} · ${fmtDay(new Date(t))}`;
 }
 
-export function Actions({ finding, onDone }: { finding: Finding; onDone: () => void }): JSX.Element {
+/**
+ * Which kinds WRITE when you press the primary button, and which only draft.
+ *
+ * `act.ts`'s `APPLIES` is the authority — `create_issue`, `link_issues` and
+ * `link_commitment` go straight through `accept_proposal`, so one click is a
+ * real tracker write. Everything else drafts a Slack message and sends nothing.
+ * Mirrored here rather than fetched because the reader needs it BEFORE the
+ * click, and a round trip to find out what a button does is not a disclosure.
+ *
+ * Keep this in step with `APPLIES`. A kind that starts writing and is not listed
+ * here says "drafts" over a button that files a ticket, which is the failure
+ * this whole block exists to prevent, inverted.
+ */
+const WRITES: Partial<Record<Finding['kind'], 'jira' | 'vault'>> = {
+  missing_ticket: 'jira',
+  undetected_dependency: 'jira',
+  /**
+   * `link_commitment` APPLIES like the other two and safe mode does NOT stop it,
+   * because what it writes is the VAULT — and `safe-mode.ts` says so in its own
+   * header: it guards the vendor connectors and leaves ours alone. So the click
+   * sticks, the promise records the key as confirmed, and the alert stops
+   * firing, on the instance where the other primaries refuse. Only the
+   * provenance comment it tries to leave on the ticket is blocked, and `act.ts`
+   * reports that separately.
+   *
+   * Lumping it in with the Jira writers told the reader it was inert here. It is
+   * the opposite: it is the one primary that always works.
+   */
+  unlinked_commitment: 'vault',
+};
+
+/**
+ * The channel the draft is addressed to, read off the evidence.
+ *
+ * `askProposal` in `act.ts` derives it the same way and from the same field —
+ * a Slack evidence label is `#channel — author`. Deriving it twice is how the
+ * button and the message it produces come to name different channels, so if
+ * this ever needs more than the label, both should move to one place.
+ *
+ * Undefined is a real answer, and `act.ts` handles it: nothing in the evidence
+ * says where this was discussed, and guessing a channel would be inventing a
+ * destination.
+ */
+function askChannel(finding: Finding): string | undefined {
+  return finding.evidence
+    .filter((e) => e.surface === 'slack')
+    .map((e) => /^#([^\s—]+)/.exec(e.label)?.[1])
+    .find(Boolean);
+}
+
+/**
+ * The sentence under "What now" — where each button goes, before you press it.
+ *
+ * The complaint this answers: *"when it says 'Ask about…' or 'Ask someone…' we
+ * don't know where the message will be sent and that it will be sent on slack.
+ * Same thing goes about opening a ticket or 'Not now'."* Every one of those is
+ * a destination the button names nothing about.
+ *
+ * SAFE MODE IS THE FIRST CLAUSE WHEN IT IS ON, because it is the default and it
+ * changes what every other clause means. `act.ts` is honest about the refusal
+ * AFTER the click — "That did not go through… Nothing was written" — and a
+ * button promising a Jira write on an instance that cannot make one is the same
+ * defect one step earlier.
+ */
+function whatHappens(finding: Finding, safe: boolean): string {
+  const channel = askChannel(finding);
+  const primary = PRIMARY[finding.kind] ?? 'The first button';
+  const writes = WRITES[finding.kind];
+
+  /**
+   * The destination, in ONE place, because it belongs in every branch.
+   *
+   * It was written into the writable branch alone — and safe mode is the
+   * default, so on eighteen of nineteen alerts the lead named no destination at
+   * all, which is the complaint verbatim.
+   *
+   * No channel is a real answer and not a gap: `act.ts` drafts without one
+   * rather than guessing, because nothing in the records says where this was
+   * discussed. It does not say "pick one" — there is no channel picker, and
+   * naming an affordance that does not exist is the defect one layer up.
+   */
+  const where = channel
+    ? ` to #${channel}`
+    : ' addressed to the people in the records above — nothing in them names a channel';
+  const parks = 'Not now parks it in Later with your note; dismissing is final.';
+
+  if (safe) {
+    // `vault` writes are ours, so safe mode does not stop them. Saying "nothing
+    // happens here" over a button that permanently silences the alert would be
+    // the worst version of this whole disclosure.
+    if (writes === 'vault') {
+      return (
+        `${primary} records the key on the promise here — that sticks, and this alert stops. ` +
+        `This instance is read-only, so the comment it tries to leave on the ticket is the part ` +
+        `that cannot go. Asking drafts a Slack message${where}, and nothing sends it. ${parks}`
+      );
+    }
+    return (
+      `Read-only instance. ${writes ? `${primary} would write to Jira, and asking` : 'Asking'} ` +
+      `would draft a Slack message${where} — and nothing here leaves this machine. ${parks}`
+    );
+  }
+
+  if (writes === 'vault') {
+    return (
+      `${primary} records the key on the promise and comments on the ticket, so this alert stops. ` +
+      `Asking drafts a Slack message${where}, and nothing sends it. ${parks}`
+    );
+  }
+  return (
+    `${writes ? `${primary} writes to Jira now. Asking` : 'Asking'} drafts a Slack message${where}, ` +
+    `and nothing sends it. ${parks}`
+  );
+}
+
+export function Actions({
+  finding,
+  safeMode = true,
+  onDone,
+}: {
+  finding: Finding;
+  /**
+   * Whether this instance may write to a vendor. See the gateway's `safe-mode.ts`,
+   * which defaults the same way and for the same reason: unset means ON, because
+   * the failure of guessing wrong is a button that promises a write it cannot make.
+   */
+  safeMode?: boolean;
+  onDone: () => void;
+}): JSX.Element {
   const [result, setResult] = useState<ActionResult>();
   const [busy, setBusy] = useState(false);
   const [deferring, setDeferring] = useState(false);
@@ -247,6 +375,7 @@ export function Actions({ finding, onDone }: { finding: Finding; onDone: () => v
   return (
     <div className="block">
       <h4>What now</h4>
+      <p className="blocklead">{whatHappens(finding, safeMode)}</p>
       <div className="acts">
         <button
           className="primary"

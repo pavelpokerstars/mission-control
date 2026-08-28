@@ -70,7 +70,17 @@ function Nav({ route, counts }: { route: Route; counts: Counts }): JSX.Element {
   const items: { to: Route; label: string; n?: number; hot?: boolean }[] = [
     { to: { name: 'alerts' }, label: 'Alerts', n: counts.alerts, hot: counts.hot },
     { to: { name: 'later' }, label: 'Later', n: counts.later },
-    { to: { name: 'ask' }, label: 'Ask' },
+    /**
+     * Ask's count is a NUMBER YOU HAVE, not a number that wants you, and the
+     * badge is deliberately never `hot` for it.
+     *
+     * The other two are work: an alert is something unanswered and a parked
+     * note is something that came back. A conversation count is neither — it
+     * says how much you have said, and the red badge in this toolbar means
+     * "somebody has to look at this". Drawn in the same neutral as Later's, it
+     * reads as what it is: how much is in there.
+     */
+    { to: { name: 'ask' }, label: 'Ask', n: counts.ask },
   ];
 
   return (
@@ -93,6 +103,8 @@ function Nav({ route, counts }: { route: Route; counts: Counts }): JSX.Element {
 export interface Counts {
   alerts: number;
   later: number;
+  /** Conversations worth showing — a never-used draft is not one. */
+  ask: number;
   /** Anything above `ok` — the badge is red only when something needs a person. */
   hot: boolean;
 }

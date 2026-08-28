@@ -12,5 +12,41 @@
     "Greta Gale",
     "Hugo Hart"
   ],
-  "body": "Orbit Retro 2026-06-21\n\nCan we come back to this on Thursday?\n\nAgreed.\n\nNumbers look fine.\n\nThe staging box is flaky again.\n\nNumbers look fine.\n\nNumbers look fine."
+  "segments": [
+    {
+      "at": 60,
+      "speaker": "unattributed",
+      "text": "Orbit Retro 2026-06-21"
+    },
+    {
+      "at": 139,
+      "speaker": "unattributed",
+      "text": "Can we come back to this on Thursday?"
+    },
+    {
+      "at": 218,
+      "speaker": "unattributed",
+      "text": "Agreed."
+    },
+    {
+      "at": 297,
+      "speaker": "unattributed",
+      "text": "Numbers look fine."
+    },
+    {
+      "at": 376,
+      "speaker": "unattributed",
+      "text": "The staging box is flaky again."
+    },
+    {
+      "at": 455,
+      "speaker": "unattributed",
+      "text": "Numbers look fine."
+    },
+    {
+      "at": 534,
+      "speaker": "unattributed",
+      "text": "Numbers look fine."
+    }
+  ]
 }

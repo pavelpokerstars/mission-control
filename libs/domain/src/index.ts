@@ -827,6 +827,31 @@ export function isRecallable(note: Pick<Note, 'kind'>): boolean {
 }
 
 /**
+ * Whether this note is somebody's handling of an ALERT rather than anything
+ * said about the work.
+ *
+ * `about` is set by exactly one thing — `act.ts`'s `defer` — and that same
+ * write puts the alert's subject in `relatedKeys`, so the note joins to the
+ * ticket like any Slack message or Confluence page. Every reader of a ticket's
+ * trail treats an entry as *what a source said about the work*, and a deferral
+ * note is not that: it is a record of a decision about an alert, whose text is
+ * about the alert. Read as a source it makes the alert evidence for itself —
+ * `KNOWN-GAPS.md` §1 has the measured case, where a parked note was quoted back
+ * on the front door as one of the two voices in the disagreement it was parked
+ * from.
+ *
+ * A predicate here, rather than `!!n.about` at each site, because the two
+ * places that build a trail are the lane and the dossier and `work.ts` opens by
+ * saying they must not diverge: "a row that says 2 sources disagree and the
+ * banner you get when you click it cannot come from two different definitions
+ * of disagreement". This was fixed in one of them first, which is exactly how
+ * that divergence starts.
+ */
+export function isAlertDeferral(note: Pick<Note, 'about'>): boolean {
+  return !!note.about;
+}
+
+/**
  * OKM — how this note's claims survive contact with time.
  *  - `timeless`: still true in a year (a preference, a constraint, a person's role)
  *  - `dated`: true as of `verifiedAt` and rots without it

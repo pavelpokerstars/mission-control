@@ -31,6 +31,17 @@ export interface FindingDetail {
   item?: WorkItem;
   container?: { id: string; label: string; closedAt?: string };
   checklist?: { title: string; tracked: boolean; ref: string }[];
+  /**
+   * The decision already made about this, while it still stands.
+   *
+   * Present exactly when the alert is missing from the list for that reason —
+   * you reached this page by its address, from your own parked note or from a
+   * notification, rather than by clicking a row. Absent once a deferral lapses,
+   * because the alert is then back on the list and the page has nothing to add.
+   */
+  answered?: { kind: 'deferred' | 'dismissed'; until?: string };
+  /** Whether this instance may write to a vendor at all — see the gateway's `safe-mode.ts`. */
+  safeMode?: boolean;
 }
 
 export interface Loaded<T> {
@@ -126,8 +137,24 @@ export function useJson<T>(path: string | undefined): Loaded<T> {
   return { ...state, reload: () => setNonce((n) => n + 1) };
 }
 
-export function useFindings(): Loaded<{ findings: Finding[] }> {
-  return useJson<{ findings: Finding[] }>('/api/findings');
+/**
+ * What the front door returns, and the two halves are not interchangeable.
+ *
+ * `findings` is THE LIST — already free of everything a human has deferred or
+ * dismissed, and the only one of the two that may be rendered as alerts or
+ * counted in the toolbar. `parked` is what was suppressed, carried alongside so
+ * a `Later` row can name the alert its note came from: a note is parked exactly
+ * when its alert has left the list, so `findings` is the one array that can
+ * never resolve one. See `runAlertFindings` in the gateway for why this is two
+ * arrays rather than one with a flag on each entry.
+ */
+export interface AlertFindings {
+  findings: Finding[];
+  parked: Finding[];
+}
+
+export function useFindings(): Loaded<AlertFindings> {
+  return useJson<AlertFindings>('/api/findings');
 }
 
 export function useFinding(id: string): Loaded<FindingDetail> {

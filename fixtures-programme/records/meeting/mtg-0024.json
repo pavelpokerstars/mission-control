@@ -11,5 +11,41 @@
     "Finn Frost",
     "Greta Gale"
   ],
-  "body": "Orbit Sprint Review 2026-08-20\n\nDeploy window is Thursday.\n\nDeploy window is Thursday.\n\nI will pick that up after standup.\n\nNo update today.\n\nNothing blocking from me.\n\nI will pick that up after standup."
+  "segments": [
+    {
+      "at": 60,
+      "speaker": "unattributed",
+      "text": "Orbit Sprint Review 2026-08-20"
+    },
+    {
+      "at": 162,
+      "speaker": "unattributed",
+      "text": "Deploy window is Thursday."
+    },
+    {
+      "at": 264,
+      "speaker": "unattributed",
+      "text": "Deploy window is Thursday."
+    },
+    {
+      "at": 366,
+      "speaker": "unattributed",
+      "text": "I will pick that up after standup."
+    },
+    {
+      "at": 468,
+      "speaker": "unattributed",
+      "text": "No update today."
+    },
+    {
+      "at": 570,
+      "speaker": "unattributed",
+      "text": "Nothing blocking from me."
+    },
+    {
+      "at": 672,
+      "speaker": "unattributed",
+      "text": "I will pick that up after standup."
+    }
+  ]
 }

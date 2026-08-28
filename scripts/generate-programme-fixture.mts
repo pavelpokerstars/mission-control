@@ -427,6 +427,12 @@ for (const [n, text, offset, who] of [
     id: `message:slack/orbit-delivery/${n}`, kind: 'message', source: 'slack',
     label: text.slice(0, 60), at, container: 'orbit-delivery',
     recordRef: `records/message/${n}.json`,
+    // These two were the only messages of ninety-two with no `url`, and they are
+    // the two the disagreement alert cites — so the record page's source link
+    // was unreachable for Slack on the one screen that has a Slack citation.
+    // Derived the same way as the ninety generated above, rather than from the
+    // record name — this fixture's job is reproducing the SHAPE.
+    url: `https://example.com/archives/orbit-delivery/p${Date.parse(at)}`,
   });
   records.push({ kind: 'message', name: n, payload: { id: n, channel: 'orbit-delivery', author: people[who]!.handle, at, text } });
   edges.push({
@@ -520,6 +526,25 @@ for (let i = 0; i < 120; i++) {
  */
 const CEREMONY = ['Daily Scrum', 'Backlog Refinement', 'Sprint Planning', 'Sprint Review', 'Retro'] as const;
 interface Meeting { id: string; title: string; at: string; paras: string[]; }
+
+/**
+ * Where a paragraph sits in the recording, in seconds.
+ *
+ * ONE FORMULA, TWO CALLERS, and they must not drift: the meeting record's
+ * segments are written with it, and so is the `at` on every commitment note's
+ * citation. `readRecord` resolves a citation to the NEAREST segment, so a
+ * citation carrying a paragraph index against segments measured in seconds
+ * silently lands on the first line — the title — instead of the sentence the
+ * promise was made in. That is the failure this whole page exists to avoid,
+ * and it is invisible: the page still opens, still marks a line, still looks
+ * right.
+ *
+ * Derived rather than random, because a fixture regenerates byte-identically or
+ * `npm run verify` fails. Offset by the meeting's own hash so twenty-four
+ * meetings do not all march in lockstep.
+ */
+const segAt = (meetingId: string, para: number): number =>
+  60 + para * (75 + (h(`${meetingId}-step`) % 40));
 const meetings: Meeting[] = [];
 
 for (let i = 0; i < 24; i++) {
@@ -620,34 +645,180 @@ for (const [i, p] of PROMISES.entries()) {
      * The ref is what makes the citation a LINK — `quote` alone renders as
      * prose.
      *
-     * `ref.at` is the PARAGRAPH INDEX, matching `annotateTranscript` on an
-     * untimed record, and it is deliberately not repeated on the evidence body.
-     * `Evidence.at` means seconds into a recording and the alert page renders
-     * it as `Math.floor(at / 60)`, so paragraph 3 displayed as "0m in" — a
-     * moment nobody recorded, printed beside a quotation. The citation still
-     * opens the note at the right paragraph; it just does not claim a clock a
-     * Zoom Doc does not have. See `zoomEvidence` in `apps/gateway/src/format.ts`.
+     * `ref.at` is SECONDS, from `segAt` — the same call that writes the segment
+     * it points at, because `readRecord` resolves a citation to the nearest one.
+     * It used to be a paragraph index, which was right while these meetings were
+     * untimed Docs notes and wrong the moment they gained a clock: against
+     * segments at 60, 146, 232, 318 a citation of `3` lands on the title.
+     *
+     * It is still deliberately NOT repeated on the evidence body. `Evidence.at`
+     * makes the alert page render `Math.floor(at / 60)` as "Nm in", and the
+     * promise is one sentence in a fifteen-minute scrum — "5m in" beside the
+     * quotation is a fact about the recording, not about the promise, and the
+     * page has one job. See `zoomEvidence` in `apps/gateway/src/format.ts`.
      */
     evidence: [{
       surface: 'zoom',
       label: `${m.title} (read by the model)`,
       quote: text,
-      ref: { surface: 'zoom', id: m.id, at: p.para },
+      ref: { surface: 'zoom', id: m.id, at: segAt(m.id, p.para) },
     }],
   } as Note);
+}
+
+/**
+ * ⟨DEMO STATE⟩ What somebody already parked, so `Later` opens on something.
+ *
+ * `Later` lists what `isParked` matches: a note carrying `about` — deferred
+ * from an alert by `act.ts` — or the `parked` tag, which is what the page's own
+ * composer writes. A collector produces neither, so a fresh checkout opens
+ * `Later` on *"Nothing parked right now"* and `DIRECTION.md` §7 — "not needed"
+ * and "not now" are different answers — is invisible until somebody defers
+ * something by hand.
+ *
+ * These are `idea` notes in exactly the shape `defer` and `parkNote` write, so
+ * nothing downstream can tell them from ones a person made. They are demo
+ * STATE rather than a claim about the programme, which is why they are built
+ * here and not in `PROMISES`: no graph node, no evidence about the work, and
+ * `kind` keeps them out of every commitment detector.
+ *
+ * EVERY TIED NOTE'S REMINDER IS IN THE PAST, and that is what keeps them
+ * honest. A deferral suppresses its alert (`suppressedIds` in `act.ts`) and
+ * this seeds no `mc.finding_deferred` event, so a future date here would draw a
+ * note claiming to hold an alert that is still on the front door. A LAPSED
+ * deferral is the coherent shape — it came back, the alert is in the list, and
+ * the note says why it was pushed away in the first place. An untied note holds
+ * no alert, so it is free to carry a future date or none at all, which is also
+ * how all three branches of `Later`'s `due()` come to be drawn.
+ */
+{
+  const coldStart = notes.find((n) => n.id === 'promise-004')!;
+  const parked = (
+    id: string,
+    fields: Partial<Note> & Pick<Note, 'title' | 'body' | 'createdAt'>,
+  ): void => {
+    notes.push({
+      id,
+      kind: 'idea',
+      status: 'open',
+      recency: 'dated',
+      relatedKeys: [],
+      tags: [],
+      evidence: [],
+      updatedAt: fields.createdAt,
+      verifiedAt: fields.createdAt,
+      ...fields,
+    } as Note);
+  };
+
+  /**
+   * Parked from the flagship alert. `about` is the finding's id, and the title
+   * is its claim — `act.ts` copies both, which is what lets `Later` say what a
+   * note is about rather than showing a sentence typed at 5pm three weeks ago.
+   * The claim mirrors `asClause`: the promise's own title, trailing stop off.
+   */
+  parked('parked-001', {
+    about: 'missing_ticket:promise-004',
+    title: `${coldStart.title.replace(/[.!?:;,]+$/, '')} was never filed`,
+    createdAt: day(-9, 16),
+    dueAt: day(-5, 9),
+    evidence: coldStart.evidence,
+    body:
+      `${coldStart.owner} is on the platform rotation until ${coldStart.container!.replace('sprint:', '')} closes. ` +
+      'Filing it now only moves it to a board nobody is reading — ask at planning whether it is still wanted, ' +
+      'then file it with a date somebody actually said.',
+  });
+
+  /** Parked from the disagreement, whose claim `claimFor` builds from the key. */
+  parked('parked-002', {
+    about: `disagreement:${disputed.key}`,
+    title: `${disputed.key} is called done and not done`,
+    relatedKeys: [disputed.key],
+    createdAt: day(-5, 17),
+    dueAt: day(-1, 9),
+    evidence: [{
+      surface: 'jira',
+      label: disputed.key,
+      ref: { surface: 'jira', id: disputed.key },
+    }],
+    body:
+      'Both messages are in #orbit-delivery three days apart and neither author has seen the other. ' +
+      'Worth thirty seconds at the stand-up rather than a thread — the schema change either landed or it did not.',
+  });
+
+  /**
+   * Typed into the composer, with a reminder still ahead of it.
+   *
+   * NAMED, and it has to be: the composer writes `title: ''` and `decodeNote`
+   * falls a missing title back to the note's ID, so an unnamed note seeded from
+   * disk would render its slug — `parked-003` — as its title. Naming it is what
+   * a person does on the note page anyway.
+   */
+  parked('parked-003', {
+    title: 'Chase the Orbit 31 retro recording',
+    tags: ['parked'],
+    createdAt: day(-2, 11),
+    dueAt: day(14, 9),
+    body:
+      'Ask the delivery lead whether the Orbit 31 retro was recorded anywhere. The promises out of it ' +
+      'should be in here before the next planning, and right now I am going on memory.',
+  });
+
+  /** And one with no date at all — nothing brings it back until you ask. */
+  parked('parked-004', {
+    title: 'Write the owner-and-date rule down',
+    tags: ['parked'],
+    createdAt: day(-1, 8),
+    body:
+      'Write the rule down where the team reads it: a promise with no owner and no date is not a commitment. ' +
+      'We keep re-deciding it in the room and losing it again by the next planning.',
+  });
 }
 
 for (const m of meetings) {
   nodes.push({
     id: `meeting:zoom/${m.id}`, kind: 'meeting', source: 'zoom', label: m.title, at: m.at,
     recordRef: `records/meeting/${m.id}.json`,
+    // Zoom was the one surface with no `url` on any node, and every commitment
+    // alert — the flagship among them — cites Zoom and only Zoom. So the record
+    // page's source link was unreachable on the alerts the demo is built on.
+    // The live collector does write one (`import-zoom-notes.mts` carries the
+    // Hub document url), which is what makes this a fixture gap rather than a
+    // data-model one.
+    url: `https://example.com/docs/${m.id}`,
   });
+  /**
+   * TIMED SEGMENTS, not a `body`, and the difference is what the record page can
+   * show.
+   *
+   * A payload with only a `body` is a Zoom Docs NOTE: `annotateTranscript`
+   * derives segments from the prose, `start` becomes a paragraph INDEX and
+   * `timed:false` says so — which is why the record view leaves the time column
+   * empty rather than printing "0:03" beside a sentence nobody timed. Carrying
+   * `segments` with an `at` makes these what `fixtures/` already holds and what
+   * a Zoom transcript is: a real offset per line, which is the clock a citation
+   * quotes and the one the preview draws on `#scr-record`.
+   *
+   * The spacing is derived, not random — a fixture regenerates byte-identically
+   * or `npm run verify` fails. Ninety seconds a paragraph, offset by the
+   * meeting's own hash so twenty-four meetings do not all march in lockstep.
+   *
+   * SPEAKERS ARE STILL ABSENT, deliberately. A time is a fact about the
+   * recording; an attribution is a claim about a person, and the promise notes
+   * already say who took what. Putting a name on the paragraph that contains
+   * "Esme Ellis to chase the vendor sandbox" would assert that Esme said it,
+   * when what the note records is that she took it.
+   */
   records.push({
     kind: 'meeting', name: m.id,
     payload: {
       id: m.id, topic: m.title, startedAt: m.at,
       participants: people.slice(0, 5 + (h(m.id) % 5)).map((p) => p.name),
-      body: m.paras.join('\n\n'),
+      segments: m.paras.map((text, i) => ({
+        at: segAt(m.id, i),
+        speaker: 'unattributed',
+        text,
+      })),
     },
   });
 }
@@ -716,7 +887,7 @@ console.log(`
   wrote ${OUT}/
     graph.json     ${nodes.length} nodes, ${edges.length} edges  (${(edges.length / nodes.length).toFixed(2)} edges/node)
     records/       ${records.length} across ${[...new Set(records.map((r) => r.kind))].sort().join(', ')}
-    notes/         ${notes.length} commitment(s)
+    notes/         ${notes.length} note(s) — ${notes.filter((n) => n.kind === 'commitment').length} commitment(s), ${notes.filter((n) => n.kind === 'idea').length} parked
     events.jsonl   ${events.length}
 
   node kinds   ${kinds.join(' ')}

@@ -718,9 +718,48 @@
     font-size:11px; color:var(--ink-2); letter-spacing:.04em;
   }
   .rec-head .why { font-family:var(--mono); font-size:10.5px; color:var(--ink-3); }
+  /* The ONE affordance in this app that leaves it, and the only place an arrow
+     points out rather than across. `←` means back, `→` means another of our
+     pages, and there was no mark at all for "this is somebody else's". It is
+     ONE line in the context bar, subordinate to the source and to why the page is
+     open, and it promises the document rather than the line — which is what keeps
+     it an escape hatch rather than the vendor pane returning by another route.
+     It renders only when a collector wrote a url; never constructed, never
+     guessed. */
+  .rec-head .vendor {
+    margin-left:auto; font-family:var(--mono); font-size:10.5px; color:var(--ink-2);
+    text-decoration:underline; text-underline-offset:3px; white-space:nowrap;
+  }
+  .rec-head .vendor:hover { color:var(--ink); }
   .transcript { padding:22px var(--gutter) 28px; display:grid; gap:2px; }
-  .line { display:grid; grid-template-columns:74px minmax(0,1fr); gap:0 16px; padding:8px 12px; border-radius:6px; margin:0 -12px; }
-  .line time { font-family:var(--mono); font-size:11px; color:var(--ink-3); padding-top:3px; }
+  /* `align-items:baseline` and NOT a hand-tuned nudge.
+     The stamp is 11px mono and the line is 16px sans, so top-aligning them
+     leaves the two texts sitting at different heights however the padding is
+     tweaked — and the tweak has to be re-found every time either font-size
+     moves. Baseline alignment is the property that means what is wanted:
+     the time and the words it stamps sit on one line. On a Slack record the
+     stamp is two lines and the FIRST baseline is the one that aligns, which
+     is the day — correct, because the clock beneath belongs to it. */
+  .line { display:grid; grid-template-columns:74px minmax(0,1fr); gap:0 16px; padding:8px 12px; border-radius:6px; margin:0 -12px; align-items:baseline; }
+  /* The `padding-top:3px` that used to be here was the nudge baseline alignment
+     replaces; kept, it shifts the stamp's baseline back down by exactly itself. */
+  .line time { font-family:var(--mono); font-size:11px; color:var(--ink-3); white-space:pre-line; }
+  /* A `<p>` with no reset carries the UA's `margin:1em 0`, which pushed the
+     words ~16px below the stamp beside them. Nothing here set it, so every
+     transcript and every channel has read this way. */
+  .line .said { margin:0; }
+  /* THE DAY IS A SEPARATOR, NOT PART OF THE STAMP.
+     A Slack record is a whole channel, so the day has to appear somewhere or
+     messages weeks apart read as one conversation. Carried inside `<time>` it
+     made that stamp two lines, and baseline alignment then put the DAY on the
+     message's line with the clock hanging below it — so the one thing the
+     column exists to say was the one thing not aligned with what it stamps.
+     Hoisted out, every stamp is a single line and sits on its message. */
+  .daymark {
+    font-family:var(--mono); font-size:10px; letter-spacing:.08em; text-transform:uppercase;
+    color:var(--ink-3); padding:14px 12px 4px; margin:0 -12px;
+  }
+  .daymark:first-child { padding-top:0; }
   .line .said b { font-weight:600; margin-right:8px; }
   .line .said span { color:var(--ink-2); }
   .line.hit { background:var(--warn-bg); }
@@ -903,7 +942,8 @@
       <h3>A toolbar of three, and everything else is contextual</h3>
       <ul>
         <li><b>The toolbar carries only what you might want from anywhere</b> — Alerts, Later, Ask. The counts
-          do real work: <i>Alerts 3 · Later 2</i> tells you the state of things without opening anything.</li>
+          do real work: <i>Alerts 3 · Later 2</i> tells you the state of things without opening anything.
+          <i>Ask 6</i> is the one that is not work — it says how much is in there, so it is never red.</li>
         <li><b>An alert, a conversation and a record are never nav items.</b> Each one is always <i>about</i>
           something specific, so you reach it by clicking that thing. Three is the ceiling here; a fifth entry
           and the launcher-for-tools look is back.</li>
@@ -1192,10 +1232,12 @@
       <button class="back" data-go="alert">← back to the alert</button>
       <div class="rec-head">
         <span class="src"><i class="dot zoom"></i>Zoom · Sprint 12 planning · 8 July</span>
-        <span class="why">opened at 14:12 — the line the Kafka alert cites</span>
+        <span class="why">opened on the line the promise nobody filed is about · 8 July 2026</span>
+        <a class="vendor" href="#">the original in Zoom ↗</a>
       </div>
 
       <div class="transcript">
+        <div class="daymark">Tue 8 July</div>
         <div class="line"><time>14:11:38</time><p class="said"><b>dana</b><span>…so the replay only works if we can read the failed batch back off something durable.</span></p></div>
         <div class="line"><time>14:11:52</time><p class="said"><b>you</b><span>Do we have a topic for that, or does it need creating?</span></p></div>
         <div class="line hit"><time>14:12:04</time><p class="said"><b>riya</b><span>Platform can give us the topic. Sanjay's team owns it — they said the twelfth of August at the latest.</span></p></div>
@@ -1212,6 +1254,11 @@
           across meetings. The only route in is a piece of evidence you clicked.</li>
         <li><b>It opens on the line, with what was said either side.</b> A citation that drops you at the top of
           a ninety-minute transcript has not really been followed.</li>
+        <li><b>One link leaves, and it is the last one.</b> A citation lands on our record, on the cited
+          line, because a vendor tab is where you would have gone without this. The source link is one line in
+          the record's context bar and never on the row that reaches it: you cannot get to Slack without
+          having opened our rendering of the thread first. It is the answer to "how do I know it is not making this up" —
+          ours is checkable against theirs — and it renders only when a collector wrote a url.</li>
         <li><b>Read the four lines around the highlight</b> — "I will put it on our board now so it does not get
           lost" is the moment the whole alert is about, and it is the sentence that makes a judge wince.</li>
       </ul>
@@ -1327,10 +1374,13 @@
             quote:'Kafka topic — PLATFORM own — due 12 Aug' },
           { src:'jira', cls:'jira', who:'', label:'Searched 19 issues in Payments reliability', date:'now',
             plain:'No issue references a Kafka topic, and none is assigned to the platform team.' },
+          { src:'jira', cls:'jira', who:'', label:'MC-104', date:'now', opens:true,
+            plain:'MC-104 is in review in the tracker, and nothing outside Jira mentions it.' },
           { src:'slack', cls:'slack', who:'', label:'#eng-platform', date:'since 8 Jul',
             plain:'Nobody has mentioned it since the day it was agreed.' }
         ]
       },
+      actlead:'Creating writes to Jira now. Asking only drafts a Slack message — nothing is sent until you read it. Not now parks this in Later.',
       actions: [
         { label:'Create the ticket', primary:true,
           result:'<p><b>MC-112 created</b> — <i>Kafka topic for payments replay</i>, assigned to the platform team, due 12 Aug, linked as a blocker of MC-104, MC-107 and MC-111.</p><p>The ticket carries a comment naming the meeting, the rationale, and both citations above. The commitment in the vault now points at it, so this alert will not fire again.</p>' },
@@ -1366,6 +1416,7 @@
             plain:'MC-105 → MC-103 — the arrow that closed the loop' }
         ]
       },
+      actlead:'Nothing here writes to a tracker. Asking drafts a Slack message and sends nothing. Not now parks this in Later; dismissing is final.',
       actions: [
         { label:'Show me the loop', primary:true,
           result:'<p>Framed on the four tickets, with everything else dimmed. The arrow drawn this morning is the one to remove or re-point.</p>' },
@@ -1399,6 +1450,7 @@
             plain:'In review since Tuesday 09:31. Nobody has moved it since.' }
         ]
       },
+      actlead:'Both Ask buttons draft a Slack message to #eng-platform and send nothing until you read it. Not now parks this in Later.',
       actions: [
         { label:'Ask both, in one thread', primary:true,
           result:'<p><b>Drafted to sam and dana</b> in #eng-platform, quoting both messages with their timestamps and asking only which is current. Nothing has been sent.</p>' },
@@ -1450,11 +1502,15 @@
 
     html += '<div class="block"><h4>' + esc(a.evidence.title) + '</h4><div class="ev">';
     a.evidence.items.forEach(function (e) {
-      // A quote is a citation and opens the record it came from. A line without
-      // one is our own observation ("no issue references a Kafka topic") — there
-      // is nothing to open, so it is deliberately not a link.
-      var tag = e.quote ? 'button' : 'article';
-      var attrs = e.quote ? ' type="button" class="evrow" data-go="record"' : '';
+      // THE TEST IS WHETHER THERE IS A RECORD, not whether there is a quote.
+      // "No issue references a Kafka topic" is our own observation with nothing
+      // behind it, and a dead link there is worse than a sentence. But an
+      // observation ABOUT something openable is a different case — "MC-104 is in
+      // review in the tracker" carries no quote and the ticket is a record we
+      // hold — so the fixture marks those `opens` and they link too.
+      var opens = e.quote || e.opens;
+      var tag = opens ? 'button' : 'article';
+      var attrs = opens ? ' type="button" class="evrow" data-go="record"' : '';
       html += '<' + tag + attrs + '><i class="dot ' + e.cls + '" aria-hidden="true"></i><div>'
             +   '<div class="hd">'
             +     '<span class="src">' + esc(e.src) + '</span>'
@@ -1468,7 +1524,9 @@
     });
     html += '</div></div>';
 
-    html += '<div class="block" id="actblock"><h4>What now</h4><div class="acts">';
+    html += '<div class="block" id="actblock"><h4>What now</h4>'
+          + (a.actlead ? '<p class="blocklead">' + esc(a.actlead) + '</p>' : '')
+          + '<div class="acts">';
     a.actions.forEach(function (act, i) {
       html += '<button data-act="' + i + '" class="' + (act.primary ? 'primary' : act.ghost ? 'ghost' : '') + '">'
             + esc(act.label) + '</button>';
@@ -1850,14 +1908,19 @@
   var NAV = [
     { to: 'list',  label: 'Alerts', count: '3', hot: true },
     { to: 'later', label: 'Later',  count: null },
-    { to: 'ask',   label: 'Ask' },
+    // Counted like the other two, and never `hot`: an alert is unanswered and a
+    // parked note came back, but a conversation count is only how much you have
+    // said. Red here means somebody has to look at something.
+    { to: 'ask',   label: 'Ask',    count: null },
   ];
 
   function navHtml(screen) {
     return '<nav class="appnav" aria-label="Sections">' + NAV.map(function (i) {
       // an alert and a record are both "in" Alerts — you got there from the list
       var on = i.to === screen || (i.to === 'list' && (screen === 'alert' || screen === 'record'));
-      var n = i.to === 'later' ? String(NOTES.length) : i.count;
+      var n = i.to === 'later' ? String(NOTES.length)
+            : i.to === 'ask' ? String(CONVERSATIONS.length)
+            : i.count;
       return '<button type="button" data-go="' + i.to + '"' + (on ? ' aria-current="page"' : '') + '>'
            + i.label
            + (n ? '<span class="n' + (i.hot ? ' hot' : '') + '">' + n + '</span>' : '')

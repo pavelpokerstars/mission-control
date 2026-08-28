@@ -13,5 +13,41 @@
     "Hugo Hart",
     "Ivy Iver"
   ],
-  "body": "Orbit Retro 2026-06-24\n\nNumbers look fine.\n\nThe staging box is flaky again.\n\nLet us take that offline.\n\nThat is the last of it.\n\nNumbers look fine.\n\nMorning all."
+  "segments": [
+    {
+      "at": 60,
+      "speaker": "unattributed",
+      "text": "Orbit Retro 2026-06-24"
+    },
+    {
+      "at": 157,
+      "speaker": "unattributed",
+      "text": "Numbers look fine."
+    },
+    {
+      "at": 254,
+      "speaker": "unattributed",
+      "text": "The staging box is flaky again."
+    },
+    {
+      "at": 351,
+      "speaker": "unattributed",
+      "text": "Let us take that offline."
+    },
+    {
+      "at": 448,
+      "speaker": "unattributed",
+      "text": "That is the last of it."
+    },
+    {
+      "at": 545,
+      "speaker": "unattributed",
+      "text": "Numbers look fine."
+    },
+    {
+      "at": 642,
+      "speaker": "unattributed",
+      "text": "Morning all."
+    }
+  ]
 }

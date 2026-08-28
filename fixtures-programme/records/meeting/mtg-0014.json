@@ -9,5 +9,41 @@
     "Dev Dunne",
     "Esme Ellis"
   ],
-  "body": "Orbit Backlog Refinement 2026-07-21\n\nLet us take that offline.\n\nThe staging box is flaky again.\n\nCan we come back to this on Thursday?\n\nI will pick that up after standup.\n\nAgreed.\n\nCan we come back to this on Thursday?"
+  "segments": [
+    {
+      "at": 60,
+      "speaker": "unattributed",
+      "text": "Orbit Backlog Refinement 2026-07-21"
+    },
+    {
+      "at": 173,
+      "speaker": "unattributed",
+      "text": "Let us take that offline."
+    },
+    {
+      "at": 286,
+      "speaker": "unattributed",
+      "text": "The staging box is flaky again."
+    },
+    {
+      "at": 399,
+      "speaker": "unattributed",
+      "text": "Can we come back to this on Thursday?"
+    },
+    {
+      "at": 512,
+      "speaker": "unattributed",
+      "text": "I will pick that up after standup."
+    },
+    {
+      "at": 625,
+      "speaker": "unattributed",
+      "text": "Agreed."
+    },
+    {
+      "at": 738,
+      "speaker": "unattributed",
+      "text": "Can we come back to this on Thursday?"
+    }
+  ]
 }

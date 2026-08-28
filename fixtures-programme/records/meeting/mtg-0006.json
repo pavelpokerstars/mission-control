@@ -13,5 +13,41 @@
     "Hugo Hart",
     "Ivy Iver"
   ],
-  "body": "Orbit Sprint Review 2026-06-27\n\nI will pick that up after standup.\n\nHugo Hart to split the batch job.\n\nLet us take that offline.\n\nSame as yesterday.\n\nMorning all.\n\nI will pick that up after standup."
+  "segments": [
+    {
+      "at": 60,
+      "speaker": "unattributed",
+      "text": "Orbit Sprint Review 2026-06-27"
+    },
+    {
+      "at": 160,
+      "speaker": "unattributed",
+      "text": "I will pick that up after standup."
+    },
+    {
+      "at": 260,
+      "speaker": "unattributed",
+      "text": "Hugo Hart to split the batch job."
+    },
+    {
+      "at": 360,
+      "speaker": "unattributed",
+      "text": "Let us take that offline."
+    },
+    {
+      "at": 460,
+      "speaker": "unattributed",
+      "text": "Same as yesterday."
+    },
+    {
+      "at": 560,
+      "speaker": "unattributed",
+      "text": "Morning all."
+    },
+    {
+      "at": 660,
+      "speaker": "unattributed",
+      "text": "I will pick that up after standup."
+    }
+  ]
 }

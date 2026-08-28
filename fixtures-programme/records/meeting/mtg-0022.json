@@ -13,5 +13,41 @@
     "Hugo Hart",
     "Ivy Iver"
   ],
-  "body": "Orbit Sprint Planning 2026-08-14\n\nThe staging box is flaky again.\n\nGreta Gale to split the batch job.\n\nI will pick that up after standup.\n\nNumbers look fine.\n\nI will pick that up after standup.\n\nI will pick that up after standup."
+  "segments": [
+    {
+      "at": 60,
+      "speaker": "unattributed",
+      "text": "Orbit Sprint Planning 2026-08-14"
+    },
+    {
+      "at": 167,
+      "speaker": "unattributed",
+      "text": "The staging box is flaky again."
+    },
+    {
+      "at": 274,
+      "speaker": "unattributed",
+      "text": "Greta Gale to split the batch job."
+    },
+    {
+      "at": 381,
+      "speaker": "unattributed",
+      "text": "I will pick that up after standup."
+    },
+    {
+      "at": 488,
+      "speaker": "unattributed",
+      "text": "Numbers look fine."
+    },
+    {
+      "at": 595,
+      "speaker": "unattributed",
+      "text": "I will pick that up after standup."
+    },
+    {
+      "at": 702,
+      "speaker": "unattributed",
+      "text": "I will pick that up after standup."
+    }
+  ]
 }

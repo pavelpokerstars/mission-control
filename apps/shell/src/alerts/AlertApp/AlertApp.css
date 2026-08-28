@@ -24,35 +24,84 @@
  * The app shell — and the one place the app deliberately differs from the
  * preview.
  *
- * The preview is a documentation page: it stacks screens down a scrolling body
- * with captions between them, inside `main`, and it draws each one as a
- * floating window — a border, a radius and a shadow on `.appwin`, inset in a
- * grey `--ground` margin. That framing is the DOCUMENT's, not the product's: it
- * is how you show a screenshot of an app on a page about the app. Shipped as
- * it stands it reads as the real thing running inside a picture of itself.
+ * TWO THINGS THE PREVIEW DOES, AND ONLY ONE OF THEM IS THE PRODUCT'S.
  *
- * So the app fills the viewport, and this is the only rule allowed to say so.
- * `.appwin` itself is untouched — the preview still draws its own window, which
- * is what keeps `docs/design-preview.html` the reference `DESIGN.md` says it is
- * — and everything below is scoped under `.app-shell`, which exists nowhere but
- * here.
+ * It draws each screen as a floating window — a border, a radius and a shadow on
+ * `.appwin`, inset in a grey `--ground` margin. That framing is the DOCUMENT's:
+ * it is how you show a picture of an app on a page about the app, and shipped as
+ * drawn it reads as the real thing running inside a picture of itself. It is
+ * gone here, and that is the whole of what this file removes.
+ *
+ * It ALSO caps the measure — `main { max-width:1000px; margin:0 auto }` — and
+ * that half is the product's. Removing the frame took the measure with it, and
+ * a paragraph is only readable for so many characters however wide the monitor:
+ * on a 1440 display the row headings ran 1307px and the evidence quotes 1324px,
+ * against the preview's ~900. So the container is back, without the frame.
+ *
+ * ONE SURFACE, NOT TWO. `.app-shell` carries `--app` rather than `--ground`, so
+ * the page is a single colour edge to edge and the centred column has no visible
+ * boundary — what centres is the CONTENT and the hairlines between bands, the
+ * way a modern page centres an article. Left on `--ground` the flat panel would
+ * read as the window again, minus its frame, which is the worst of both.
  *
  * WHAT IS NOT CHANGED, and this is the part worth guarding: every band still
  * pads with `var(--gutter)`, so the single-x check in `DESIGN.md` §8 holds
- * exactly as before. Widening the window moves where that x falls; it must not
- * split it into several.
+ * exactly as before. The container moves where that x falls; it must not split
+ * it into several.
+ *
+ * `max-width` and not a fixed width, and the 1000px is the preview's own number
+ * rather than a new one — an earlier version of this rule invented `860px`, and
+ * it looked fine and was 140px narrower than the design at every width above
+ * 1000. Nothing about that is visible without measuring two pages side by side.
  * ------------------------------------------------------------------------- */
 .app-shell {
   min-height: 100vh;
-  background: var(--ground);
+  background: var(--app);
+  overflow-x: clip;
 }
+/**
+ * The header spans the page; its CONTENTS stay on the column.
+ *
+ * A bar that stops at 1000px reads as a strip floating on the page rather than
+ * as the app's header — the same complaint as the window frame, one element up.
+ * But a bar whose contents also run to the edges puts the brand at x=0 while
+ * "19 things need you" sits at x=250, and a masthead that does not line up with
+ * the page under it looks careless rather than wide.
+ *
+ * So: break the BOX out of the column, and put the CONTENT back on it. The
+ * padding resolves to the same x every band pads to, at every width — measured
+ * 250 at 1440, 42 at 1024, 30 at 820 — which is what keeps `DESIGN.md` §8's
+ * single-x rule true of the header as well as the bands. It also retires the
+ * preview's `22px`, which was this bar's inset from the EDGE OF A WINDOW; with
+ * no window there is nothing for 22px to be measured from, and the number that
+ * means something is the gutter.
+ *
+ * THIS ONE CANNOT GO IN THE PREVIEW, and that is not an oversight. The preview
+ * stacks screens down a documentation page as pictures of an app; a header that
+ * breaks out to `50vw` there would span the document, not the screen. It joins
+ * the frame removal and the container in this block, which is the place the app
+ * is allowed to differ.
+ *
+ * `overflow-x: clip` on the shell is the guard for the one hazard in `vw`: it
+ * counts the scrollbar and `clientWidth` does not, so on a platform with
+ * classic scrollbars the bar overhangs by half a scrollbar and the page scrolls
+ * sideways. `clip` rather than `hidden` — `hidden` makes the shell a scroll
+ * container, which silently kills `position:sticky` for anything inside it.
+ */
+.app-shell .topbar {
+  margin-inline: calc(50% - 50vw);
+  padding-inline: max(var(--gutter), calc(50vw - 500px + var(--gutter)));
+}
+
 .app-shell .appwin {
+  max-width: 1000px;
+  margin: 0 auto;
   border: 0;
   border-radius: 0;
   box-shadow: none;
   min-height: 100vh;
-  /* The preview clips to its rounded corners. Full-bleed there are no corners
-   * to clip to, and clipping would cut off the date picker's popup where it
-   * opens past the bottom of a short page. */
+  /* The preview clips to its rounded corners. There are no corners here, and
+   * clipping would cut off the date picker's popup where it opens past the
+   * bottom of a short page. */
   overflow: visible;
 }

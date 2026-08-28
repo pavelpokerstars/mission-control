@@ -32,6 +32,7 @@ import {
   DEFAULT_AGING_DAYS,
   findContradictions,
   findCycles,
+  isAlertDeferral,
   segmentTime,
   slackTsToIso,
   statusAgeOf,
@@ -365,6 +366,13 @@ export async function gatherWorkFacts(
   }
 
   for (const n of vault.list()) {
+    /**
+     * A note parked from an alert is not a source about the ticket — see
+     * `isAlertDeferral`, and `KNOWN-GAPS.md` §1 for what it did to the front
+     * door. The dossier's own trail applies the same predicate, because this
+     * file's header says the two may not disagree about what disagreement is.
+     */
+    if (isAlertDeferral(n)) continue;
     for (const key of n.relatedKeys ?? []) {
       add(key, {
         surface: 'vault',
@@ -523,11 +531,18 @@ export async function gatherWorkFacts(
          * Three rows, in this order, and at least one always exists so an alert
          * page is never evidence-free.
          *
-         * The first two are OUR OBSERVATION and carry no `ref` on purpose — a
-         * sprint is not a record and neither is a date, and an evidence row
-         * that promises a document and delivers a 404 is worse than a plain
-         * sentence. Only the third is a citation, and only when somebody
-         * actually said something.
+         * The first two are OUR OBSERVATION — a sprint is not a record and
+         * neither is a date — but both are ABOUT a ticket, and that ticket IS a
+         * record we hold. So both carry a `ref` to it.
+         *
+         * The rule is still that a row with somewhere to go is a link and one
+         * without is a sentence, and that a dead link is worse than plain text.
+         * What changed is noticing these were not dead: `/record/jira/<key>`
+         * resolves today, names the ticket ("ORB-1641 — Rework the migration
+         * job") and carries the sprint — which is exactly what an alert reading
+         * "ORB-1641 has not moved" leaves the reader wondering. Twelve of the
+         * eighteen unlinked evidence rows on this fixture were this case: our
+         * observation, about something openable, offering nothing to open.
          */
         evidence: [
           ...carried.slice(-1).map(
@@ -536,6 +551,7 @@ export async function gatherWorkFacts(
               label: `${c.label} closed${
                 c.closedAt ?? c.endsAt ? ` on ${(c.closedAt ?? c.endsAt)!.slice(0, 10)}` : ''
               } with ${item.key} still ${COLUMN_PHRASE[item.status]}`,
+              ref: { surface: 'jira', id: item.key },
             }),
           ),
           ...(trail[0] && trail[0].surface !== 'jira'
@@ -544,6 +560,7 @@ export async function gatherWorkFacts(
                 {
                   surface: 'jira' as const,
                   label: `${item.key} is ${COLUMN_PHRASE[item.status]} in the tracker, and nothing outside Jira mentions it`,
+                  ref: { surface: 'jira' as const, id: item.key },
                 },
               ]),
         ],

@@ -10,5 +10,41 @@
     "Esme Ellis",
     "Finn Frost"
   ],
-  "body": "Orbit Backlog Refinement 2026-07-24\n\nCan we come back to this on Thursday?\n\nNo update today.\n\nCan we come back to this on Thursday?\n\nThe staging box is flaky again.\n\nThe staging box is flaky again.\n\nSame as yesterday."
+  "segments": [
+    {
+      "at": 60,
+      "speaker": "unattributed",
+      "text": "Orbit Backlog Refinement 2026-07-24"
+    },
+    {
+      "at": 168,
+      "speaker": "unattributed",
+      "text": "Can we come back to this on Thursday?"
+    },
+    {
+      "at": 276,
+      "speaker": "unattributed",
+      "text": "No update today."
+    },
+    {
+      "at": 384,
+      "speaker": "unattributed",
+      "text": "Can we come back to this on Thursday?"
+    },
+    {
+      "at": 492,
+      "speaker": "unattributed",
+      "text": "The staging box is flaky again."
+    },
+    {
+      "at": 600,
+      "speaker": "unattributed",
+      "text": "The staging box is flaky again."
+    },
+    {
+      "at": 708,
+      "speaker": "unattributed",
+      "text": "Same as yesterday."
+    }
+  ]
 }

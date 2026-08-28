@@ -19,6 +19,7 @@ import {
   buildTimeline,
   byRecency,
   classifySignalFor,
+  isAlertDeferral,
   docNodeId,
   findContradictions,
   meetingNodeId,
@@ -265,7 +266,16 @@ export async function buildDossier(
   // habit, not a status report — and reading a state claim out of one is the
   // same mistake as reading one out of a runbook. The vault's own decay model
   // already draws this line; this reuses it rather than inventing a second.
-  const notes = vault.list().filter((n) => n.relatedKeys?.includes(key));
+  //
+  // And a note somebody PARKED FROM AN ALERT is excluded outright, whatever its
+  // recency: `defer` joins it to the ticket, so without this the dossier's
+  // disagreement banner can cite the reader's own note about the alert as one of
+  // the two voices — `isAlertDeferral`, and `KNOWN-GAPS.md` §1. The lane applies
+  // the same predicate; `work.ts`'s header is explicit that these two may not
+  // come to two different definitions of disagreement.
+  const notes = vault
+    .list()
+    .filter((n) => n.relatedKeys?.includes(key) && !isAlertDeferral(n));
   for (const n of notes) {
     trail.push({
       surface: 'vault',

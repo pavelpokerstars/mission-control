@@ -120,7 +120,7 @@ export function ConversationPage({
           <button
             type="button"
             onClick={() => {
-              navigate(recordHref(cite, detail.data!.finding.id));
+              navigate(recordHref(cite, detail.data!.finding.id, detail.data!.finding.kind));
             }}
           >
             Show me where this was said

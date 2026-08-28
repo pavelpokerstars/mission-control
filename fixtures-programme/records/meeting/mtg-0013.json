@@ -11,5 +11,41 @@
     "Finn Frost",
     "Greta Gale"
   ],
-  "body": "Orbit Daily Scrum 2026-07-18\n\nSame as yesterday.\n\nThe staging box is flaky again.\n\nNothing blocking from me.\n\nLuca Lund to measure the cold start.\n\nDeploy window is Thursday.\n\nThat is the last of it."
+  "segments": [
+    {
+      "at": 60,
+      "speaker": "unattributed",
+      "text": "Orbit Daily Scrum 2026-07-18"
+    },
+    {
+      "at": 165,
+      "speaker": "unattributed",
+      "text": "Same as yesterday."
+    },
+    {
+      "at": 270,
+      "speaker": "unattributed",
+      "text": "The staging box is flaky again."
+    },
+    {
+      "at": 375,
+      "speaker": "unattributed",
+      "text": "Nothing blocking from me."
+    },
+    {
+      "at": 480,
+      "speaker": "unattributed",
+      "text": "Luca Lund to measure the cold start."
+    },
+    {
+      "at": 585,
+      "speaker": "unattributed",
+      "text": "Deploy window is Thursday."
+    },
+    {
+      "at": 690,
+      "speaker": "unattributed",
+      "text": "That is the last of it."
+    }
+  ]
 }

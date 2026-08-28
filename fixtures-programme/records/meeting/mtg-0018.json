@@ -9,5 +9,41 @@
     "Dev Dunne",
     "Esme Ellis"
   ],
-  "body": "Orbit Backlog Refinement 2026-08-02\n\nSame as yesterday.\n\nNothing blocking from me.\n\nMorning all.\n\nLet us take that offline.\n\nThe staging box is flaky again.\n\nLet us take that offline."
+  "segments": [
+    {
+      "at": 60,
+      "speaker": "unattributed",
+      "text": "Orbit Backlog Refinement 2026-08-02"
+    },
+    {
+      "at": 172,
+      "speaker": "unattributed",
+      "text": "Same as yesterday."
+    },
+    {
+      "at": 284,
+      "speaker": "unattributed",
+      "text": "Nothing blocking from me."
+    },
+    {
+      "at": 396,
+      "speaker": "unattributed",
+      "text": "Morning all."
+    },
+    {
+      "at": 508,
+      "speaker": "unattributed",
+      "text": "Let us take that offline."
+    },
+    {
+      "at": 620,
+      "speaker": "unattributed",
+      "text": "The staging box is flaky again."
+    },
+    {
+      "at": 732,
+      "speaker": "unattributed",
+      "text": "Let us take that offline."
+    }
+  ]
 }

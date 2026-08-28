@@ -78,6 +78,16 @@ export interface ActionResult {
  */
 interface Answer {
   forever: boolean;
+  /**
+   * A DISMISSAL specifically, because `forever` alone cannot tell you which.
+   *
+   * A dateless deferral sets `forever` too — "held until something evaluates
+   * the watch" — so the two collapse for the purpose of *suppressing*, which is
+   * all `resolve` ever needed. They do not collapse for the purpose of SAYING
+   * what happened: "you dismissed this" and "you parked this with no date" are
+   * different sentences, and `answerFor` has to be able to write the right one.
+   */
+  dismissed: boolean;
   /** Epoch ms, the furthest-out deferral seen. */
   until?: number;
 }
@@ -88,9 +98,11 @@ function foldAnswer(into: Map<string, Answer>, e: McEvent): void {
   if (!p.findingId) return;
   if (e.type !== 'mc.finding_dismissed' && e.type !== 'mc.finding_deferred') return;
 
-  const a = into.get(p.findingId) ?? { forever: false };
-  if (e.type === 'mc.finding_dismissed') a.forever = true;
-  else {
+  const a = into.get(p.findingId) ?? { forever: false, dismissed: false };
+  if (e.type === 'mc.finding_dismissed') {
+    a.forever = true;
+    a.dismissed = true;
+  } else {
     const due = p.until ? Date.parse(p.until) : Number.NaN;
     // No parseable date means an event-based reminder. Held until watched.
     if (!Number.isFinite(due)) a.forever = true;
@@ -147,6 +159,45 @@ export async function answeredFindingIds(vault: VaultStore, now = Date.now()): P
     answers = built;
   }
   return resolve(answers, now);
+}
+
+/** A standing decision, as a page can state it. `until` is ISO. */
+export interface StandingAnswer {
+  kind: 'deferred' | 'dismissed';
+  /** Absent on a dismissal, and on a deferral whose reminder is an EVENT. */
+  until?: string;
+}
+
+/**
+ * What a human already answered about ONE finding, when the answer still
+ * stands.
+ *
+ * `answeredFindingIds` collapses the same fold into a Set, which is everything
+ * the front door needs: it drops them. A page reached by its own ADDRESS needs
+ * the decision rather than the fact of one — otherwise it renders a parked
+ * alert as though nothing had happened, silently contradicting the list it is
+ * missing from, and offers *Not now* on something already put away.
+ *
+ * Built on `answeredFindingIds` rather than beside it, so there is one index,
+ * one fold and one comparison against the clock. Returning `undefined` for a
+ * finding that is no longer suppressed is the point of that reuse: a deferral
+ * expires with the clock, and the moment it does the alert is back on the list
+ * and the page must stop claiming otherwise.
+ */
+export async function answerFor(
+  vault: VaultStore,
+  id: string,
+  now = Date.now(),
+): Promise<StandingAnswer | undefined> {
+  const standing = await answeredFindingIds(vault, now);
+  if (!standing.has(id)) return undefined;
+  const a = answers?.get(id);
+  if (!a) return undefined;
+  if (a.dismissed) return { kind: 'dismissed' };
+  return {
+    kind: 'deferred',
+    ...(a.until !== undefined ? { until: new Date(a.until).toISOString() } : {}),
+  };
 }
 
 // ---------------------------------------------------------------------------

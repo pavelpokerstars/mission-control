@@ -13,7 +13,7 @@ owner: Ada Ash
 dueAt: 2026-08-09T17:00:00.000Z
 container: sprint:Orbit 32
 evidence:
-  - {"surface":"zoom","label":"Orbit Sprint Review 2026-08-11 (read by the model)","quote":"Ada Ash to finish the pricing table.","ref":{"surface":"zoom","id":"mtg-0021","at":3}}
+  - {"surface":"zoom","label":"Orbit Sprint Review 2026-08-11 (read by the model)","quote":"Ada Ash to finish the pricing table.","ref":{"surface":"zoom","id":"mtg-0021","at":354}}
 ---
 
 Ada Ash to finish the pricing table.

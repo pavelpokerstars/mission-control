@@ -196,7 +196,7 @@ const SHELL_FILES = [
   'ConversationPage/ConversationPage.tsx', 'DatePicker/DatePicker.tsx',
   'Later/Later.tsx', 'NotePage/NotePage.tsx', 'RecordView/RecordView.tsx',
   'Sources/Sources.tsx', 'Thread/Thread.tsx',
-  'api.ts', 'chat.ts', 'conversations.ts', 'router.ts',
+  'api.ts', 'chat.ts', 'conversations.ts', 'demo.ts', 'router.ts',
 ];
 
 /**

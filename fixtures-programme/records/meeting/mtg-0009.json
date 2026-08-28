@@ -9,5 +9,41 @@
     "Dev Dunne",
     "Esme Ellis"
   ],
-  "body": "Orbit Backlog Refinement 2026-07-06\n\nDeploy window is Thursday.\n\nSame as yesterday.\n\nNothing blocking from me.\n\nDeploy window is Thursday.\n\nI will pick that up after standup.\n\nThat is the last of it."
+  "segments": [
+    {
+      "at": 60,
+      "speaker": "unattributed",
+      "text": "Orbit Backlog Refinement 2026-07-06"
+    },
+    {
+      "at": 149,
+      "speaker": "unattributed",
+      "text": "Deploy window is Thursday."
+    },
+    {
+      "at": 238,
+      "speaker": "unattributed",
+      "text": "Same as yesterday."
+    },
+    {
+      "at": 327,
+      "speaker": "unattributed",
+      "text": "Nothing blocking from me."
+    },
+    {
+      "at": 416,
+      "speaker": "unattributed",
+      "text": "Deploy window is Thursday."
+    },
+    {
+      "at": 505,
+      "speaker": "unattributed",
+      "text": "I will pick that up after standup."
+    },
+    {
+      "at": 594,
+      "speaker": "unattributed",
+      "text": "That is the last of it."
+    }
+  ]
 }

@@ -107,10 +107,16 @@ spacing accumulates, and every spacing bug found so far started as one.
 
 ## 4. The pages, and how you move
 
-A permanent **toolbar** of exactly three: `Alerts 3 · Later 2 · Ask`. The counts
-are read from the data, never written down (see §8). **Three is the ceiling** —
-a fourth entry and the toolbar starts reading as a launcher for tools rather than
-as the two or three things you might want from anywhere.
+A permanent **toolbar** of exactly three: `Alerts 3 · Later 2 · Ask 6`. The
+counts are read from the data, never written down (see §8). **Three is the
+ceiling** — a fourth entry and the toolbar starts reading as a launcher for tools
+rather than as the two or three things you might want from anywhere.
+
+**All three carry a count, and only two of them are work.** An alert is
+something unanswered and a parked note is something that came back; a
+conversation count is neither — it says how much you have said. So Ask's badge
+is drawn in the same neutral as Later's and is **never** `hot`, because red in
+this toolbar means somebody has to look at something.
 
 Everything else is contextual:
 

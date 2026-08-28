@@ -2335,7 +2335,8 @@
       "label": "ORB-1627 shipped on Tuesday, closing it out.",
       "at": "2026-08-14T11:00:00.000Z",
       "container": "orbit-delivery",
-      "recordRef": "records/message/dispute-a.json"
+      "recordRef": "records/message/dispute-a.json",
+      "url": "https://example.com/archives/orbit-delivery/p1786705200000"
     },
     {
       "id": "message:slack/orbit-delivery/dispute-b",
@@ -2344,7 +2345,8 @@
       "label": "ORB-1627 is not done — still waiting on the schema change.",
       "at": "2026-08-17T11:00:00.000Z",
       "container": "orbit-delivery",
-      "recordRef": "records/message/dispute-b.json"
+      "recordRef": "records/message/dispute-b.json",
+      "url": "https://example.com/archives/orbit-delivery/p1786964400000"
     },
     {
       "id": "page:confluence/page-0001",
@@ -4152,7 +4154,8 @@
       "source": "zoom",
       "label": "Orbit Backlog Refinement 2026-06-12",
       "at": "2026-06-12T10:00:00.000Z",
-      "recordRef": "records/meeting/mtg-0001.json"
+      "recordRef": "records/meeting/mtg-0001.json",
+      "url": "https://example.com/docs/mtg-0001"
     },
     {
       "id": "meeting:zoom/mtg-0002",
@@ -4160,7 +4163,8 @@
       "source": "zoom",
       "label": "Orbit Sprint Planning 2026-06-15",
       "at": "2026-06-15T10:00:00.000Z",
-      "recordRef": "records/meeting/mtg-0002.json"
+      "recordRef": "records/meeting/mtg-0002.json",
+      "url": "https://example.com/docs/mtg-0002"
     },
     {
       "id": "meeting:zoom/mtg-0003",
@@ -4168,7 +4172,8 @@
       "source": "zoom",
       "label": "Orbit Daily Scrum 2026-06-18",
       "at": "2026-06-18T10:00:00.000Z",
-      "recordRef": "records/meeting/mtg-0003.json"
+      "recordRef": "records/meeting/mtg-0003.json",
+      "url": "https://example.com/docs/mtg-0003"
     },
     {
       "id": "meeting:zoom/mtg-0004",
@@ -4176,7 +4181,8 @@
       "source": "zoom",
       "label": "Orbit Retro 2026-06-21",
       "at": "2026-06-21T10:00:00.000Z",
-      "recordRef": "records/meeting/mtg-0004.json"
+      "recordRef": "records/meeting/mtg-0004.json",
+      "url": "https://example.com/docs/mtg-0004"
     },
     {
       "id": "meeting:zoom/mtg-0005",
@@ -4184,7 +4190,8 @@
       "source": "zoom",
       "label": "Orbit Retro 2026-06-24",
       "at": "2026-06-24T10:00:00.000Z",
-      "recordRef": "records/meeting/mtg-0005.json"
+      "recordRef": "records/meeting/mtg-0005.json",
+      "url": "https://example.com/docs/mtg-0005"
     },
     {
       "id": "meeting:zoom/mtg-0006",
@@ -4192,7 +4199,8 @@
       "source": "zoom",
       "label": "Orbit Sprint Review 2026-06-27",
       "at": "2026-06-27T10:00:00.000Z",
-      "recordRef": "records/meeting/mtg-0006.json"
+      "recordRef": "records/meeting/mtg-0006.json",
+      "url": "https://example.com/docs/mtg-0006"
     },
     {
       "id": "meeting:zoom/mtg-0007",
@@ -4200,7 +4208,8 @@
       "source": "zoom",
       "label": "Orbit Retro 2026-06-30",
       "at": "2026-06-30T10:00:00.000Z",
-      "recordRef": "records/meeting/mtg-0007.json"
+      "recordRef": "records/meeting/mtg-0007.json",
+      "url": "https://example.com/docs/mtg-0007"
     },
     {
       "id": "meeting:zoom/mtg-0008",
@@ -4208,7 +4217,8 @@
       "source": "zoom",
       "label": "Orbit Backlog Refinement 2026-07-03",
       "at": "2026-07-03T10:00:00.000Z",
-      "recordRef": "records/meeting/mtg-0008.json"
+      "recordRef": "records/meeting/mtg-0008.json",
+      "url": "https://example.com/docs/mtg-0008"
     },
     {
       "id": "meeting:zoom/mtg-0009",
@@ -4216,7 +4226,8 @@
       "source": "zoom",
       "label": "Orbit Backlog Refinement 2026-07-06",
       "at": "2026-07-06T10:00:00.000Z",
-      "recordRef": "records/meeting/mtg-0009.json"
+      "recordRef": "records/meeting/mtg-0009.json",
+      "url": "https://example.com/docs/mtg-0009"
     },
     {
       "id": "meeting:zoom/mtg-0010",
@@ -4224,7 +4235,8 @@
       "source": "zoom",
       "label": "Orbit Retro 2026-07-09",
       "at": "2026-07-09T10:00:00.000Z",
-      "recordRef": "records/meeting/mtg-0010.json"
+      "recordRef": "records/meeting/mtg-0010.json",
+      "url": "https://example.com/docs/mtg-0010"
     },
     {
       "id": "meeting:zoom/mtg-0011",
@@ -4232,7 +4244,8 @@
       "source": "zoom",
       "label": "Orbit Sprint Planning 2026-07-12",
       "at": "2026-07-12T10:00:00.000Z",
-      "recordRef": "records/meeting/mtg-0011.json"
+      "recordRef": "records/meeting/mtg-0011.json",
+      "url": "https://example.com/docs/mtg-0011"
     },
     {
       "id": "meeting:zoom/mtg-0012",
@@ -4240,7 +4253,8 @@
       "source": "zoom",
       "label": "Orbit Backlog Refinement 2026-07-15",
       "at": "2026-07-15T10:00:00.000Z",
-      "recordRef": "records/meeting/mtg-0012.json"
+      "recordRef": "records/meeting/mtg-0012.json",
+      "url": "https://example.com/docs/mtg-0012"
     },
     {
       "id": "meeting:zoom/mtg-0013",
@@ -4248,7 +4262,8 @@
       "source": "zoom",
       "label": "Orbit Daily Scrum 2026-07-18",
       "at": "2026-07-18T10:00:00.000Z",
-      "recordRef": "records/meeting/mtg-0013.json"
+      "recordRef": "records/meeting/mtg-0013.json",
+      "url": "https://example.com/docs/mtg-0013"
     },
     {
       "id": "meeting:zoom/mtg-0014",
@@ -4256,7 +4271,8 @@
       "source": "zoom",
       "label": "Orbit Backlog Refinement 2026-07-21",
       "at": "2026-07-21T10:00:00.000Z",
-      "recordRef": "records/meeting/mtg-0014.json"
+      "recordRef": "records/meeting/mtg-0014.json",
+      "url": "https://example.com/docs/mtg-0014"
     },
     {
       "id": "meeting:zoom/mtg-0015",
@@ -4264,7 +4280,8 @@
       "source": "zoom",
       "label": "Orbit Backlog Refinement 2026-07-24",
       "at": "2026-07-24T10:00:00.000Z",
-      "recordRef": "records/meeting/mtg-0015.json"
+      "recordRef": "records/meeting/mtg-0015.json",
+      "url": "https://example.com/docs/mtg-0015"
     },
     {
       "id": "meeting:zoom/mtg-0016",
@@ -4272,7 +4289,8 @@
       "source": "zoom",
       "label": "Orbit Retro 2026-07-27",
       "at": "2026-07-27T10:00:00.000Z",
-      "recordRef": "records/meeting/mtg-0016.json"
+      "recordRef": "records/meeting/mtg-0016.json",
+      "url": "https://example.com/docs/mtg-0016"
     },
     {
       "id": "meeting:zoom/mtg-0017",
@@ -4280,7 +4298,8 @@
       "source": "zoom",
       "label": "Orbit Sprint Review 2026-07-30",
       "at": "2026-07-30T10:00:00.000Z",
-      "recordRef": "records/meeting/mtg-0017.json"
+      "recordRef": "records/meeting/mtg-0017.json",
+      "url": "https://example.com/docs/mtg-0017"
     },
     {
       "id": "meeting:zoom/mtg-0018",
@@ -4288,7 +4307,8 @@
       "source": "zoom",
       "label": "Orbit Backlog Refinement 2026-08-02",
       "at": "2026-08-02T10:00:00.000Z",
-      "recordRef": "records/meeting/mtg-0018.json"
+      "recordRef": "records/meeting/mtg-0018.json",
+      "url": "https://example.com/docs/mtg-0018"
     },
     {
       "id": "meeting:zoom/mtg-0019",
@@ -4296,7 +4316,8 @@
       "source": "zoom",
       "label": "Orbit Sprint Planning 2026-08-05",
       "at": "2026-08-05T10:00:00.000Z",
-      "recordRef": "records/meeting/mtg-0019.json"
+      "recordRef": "records/meeting/mtg-0019.json",
+      "url": "https://example.com/docs/mtg-0019"
     },
     {
       "id": "meeting:zoom/mtg-0020",
@@ -4304,7 +4325,8 @@
       "source": "zoom",
       "label": "Orbit Sprint Review 2026-08-08",
       "at": "2026-08-08T10:00:00.000Z",
-      "recordRef": "records/meeting/mtg-0020.json"
+      "recordRef": "records/meeting/mtg-0020.json",
+      "url": "https://example.com/docs/mtg-0020"
     },
     {
       "id": "meeting:zoom/mtg-0021",
@@ -4312,7 +4334,8 @@
       "source": "zoom",
       "label": "Orbit Sprint Review 2026-08-11",
       "at": "2026-08-11T10:00:00.000Z",
-      "recordRef": "records/meeting/mtg-0021.json"
+      "recordRef": "records/meeting/mtg-0021.json",
+      "url": "https://example.com/docs/mtg-0021"
     },
     {
       "id": "meeting:zoom/mtg-0022",
@@ -4320,7 +4343,8 @@
       "source": "zoom",
       "label": "Orbit Sprint Planning 2026-08-14",
       "at": "2026-08-14T10:00:00.000Z",
-      "recordRef": "records/meeting/mtg-0022.json"
+      "recordRef": "records/meeting/mtg-0022.json",
+      "url": "https://example.com/docs/mtg-0022"
     },
     {
       "id": "meeting:zoom/mtg-0023",
@@ -4328,7 +4352,8 @@
       "source": "zoom",
       "label": "Orbit Retro 2026-08-17",
       "at": "2026-08-17T10:00:00.000Z",
-      "recordRef": "records/meeting/mtg-0023.json"
+      "recordRef": "records/meeting/mtg-0023.json",
+      "url": "https://example.com/docs/mtg-0023"
     },
     {
       "id": "meeting:zoom/mtg-0024",
@@ -4336,7 +4361,8 @@
       "source": "zoom",
       "label": "Orbit Sprint Review 2026-08-20",
       "at": "2026-08-20T10:00:00.000Z",
-      "recordRef": "records/meeting/mtg-0024.json"
+      "recordRef": "records/meeting/mtg-0024.json",
+      "url": "https://example.com/docs/mtg-0024"
     }
   ],
   "links": [

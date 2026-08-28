@@ -28,6 +28,7 @@ import {
   tokens,
   type JoinCandidate,
   FINDING_RANK,
+  isAlertKind,
   type Evidence,
   type Finding,
   type Note,
@@ -40,8 +41,9 @@ import {
 import { buildIdentities, type Connectors, type GraphSource } from '@mc/connectors';
 import type { VaultStore } from '@mc/vault';
 import { gatherWorkFacts, workOpts, type CorpusEntry } from './work.js';
+import { safeMode } from './safe-mode.js';
 import { agingDays } from './graph-source.js';
-import { answeredFindingIds } from './act.js';
+import { answerFor, answeredFindingIds, type StandingAnswer } from './act.js';
 
 /**
  * How long past its due date before a missing ticket is `crit` rather than
@@ -256,8 +258,8 @@ export function findMissingTickets(notes: Note[], graph: StoredGraph, now = Date
       severity:
         !reconstructed && !dueFromSprint && overdueDays >= OVERDUE_CRIT_DAYS ? 'crit' : 'warn',
       claim: reconstructed
-        ? `${n.title} is probably ${reconstructed.key}, and nothing says so`
-        : `${n.title} was never filed`,
+        ? `${asClause(n.title)} is probably ${reconstructed.key}, and nothing says so`
+        : `${asClause(n.title)} was never filed`,
       impact: [
         dueFromSprint
           ? `Taken by ${n.owner}, with no date given`
@@ -517,7 +519,7 @@ export function findDroppedCommitments(args: {
       // Always `warn`. `crit` outranks the flagship on the front door and turns
       // into a morning ping; "nobody has mentioned this" does not earn that.
       severity: 'warn',
-      claim: `${n.title} has gone quiet`,
+      claim: `${asClause(n.title)} has gone quiet`,
       impact: [
         `Taken by ${n.owner}`,
         `${since.length} meeting${since.length === 1 ? '' : 's'} since`,
@@ -594,7 +596,7 @@ export function findLinkProblems(graph: StoredGraph, items: Map<string, WorkItem
         subject: { kind: 'workitem', key: key(d.source) },
         severity: 'warn',
         claim: `${key(d.source)} waits on ${key(d.target)}, and nothing records it`,
-        impact: `${d.why ?? 'Reconstructed from evidence'} — “${title(d.target)}” is not linked as a blocker, so no board shows it.`,
+        impact: `${asClause(d.why ?? 'Reconstructed from evidence')} — “${title(d.target)}” is not linked as a blocker, so no board shows it.`,
         firedAt: graph.graph.generatedAt,
         evidence,
         dedupeKey: `undetected_dependency:${d.source}:${d.target}`,
@@ -743,6 +745,24 @@ function agingFiredAt(
   return Number.isFinite(crossed) ? new Date(crossed).toISOString() : undefined;
 }
 
+/**
+ * A title, made fit to sit inside a sentence.
+ *
+ * Every claim built here is `<title> + a clause`, and a commitment's title is a
+ * sentence somebody said: all eight in `fixtures-programme/notes/` end in a full
+ * stop, and an extracted action item will too. Interpolated raw that produced
+ * **"Esme Ellis to chase the vendor sandbox. was never filed"** — a full stop
+ * mid-claim, on the flagship alert, in the `h1`.
+ *
+ * Only sentence-ending punctuation goes. A title ending in `?` is a question
+ * somebody asked and a trailing `:` introduces something; both read as errors
+ * once a clause follows, so they go the same way. A closing bracket or quote
+ * stays — it is part of the title rather than the end of it.
+ */
+function asClause(title: string): string {
+  return title.trim().replace(/[.!?:;,]+$/, '');
+}
+
 /** The headline. `signal.text` is already phrased, and becomes the impact line. */
 function claimFor(
   kind: Finding['kind'],
@@ -796,6 +816,22 @@ export interface FindingsInput {
   items: WorkItem[];
   /** For the lane-derived findings. Omitted, they are simply not produced. */
   connectors?: Connectors;
+  /**
+   * Keep what a human has already answered. **A LIST FILTERS; AN ADDRESS DOES
+   * NOT**, and conflating the two cost the app its one link back from a note.
+   *
+   * The front door drops deferrals and dismissals, which is the whole promise
+   * of an alert list. `findingDetail` used to read through the same call, so a
+   * finding you had parked could not be opened AT ALL until the reminder
+   * lapsed — and the note that parking created carries `Open the alert`, the
+   * only ACROSS link in `DESIGN.md` §4, which therefore landed on "That alert
+   * is not there" for exactly the notes it exists for.
+   *
+   * Same distinction the vault's decay model already draws: a stale note still
+   * answers an explicit lookup and only stops being volunteered. Deliberately
+   * opt-IN, so a new route that forgets it gets the safe behaviour.
+   */
+  includeAnswered?: boolean;
 }
 
 /**
@@ -818,6 +854,7 @@ export async function runFindings({
   vault,
   items,
   connectors,
+  includeAnswered = false,
 }: FindingsInput): Promise<Finding[]> {
   const byKey = new Map(items.map((i) => [i.key, i]));
 
@@ -875,7 +912,41 @@ export async function runFindings({
    * Left as a comment rather than deleted silently: "apply the vault's decay
    * model here" is an obvious-sounding idea and somebody will have it again.
    */
-  return rankFindings(findings.filter((f) => !answered.has(f.id)));
+  return rankFindings(findings.filter((f) => includeAnswered || !answered.has(f.id)));
+}
+
+/**
+ * The front door, split into what needs you and what you have already answered.
+ *
+ * `findings` MEANS "THE LIST" AND MUST GO ON MEANING EXACTLY THAT. A dismissal
+ * is a promise that the thing stays gone, so the obvious widening — suppressed
+ * findings arriving inline, everybody filtering downstream — moves that promise
+ * from one place to every consumer, and the first one to forget puts a
+ * dismissed alert back on the front door. `parked` therefore sits BESIDE it:
+ * nothing that reads `findings` changes behaviour, and the safe default holds.
+ *
+ * The second half exists for anything that must NAME an alert it is not
+ * listing. `Later`'s rows carry the chip of the alert a note was parked from
+ * (`DIRECTION.md` §7) — and a note is parked precisely when its alert has left
+ * the list, so the filtered array is the one array that can never resolve one.
+ * It costs no second pass: `runFindings` has already produced both sets and
+ * `answeredFindingIds` already says which is which.
+ *
+ * Coverage kinds are excluded from both halves. They are one per edge, they
+ * arrive by the hundred on a real programme, and they live on Sources — see
+ * `COVERAGE_KINDS`.
+ */
+export async function runAlertFindings(
+  input: FindingsInput,
+): Promise<{ findings: Finding[]; parked: Finding[] }> {
+  const alerts = (await runFindings({ ...input, includeAnswered: true })).filter((f) =>
+    isAlertKind(f.kind),
+  );
+  const answered = await answeredFindingIds(input.vault);
+  return {
+    findings: alerts.filter((f) => !answered.has(f.id)),
+    parked: alerts.filter((f) => answered.has(f.id)),
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -909,6 +980,31 @@ export interface FindingDetail {
    * computed that the gap detector did not already need.
    */
   checklist?: { title: string; tracked: boolean; ref: string }[];
+  /**
+   * The decision a human already made about this, while it still stands.
+   *
+   * Present exactly when the finding is missing from `/api/findings` for that
+   * reason — which is the only way this page can be honest about a parked
+   * alert. Absent is the ordinary case, including a deferral whose reminder has
+   * lapsed: the alert is back on the list, so the page has nothing to add.
+   */
+  answered?: StandingAnswer;
+  /**
+   * Whether this instance may write to a vendor at all.
+   *
+   * The alert page's primary button says "Create the ticket", and on a
+   * safe-mode instance — which is the DEFAULT, `safe-mode.ts` — that write is
+   * refused. The failure path is honest about it after the fact; the button was
+   * not honest about it before. A label that promises a Jira write on an
+   * instance that cannot make one is the same defect as an "Ask someone" button
+   * that does not say it posts to Slack, and it is the one the reader hits
+   * first.
+   *
+   * It rides on the detail rather than being fetched separately so the page and
+   * the button cannot disagree about it — the same argument that puts the
+   * toolbar counts in one fetch.
+   */
+  safeMode: boolean;
 }
 
 /**
@@ -928,11 +1024,14 @@ export async function findingDetail(
   input: FindingsInput,
 ): Promise<FindingDetail | undefined> {
   const { source, vault, items } = input;
-  const findings = await runFindings(input);
+  // An address, not a list — see `FindingsInput.includeAnswered`.
+  const findings = await runFindings({ ...input, includeAnswered: true });
   const finding = findings.find((f) => f.id === id);
   if (!finding) return undefined;
 
-  const detail: FindingDetail = { finding };
+  const detail: FindingDetail = { finding, safeMode: safeMode() };
+  const answered = await answerFor(vault, id);
+  if (answered) detail.answered = answered;
 
   if (finding.subject.kind === 'workitem') {
     detail.item = items.find((i) => i.key === (finding.subject as { key: string }).key);

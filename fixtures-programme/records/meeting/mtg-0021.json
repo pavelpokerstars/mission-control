@@ -13,5 +13,41 @@
     "Hugo Hart",
     "Ivy Iver"
   ],
-  "body": "Orbit Sprint Review 2026-08-11\n\nNo update today.\n\nI will pick that up after standup.\n\nAda Ash to finish the pricing table.\n\nThat is the last of it.\n\nLet us take that offline.\n\nI will pick that up after standup."
+  "segments": [
+    {
+      "at": 60,
+      "speaker": "unattributed",
+      "text": "Orbit Sprint Review 2026-08-11"
+    },
+    {
+      "at": 158,
+      "speaker": "unattributed",
+      "text": "No update today."
+    },
+    {
+      "at": 256,
+      "speaker": "unattributed",
+      "text": "I will pick that up after standup."
+    },
+    {
+      "at": 354,
+      "speaker": "unattributed",
+      "text": "Ada Ash to finish the pricing table."
+    },
+    {
+      "at": 452,
+      "speaker": "unattributed",
+      "text": "That is the last of it."
+    },
+    {
+      "at": 550,
+      "speaker": "unattributed",
+      "text": "Let us take that offline."
+    },
+    {
+      "at": 648,
+      "speaker": "unattributed",
+      "text": "I will pick that up after standup."
+    }
+  ]
 }

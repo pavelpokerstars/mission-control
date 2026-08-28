@@ -70,6 +70,7 @@ Also done, and not on the original list because they were found by running it:
 | the structured-output seam, MCP-free | ✔ |
 | the acceptance command (`npm run verify`) | ✔ |
 | the fixture generating **byte-identically**, which it did not | ✔ |
+| the demo's own state — parked notes in both fixtures so `Later` opens on something, and conversations seeded into the browser so `Ask` does. `KNOWN-GAPS.md` §6 records what each deliberately does not do | ✔ |
 
 ---
 

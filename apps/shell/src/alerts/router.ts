@@ -85,6 +85,17 @@ export type Route =
       ref: string;
       /** The Slack channel, when the id alone cannot find it. */
       parentId?: string;
+      /**
+       * The KIND of the alert that cited this, which the id does not carry.
+       *
+       * `missing_ticket` and `unlinked_commitment` deliberately share the id
+       * `missing_ticket:<noteId>` — three things key on it and a rename
+       * re-announces every alert somebody was already told about. So splitting
+       * the id gives the wrong word for one of them, and the record page said
+       * "the promise nobody filed" over a citation belonging to an alert whose
+       * whole claim is that the promise probably HAS a ticket.
+       */
+      kind?: string;
       /** Seconds into a recording. This is what decides which LINE you land on. */
       at?: number;
       from?: string;
@@ -125,6 +136,7 @@ function parseRoute(url: string): Route {
         ...(q.get('parentId') ? { parentId: q.get('parentId')! } : {}),
         ...(Number.isFinite(at) && q.get('at') ? { at } : {}),
         ...(q.get('from') ? { from: q.get('from')! } : {}),
+        ...(q.get('kind') ? { kind: q.get('kind')! } : {}),
       };
     }
     case 'later':
@@ -166,6 +178,7 @@ export function hrefFor(route: Route): string {
       if (route.parentId) q.set('parentId', route.parentId);
       if (route.at !== undefined) q.set('at', String(route.at));
       if (route.from) q.set('from', route.from);
+      if (route.kind) q.set('kind', route.kind);
       const query = q.toString();
       return `/record/${route.ref}${query ? `?${query}` : ''}`;
     }
@@ -242,11 +255,12 @@ export function useRoute(): Route {
  * the query, so every citation opened at the top of a ninety-minute transcript
  * with nothing marked.
  */
-export function recordHref(e: Evidence, from: string): string {
+export function recordHref(e: Evidence, from: string, kind?: string): string {
   const r = e.ref!;
   const q = new URLSearchParams();
   if (r.parentId) q.set('parentId', r.parentId);
   if (r.at !== undefined) q.set('at', String(r.at));
   q.set('from', from);
+  if (kind) q.set('kind', kind);
   return `/record/${r.surface}/${encodeURIComponent(r.id)}?${q.toString()}`;
 }

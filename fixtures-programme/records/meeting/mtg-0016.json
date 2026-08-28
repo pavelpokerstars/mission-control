@@ -12,5 +12,41 @@
     "Greta Gale",
     "Hugo Hart"
   ],
-  "body": "Orbit Retro 2026-07-27\n\nMorning all.\n\nMorning all.\n\nMorning all.\n\nDeploy window is Thursday.\n\nCan we come back to this on Thursday?\n\nCan we come back to this on Thursday?"
+  "segments": [
+    {
+      "at": 60,
+      "speaker": "unattributed",
+      "text": "Orbit Retro 2026-07-27"
+    },
+    {
+      "at": 149,
+      "speaker": "unattributed",
+      "text": "Morning all."
+    },
+    {
+      "at": 238,
+      "speaker": "unattributed",
+      "text": "Morning all."
+    },
+    {
+      "at": 327,
+      "speaker": "unattributed",
+      "text": "Morning all."
+    },
+    {
+      "at": 416,
+      "speaker": "unattributed",
+      "text": "Deploy window is Thursday."
+    },
+    {
+      "at": 505,
+      "speaker": "unattributed",
+      "text": "Can we come back to this on Thursday?"
+    },
+    {
+      "at": 594,
+      "speaker": "unattributed",
+      "text": "Can we come back to this on Thursday?"
+    }
+  ]
 }

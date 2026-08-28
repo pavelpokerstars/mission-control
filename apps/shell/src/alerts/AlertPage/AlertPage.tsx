@@ -25,18 +25,45 @@ import { KIND_LABEL } from '../AlertList/AlertList';
 import './AlertPage.css';
 
 /**
- * The checklist: what the container said would happen.
+ * The checklist: every promise made in this container, and which ones reached
+ * the tracker.
  *
  * A list of ticks and one cross reads instantly; a paragraph about a missing
  * commitment does not. The tick is `relatedKeys.length > 0` and nothing more —
  * no scoring, no inference — which is why it can be shown as fact.
+ *
+ * THE HEADING HAD TO SAY WHAT THE TICK MEANS. It read "What {container} said
+ * would happen", which a reader takes as *the sprint's plan, ticked for what
+ * shipped* — and it is neither. No row is ever a ticket, and ✓ means "somebody
+ * filed one", not "it is done". `.blocklead` under it says so in the one place
+ * a reader is looking, because a legend they have to infer is a legend they
+ * infer wrongly.
+ *
+ * The tense follows the container. `dropped_commitment` fires while the sprint
+ * is still OPEN — that is the whole difference between it and `missing_ticket`
+ * — so a past-tense heading over it is wrong about the one fact that separates
+ * the two alerts.
  */
 function Checklist({ detail }: { detail: FindingDetail }): JSX.Element | null {
   const list = detail.checklist;
   if (!list?.length) return null;
+  const where = detail.container?.label ?? 'the sprint';
+  const closed = !!detail.container?.closedAt;
+  const missing = list.filter((i) => !i.tracked).length;
   return (
     <div className="block">
-      <h4>What {detail.container?.label ?? 'the sprint'} said would happen</h4>
+      <h4>
+        Every promise made in {where}
+        {closed ? ', and which ones reached the tracker' : ' so far'}
+      </h4>
+      <p className="blocklead">
+        {missing === 1
+          ? 'One of these has no ticket. '
+          : missing > 1
+            ? `${missing} of these have no ticket. `
+            : ''}
+        A tick means somebody filed one — not that the work is done.
+      </p>
       <ul className="check">
         {list.map((i) => (
           <li key={i.title} className={i.tracked ? 'done' : 'miss'}>
@@ -70,7 +97,7 @@ function Checklist({ detail }: { detail: FindingDetail }): JSX.Element | null {
  * citations of it should not look like two documents.
  */
 
-function EvidenceRow({ e, from }: { e: Evidence; from: string }): JSX.Element {
+function EvidenceRow({ e, from, kind }: { e: Evidence; from: string; kind: string }): JSX.Element {
   /**
    * `label` moves between the two halves depending on whether there is a quote,
    * and that is not a style choice.
@@ -116,7 +143,7 @@ function EvidenceRow({ e, from }: { e: Evidence; from: string }): JSX.Element {
     );
   }
   return (
-    <a className="evrow" href={recordHref(e, from)}>
+    <a className="evrow" href={recordHref(e, from, kind)}>
       <i className={`dot ${dotClass(e.surface)}`} aria-hidden="true" />
       <div>
         {head}
@@ -149,6 +176,32 @@ const EVIDENCE_HEADING: Partial<Record<string, string>> = {
   unlinked_commitment: 'The promise, and the ticket it probably belongs to',
   dropped_commitment: 'Where it was promised, and the last thing anyone said',
 };
+
+/**
+ * That this alert is one you already put away, said where the page already says
+ * when it fired.
+ *
+ * Reachable only by ADDRESS — a parked alert is not on the list, so you got
+ * here from the `Open the alert` link on your own note, or from a notification
+ * sent before you answered. Without this line the page renders as though
+ * nothing had happened and offers *Not now* on something already parked, which
+ * is the page quietly disagreeing with the list it is missing from.
+ *
+ * A `.when` span beside `firedLine`, deliberately: it is a fact about the
+ * alert's history in the same mono and the same muted ink, not a banner. The
+ * reader chose this state and does not need to be alarmed about it.
+ */
+function answeredLine(detail: FindingDetail): string | undefined {
+  const a = detail.answered;
+  if (!a) return undefined;
+  if (a.kind === 'dismissed') return 'Dismissed — you said this was not needed';
+  if (!a.until) return 'Parked — nothing brings it back until you ask';
+  const when = new Date(a.until).toLocaleDateString(undefined, {
+    day: 'numeric',
+    month: 'long',
+  });
+  return `Parked until ${when}`;
+}
 
 function firedLine(detail: FindingDetail): string {
   const { finding, container } = detail;
@@ -209,6 +262,16 @@ export function AlertPage({
             <div className="meta">
               <span className={`chip ${data.finding.severity}`}>{KIND_LABEL[data.finding.kind]}</span>
               <span className="when">{firedLine(data)}</span>
+              {answeredLine(data) && <span className="when">{answeredLine(data)}</span>}
+              {/*
+                WHAT THE TICKET ACTUALLY IS, which the page never said.
+                "ORB-1641 has not moved" names a key and nothing else, and the
+                reader's first question is which piece of work that is.
+                `FindingDetail.item` has carried the title all along and nothing
+                read it — the same omission on `cycle` and `disagreement`, whose
+                headlines are also bare keys.
+              */}
+              {data.item?.title && <span className="when">{data.item.title}</span>}
             </div>
             <h1 className="claim">{data.finding.claim}</h1>
             <p className="impact">{data.finding.impact}</p>
@@ -220,7 +283,7 @@ export function AlertPage({
             <h4>{EVIDENCE_HEADING[data.finding.kind] ?? 'The records this stands on'}</h4>
             <div className="ev">
               {data.finding.evidence.map((e, i) => (
-                <EvidenceRow key={`${e.surface}-${i}`} e={e} from={data.finding.id} />
+                <EvidenceRow key={`${e.surface}-${i}`} e={e} from={data.finding.id} kind={data.finding.kind} />
               ))}
               {/* Our own observation, and the only line here that is not a
                   citation: the tracker's silence is exactly what makes this a
@@ -243,13 +306,14 @@ export function AlertPage({
 
           {data.note?.body && (
             <div className="block">
-              <h4>The note it was recorded in</h4>
+              <h4>How it was recorded when it was said</h4>
               <p className="blocklead">{data.note.body}</p>
             </div>
           )}
 
           <Actions
             finding={data.finding}
+            safeMode={data.safeMode}
             onDone={() => {
               reload();
               onActed?.();

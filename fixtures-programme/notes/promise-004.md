@@ -13,7 +13,7 @@ owner: Luca Lund
 dueAt: 2026-07-26T17:00:00.000Z
 container: sprint:Orbit 31
 evidence:
-  - {"surface":"zoom","label":"Orbit Daily Scrum 2026-07-18 (read by the model)","quote":"Luca Lund to measure the cold start.","ref":{"surface":"zoom","id":"mtg-0013","at":4}}
+  - {"surface":"zoom","label":"Orbit Daily Scrum 2026-07-18 (read by the model)","quote":"Luca Lund to measure the cold start.","ref":{"surface":"zoom","id":"mtg-0013","at":480}}
 ---
 
 Luca Lund to measure the cold start.

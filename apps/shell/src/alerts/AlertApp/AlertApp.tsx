@@ -16,8 +16,10 @@
  */
 
 import { useEffect, useRef, type JSX } from 'react';
-import type { Finding, Note } from '@mc/domain';
-import { useJson } from '../api';
+import type { Note } from '@mc/domain';
+import { useFindings, useJson } from '../api';
+import { historyOf, useConversations } from '../conversations';
+import { seedDemoConversations } from '../demo';
 import { useRoute } from '../router';
 import { AlertList } from '../AlertList/AlertList';
 import { AlertPage } from '../AlertPage/AlertPage';
@@ -42,9 +44,30 @@ export default function AlertApp(): JSX.Element {
    * requests and the number could differ between the badge and the list it is
    * counting, which is the exact bug that rule exists to prevent.
    */
-  const findings = useJson<{ findings: Finding[] }>('/api/findings');
+  const findings = useFindings();
   const notes = useJson<Note[]>('/api/vault/notes');
+  /**
+   * The third count comes from the STORE, not from a request, because that is
+   * where conversations live — `conversations.ts` keeps them in `localStorage`
+   * and the gateway holds no per-user state. Same rule either way: the number
+   * is read from the collection it counts (`DESIGN.md` §8), and `historyOf` is
+   * the collection — a never-used draft is not a conversation.
+   *
+   * It needs no entry in the navigation effect below: this is a subscription,
+   * so asking a question or deleting a row moves the badge on the spot.
+   */
+  const conversations = useConversations((s) => s.conversations);
   const alerts = findings.data?.findings ?? [];
+  /**
+   * Suppressed alerts, for NAMING and nothing else.
+   *
+   * Kept out of `alerts` deliberately: that array is what the counts and the
+   * list are read from, and a deferral is a promise that the thing is gone
+   * until its date. Every row a chip has to label is joined below, where the
+   * only question asked of a finding is what it is called.
+   */
+  const parked = findings.data?.parked ?? [];
+  const namedAlerts = [...alerts, ...parked];
   const counts: Counts = {
     alerts: alerts.filter((f) => f.severity !== 'ok').length,
     /**
@@ -58,8 +81,23 @@ export default function AlertApp(): JSX.Element {
      * the page that owns the concept.
      */
     later: (notes.data ?? []).filter(isParked).length,
+    ask: historyOf(conversations).length,
     hot: alerts.some((f) => f.severity === 'crit'),
   };
+
+  /**
+   * The demo's own conversations, once, into a browser that has none.
+   *
+   * Here rather than in `Ask` for two reasons. The findings are already in hand
+   * — `demo.ts` binds each seeded conversation to a real alert, and a second
+   * fetch of this same list is how a count and the thing it counts come to
+   * disagree — and an alert's ask header reads its conversations from the same
+   * store, so seeding only when somebody opens `Ask` would leave the alert page
+   * saying "no conversations yet" about ones that exist.
+   */
+  useEffect(() => {
+    if (findings.data) seedDemoConversations(findings.data.findings);
+  }, [findings.data]);
 
   /**
    * Re-read the counts on every navigation.
@@ -99,14 +137,22 @@ export default function AlertApp(): JSX.Element {
       {route.name === 'alert' && (
         <AlertPage id={route.id} route={route} counts={counts} onActed={() => refresh.current()} />
       )}
-      {route.name === 'later' && <Later route={route} counts={counts} />}
-      {route.name === 'note' && <NotePage id={route.id} route={route} counts={counts} />}
+      {/* The alerts ride down so a parked note can carry the chip of the alert
+          it came from — `DIRECTION.md` §7. Handed over rather than fetched
+          again for the reason the counts are: two reads of one list is how a
+          row and the badge above it come to disagree. Suppressed ones included,
+          because a note is parked exactly while its alert is one of them. */}
+      {route.name === 'later' && <Later route={route} counts={counts} alerts={namedAlerts} />}
+      {route.name === 'note' && (
+        <NotePage id={route.id} route={route} counts={counts} alerts={namedAlerts} />
+      )}
       {route.name === 'record' && (
         <RecordView
           refKey={route.ref}
           parentId={route.parentId}
           at={route.at}
           from={route.from}
+          kind={route.kind}
           route={route}
           counts={counts}
         />

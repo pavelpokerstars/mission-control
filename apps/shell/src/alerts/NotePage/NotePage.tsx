@@ -18,12 +18,12 @@
  */
 
 import { useEffect, useState, type JSX } from 'react';
-import type { Note } from '@mc/domain';
+import type { Finding, Note } from '@mc/domain';
 import { explain, deleteNote, saveNote, useJson } from '../api';
 import { AppWindow, BackLink, type Counts } from '../Chrome/Chrome';
 import { DatePicker, fmtDay, isoDay, plusDays } from '../DatePicker/DatePicker';
 import { WHEN, CUSTOM, optionLabel } from '../Actions/Actions';
-import { due } from '../Later/Later';
+import { Chip, due } from '../Later/Later';
 import { go, hrefFor, type Route } from '../router';
 
 import './NotePage.css';
@@ -35,10 +35,23 @@ export function NotePage({
   id,
   route,
   counts,
+  alerts,
 }: {
   id: string;
   route: Route;
   counts: Counts;
+  /**
+   * Every alert this note might name — the list plus the suppressed ones, as
+   * `Later` gets them.
+   *
+   * `DESIGN.md` §6: "A chip on a list row and the chip on the page it opens are
+   * read from the same source, so they cannot disagree." Later's row draws
+   * `Chip` off these, so this page has to draw it off the same ones — a page
+   * reading "Note" over a row reading "Sources disagree" is that rule broken in
+   * the one place it was written for, and handing this page only half the
+   * alerts would break it again on exactly the notes that are still parked.
+   */
+  alerts: Finding[];
 }): JSX.Element {
   const { data, error, loading } = useJson<Note>(`/api/vault/notes/${encodeURIComponent(id)}`);
   const [title, setTitle] = useState<string>();
@@ -117,7 +130,7 @@ export function NotePage({
       <BackLink to={{ name: 'later' }} label="all notes" />
 
       <div className="ctxbar">
-        <span className="chip plain">Note</span>
+        <Chip note={data} alerts={alerts} />
         {data.about ? (
           <>
             <span className="about">
@@ -190,13 +203,22 @@ export function NotePage({
 
         {failed && <p className="quiet">That did not work: {failed}</p>}
 
+        {/*
+          `due()` PHRASES EVERY CASE ALREADY, so this prints it rather than
+          rewriting it. It used to strip a leading "back " and prefix "comes
+          back", which is right for exactly the two of its five outcomes that
+          begin with that word: a note whose reminder has lapsed read "comes
+          back due back Aug 18", and one parked with no date read "comes back
+          no date set". Both are states the app produces — a deferral expires
+          with the clock, and the composer writes no date at all.
+        */}
         <p className="hint">
           Written{' '}
           {new Date(data.createdAt).toLocaleDateString(undefined, {
             day: 'numeric',
             month: 'short',
           })}{' '}
-          · comes back {due(data).replace(/^back /, '')}
+          · {due(data)}
           {data.dueAt && Number.isFinite(Date.parse(data.dueAt))
             ? ` (${fmtDay(new Date(data.dueAt))})`
             : ''}

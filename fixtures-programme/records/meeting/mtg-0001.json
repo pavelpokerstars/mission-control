@@ -11,5 +11,41 @@
     "Finn Frost",
     "Greta Gale"
   ],
-  "body": "Orbit Backlog Refinement 2026-06-12\n\nThat is the last of it.\n\nLet us take that offline.\n\nDeploy window is Thursday.\n\nThe staging box is flaky again.\n\nMorning all.\n\nNo update today."
+  "segments": [
+    {
+      "at": 60,
+      "speaker": "unattributed",
+      "text": "Orbit Backlog Refinement 2026-06-12"
+    },
+    {
+      "at": 154,
+      "speaker": "unattributed",
+      "text": "That is the last of it."
+    },
+    {
+      "at": 248,
+      "speaker": "unattributed",
+      "text": "Let us take that offline."
+    },
+    {
+      "at": 342,
+      "speaker": "unattributed",
+      "text": "Deploy window is Thursday."
+    },
+    {
+      "at": 436,
+      "speaker": "unattributed",
+      "text": "The staging box is flaky again."
+    },
+    {
+      "at": 530,
+      "speaker": "unattributed",
+      "text": "Morning all."
+    },
+    {
+      "at": 624,
+      "speaker": "unattributed",
+      "text": "No update today."
+    }
+  ]
 }

@@ -11,5 +11,41 @@
     "Finn Frost",
     "Greta Gale"
   ],
-  "body": "Orbit Sprint Planning 2026-07-12\n\nThe staging box is flaky again.\n\nSame as yesterday.\n\nI will pick that up after standup.\n\nNothing blocking from me.\n\nCan we come back to this on Thursday?\n\nCan we come back to this on Thursday?"
+  "segments": [
+    {
+      "at": 60,
+      "speaker": "unattributed",
+      "text": "Orbit Sprint Planning 2026-07-12"
+    },
+    {
+      "at": 157,
+      "speaker": "unattributed",
+      "text": "The staging box is flaky again."
+    },
+    {
+      "at": 254,
+      "speaker": "unattributed",
+      "text": "Same as yesterday."
+    },
+    {
+      "at": 351,
+      "speaker": "unattributed",
+      "text": "I will pick that up after standup."
+    },
+    {
+      "at": 448,
+      "speaker": "unattributed",
+      "text": "Nothing blocking from me."
+    },
+    {
+      "at": 545,
+      "speaker": "unattributed",
+      "text": "Can we come back to this on Thursday?"
+    },
+    {
+      "at": 642,
+      "speaker": "unattributed",
+      "text": "Can we come back to this on Thursday?"
+    }
+  ]
 }

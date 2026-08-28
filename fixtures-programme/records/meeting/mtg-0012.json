@@ -12,5 +12,41 @@
     "Greta Gale",
     "Hugo Hart"
   ],
-  "body": "Orbit Backlog Refinement 2026-07-15\n\nNo update today.\n\nI will pick that up after standup.\n\nMorning all.\n\nMorning all.\n\nCan we come back to this on Thursday?\n\nCan we come back to this on Thursday?"
+  "segments": [
+    {
+      "at": 60,
+      "speaker": "unattributed",
+      "text": "Orbit Backlog Refinement 2026-07-15"
+    },
+    {
+      "at": 165,
+      "speaker": "unattributed",
+      "text": "No update today."
+    },
+    {
+      "at": 270,
+      "speaker": "unattributed",
+      "text": "I will pick that up after standup."
+    },
+    {
+      "at": 375,
+      "speaker": "unattributed",
+      "text": "Morning all."
+    },
+    {
+      "at": 480,
+      "speaker": "unattributed",
+      "text": "Morning all."
+    },
+    {
+      "at": 585,
+      "speaker": "unattributed",
+      "text": "Can we come back to this on Thursday?"
+    },
+    {
+      "at": 690,
+      "speaker": "unattributed",
+      "text": "Can we come back to this on Thursday?"
+    }
+  ]
 }

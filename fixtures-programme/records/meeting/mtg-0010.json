@@ -13,5 +13,41 @@
     "Hugo Hart",
     "Ivy Iver"
   ],
-  "body": "Orbit Retro 2026-07-09\n\nLet us take that offline.\n\nNo update today.\n\nMorning all.\n\nLet us take that offline.\n\nBo Bright to split the batch job.\n\nNo update today."
+  "segments": [
+    {
+      "at": 60,
+      "speaker": "unattributed",
+      "text": "Orbit Retro 2026-07-09"
+    },
+    {
+      "at": 169,
+      "speaker": "unattributed",
+      "text": "Let us take that offline."
+    },
+    {
+      "at": 278,
+      "speaker": "unattributed",
+      "text": "No update today."
+    },
+    {
+      "at": 387,
+      "speaker": "unattributed",
+      "text": "Morning all."
+    },
+    {
+      "at": 496,
+      "speaker": "unattributed",
+      "text": "Let us take that offline."
+    },
+    {
+      "at": 605,
+      "speaker": "unattributed",
+      "text": "Bo Bright to split the batch job."
+    },
+    {
+      "at": 714,
+      "speaker": "unattributed",
+      "text": "No update today."
+    }
+  ]
 }

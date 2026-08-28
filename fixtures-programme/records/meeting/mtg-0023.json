@@ -12,5 +12,41 @@
     "Greta Gale",
     "Hugo Hart"
   ],
-  "body": "Orbit Retro 2026-08-17\n\nLet us take that offline.\n\nI will pick that up after standup.\n\nThe staging box is flaky again.\n\nNothing blocking from me.\n\nDeploy window is Thursday.\n\nLet us take that offline."
+  "segments": [
+    {
+      "at": 60,
+      "speaker": "unattributed",
+      "text": "Orbit Retro 2026-08-17"
+    },
+    {
+      "at": 138,
+      "speaker": "unattributed",
+      "text": "Let us take that offline."
+    },
+    {
+      "at": 216,
+      "speaker": "unattributed",
+      "text": "I will pick that up after standup."
+    },
+    {
+      "at": 294,
+      "speaker": "unattributed",
+      "text": "The staging box is flaky again."
+    },
+    {
+      "at": 372,
+      "speaker": "unattributed",
+      "text": "Nothing blocking from me."
+    },
+    {
+      "at": 450,
+      "speaker": "unattributed",
+      "text": "Deploy window is Thursday."
+    },
+    {
+      "at": 528,
+      "speaker": "unattributed",
+      "text": "Let us take that offline."
+    }
+  ]
 }

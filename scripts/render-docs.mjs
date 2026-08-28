@@ -52,6 +52,22 @@ const PAGES = [
   { from: 'docs/GRAPH-SCHEMA.md', out: 'graph-schema.html', nav: 'Graph schema', title: 'The Connection Graph' },
   { from: 'docs/KNOWN-GAPS.md', out: 'known-gaps.html', nav: 'Known gaps', title: 'Known Gaps' },
   { from: 'CLAUDE.md', out: 'claude.html', nav: 'Working notes', title: 'Working Notes' },
+  /**
+   * The five skills, which are the other four fifths of the working notes.
+   *
+   * `CLAUDE.md` was split so that only the rules that must be known before the
+   * first edit are auto-loaded, and the area depth arrives when its description
+   * matches. That is a loading decision and not a publishing one: a reader of
+   * `docs/html/everything.html` wants all of it, and leaving them out here drops
+   * 130 KB from the one page that claims to be the lot. This list is a
+   * hand-written literal — nothing globs it — so a skill added later is missing
+   * from the rendered set with nothing failing anywhere.
+   */
+  { from: '.claude/skills/mc-collectors/SKILL.md', out: 'skill-collectors.html', nav: 'Collectors', title: 'Collectors, the Graph and the Fixtures' },
+  { from: '.claude/skills/mc-interface/SKILL.md', out: 'skill-interface.html', nav: 'Interface notes', title: 'The Interface' },
+  { from: '.claude/skills/mc-detectors/SKILL.md', out: 'skill-detectors.html', nav: 'Detectors', title: 'The Findings Pass, the Lane and the Dossier' },
+  { from: '.claude/skills/mc-agent/SKILL.md', out: 'skill-agent.html', nav: 'Agent', title: 'The Agent and Structured Output' },
+  { from: '.claude/skills/mc-ops/SKILL.md', out: 'skill-ops.html', nav: 'Verifying', title: 'Verifying and Inspecting' },
 ];
 
 /**

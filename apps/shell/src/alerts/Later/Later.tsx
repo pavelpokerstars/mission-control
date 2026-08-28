@@ -19,8 +19,9 @@
  */
 
 import { useState, type JSX } from 'react';
-import type { Note } from '@mc/domain';
+import type { Finding, Note } from '@mc/domain';
 import { deleteNote, explain, parkNote, restoreNote, useJson } from '../api';
+import { KIND_LABEL } from '../AlertList/AlertList';
 import { AppWindow, UndoStrip, type Counts } from '../Chrome/Chrome';
 import { hrefFor, type Route } from '../router';
 
@@ -66,7 +67,58 @@ interface Undone {
   index: number;
 }
 
-export function Later({ route, counts }: { route: Route; counts: Counts }): JSX.Element {
+
+/**
+ * The chip a row carries, which is how you can tell what a note is ABOUT.
+ *
+ * `DIRECTION.md` §7: **Not now** "creates a Later note carrying the alert's own
+ * chip", and the preview draws exactly that — the alert type in its severity
+ * colour. Every row read a neutral `Note` until this existed, so a note you
+ * deferred from the front door and one you typed into the composer looked
+ * identical, and the page could not say which of its rows were tied.
+ *
+ * READ FROM THE FINDING, never from the id. `about` looks like it carries the
+ * kind — `disagreement:ORB-1627` — and for one pair it lies: `missing_ticket`
+ * and `unlinked_commitment` deliberately SHARE the `missing_ticket:<noteId>`
+ * namespace, because three things key on a finding's id and a rename re-raises
+ * every alert somebody was already told about. Splitting the id would print
+ * "Missing ticket" over an alert whose whole claim is that the promise probably
+ * HAS a ticket. `KIND_LABEL` and the severity come from the alert itself or
+ * from nowhere. `NotePage` draws the same component for the page the row opens,
+ * because `DESIGN.md` §6 requires the two to be read from one source.
+ *
+ * AND FROM NOWHERE IS STILL A REAL CASE, though no longer the common one. The
+ * caller hands over `/api/findings`' BOTH halves — the list plus the suppressed
+ * `parked` ones — so an alert with a deferral still running resolves, which is
+ * the state a freshly parked note is in and was the whole point of carrying the
+ * second half. What cannot resolve is an alert that has stopped firing
+ * altogether: somebody filed the ticket, the loop was broken, the two sources
+ * agree again. The note outlives it, there is no kind left to name, and the
+ * neutral `Alert` is the honest answer rather than a fallback — the same word
+ * `Ask` uses for a tied row.
+ */
+export function Chip({ note, alerts }: { note: Note; alerts: Finding[] }): JSX.Element {
+  if (!note.about) return <span className="chip plain">Note</span>;
+  const f = alerts.find((a) => a.id === note.about);
+  if (!f) return <span className="chip plain">Alert</span>;
+  return <span className={`chip ${f.severity}`}>{KIND_LABEL[f.kind]}</span>;
+}
+
+export function Later({
+  route,
+  counts,
+  alerts,
+}: {
+  route: Route;
+  counts: Counts;
+  /**
+   * Every alert a row here might name — the front door's list AND the ones
+   * suppressed by a deferral or a dismissal. Both halves, because a note is
+   * parked exactly while its alert is in the second one. Read only to LABEL a
+   * row; nothing on this page counts or lists them.
+   */
+  alerts: Finding[];
+}): JSX.Element {
   const { data, loading, error, reload } = useJson<Note[]>('/api/vault/notes');
   const [draft, setDraft] = useState('');
   const [undone, setUndone] = useState<Undone>();
@@ -175,7 +227,7 @@ export function Later({ route, counts }: { route: Route; counts: Counts }): JSX.
           <div className="later-row">
             <a className="rowmain" href={hrefFor({ name: 'note', id: n.id })}>
               <span className="top">
-                <span className="chip plain">Note</span>
+                <Chip note={n} alerts={alerts} />
                 {n.title && <span className="t">{n.title}</span>}
                 <span className="editnote-hint">open</span>
               </span>

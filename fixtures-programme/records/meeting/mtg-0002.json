@@ -12,5 +12,41 @@
     "Greta Gale",
     "Hugo Hart"
   ],
-  "body": "Orbit Sprint Planning 2026-06-15\n\nDeploy window is Thursday.\n\nCan we come back to this on Thursday?\n\nMorning all.\n\nLet us take that offline.\n\nAgreed.\n\nLet us take that offline."
+  "segments": [
+    {
+      "at": 60,
+      "speaker": "unattributed",
+      "text": "Orbit Sprint Planning 2026-06-15"
+    },
+    {
+      "at": 171,
+      "speaker": "unattributed",
+      "text": "Deploy window is Thursday."
+    },
+    {
+      "at": 282,
+      "speaker": "unattributed",
+      "text": "Can we come back to this on Thursday?"
+    },
+    {
+      "at": 393,
+      "speaker": "unattributed",
+      "text": "Morning all."
+    },
+    {
+      "at": 504,
+      "speaker": "unattributed",
+      "text": "Let us take that offline."
+    },
+    {
+      "at": 615,
+      "speaker": "unattributed",
+      "text": "Agreed."
+    },
+    {
+      "at": 726,
+      "speaker": "unattributed",
+      "text": "Let us take that offline."
+    }
+  ]
 }

@@ -10,5 +10,41 @@
     "Esme Ellis",
     "Finn Frost"
   ],
-  "body": "Orbit Sprint Planning 2026-08-05\n\nDeploy window is Thursday.\n\nCan we come back to this on Thursday?\n\nThat is the last of it.\n\nCleo Calder to finish the rate limiter.\n\nNo update today.\n\nMorning all."
+  "segments": [
+    {
+      "at": 60,
+      "speaker": "unattributed",
+      "text": "Orbit Sprint Planning 2026-08-05"
+    },
+    {
+      "at": 161,
+      "speaker": "unattributed",
+      "text": "Deploy window is Thursday."
+    },
+    {
+      "at": 262,
+      "speaker": "unattributed",
+      "text": "Can we come back to this on Thursday?"
+    },
+    {
+      "at": 363,
+      "speaker": "unattributed",
+      "text": "That is the last of it."
+    },
+    {
+      "at": 464,
+      "speaker": "unattributed",
+      "text": "Cleo Calder to finish the rate limiter."
+    },
+    {
+      "at": 565,
+      "speaker": "unattributed",
+      "text": "No update today."
+    },
+    {
+      "at": 666,
+      "speaker": "unattributed",
+      "text": "Morning all."
+    }
+  ]
 }

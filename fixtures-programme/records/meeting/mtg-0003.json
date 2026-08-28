@@ -10,5 +10,41 @@
     "Esme Ellis",
     "Finn Frost"
   ],
-  "body": "Orbit Daily Scrum 2026-06-18\n\nNo update today.\n\nNo update today.\n\nEsme Ellis to chase the vendor sandbox.\n\nCan we come back to this on Thursday?\n\nLet us take that offline.\n\nLet us take that offline."
+  "segments": [
+    {
+      "at": 60,
+      "speaker": "unattributed",
+      "text": "Orbit Daily Scrum 2026-06-18"
+    },
+    {
+      "at": 146,
+      "speaker": "unattributed",
+      "text": "No update today."
+    },
+    {
+      "at": 232,
+      "speaker": "unattributed",
+      "text": "No update today."
+    },
+    {
+      "at": 318,
+      "speaker": "unattributed",
+      "text": "Esme Ellis to chase the vendor sandbox."
+    },
+    {
+      "at": 404,
+      "speaker": "unattributed",
+      "text": "Can we come back to this on Thursday?"
+    },
+    {
+      "at": 490,
+      "speaker": "unattributed",
+      "text": "Let us take that offline."
+    },
+    {
+      "at": 576,
+      "speaker": "unattributed",
+      "text": "Let us take that offline."
+    }
+  ]
 }

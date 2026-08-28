@@ -30,9 +30,48 @@
     font-size:11px; color:var(--ink-2); letter-spacing:.04em;
   }
 .rec-head .why { font-family:var(--mono); font-size:10.5px; color:var(--ink-3); }
+/* The ONE affordance in this app that leaves it, and the only place an arrow
+   points out rather than across. `←` means back, `→` means another of our
+   pages, and there was no mark at all for "this is somebody else's". It is
+   ONE line in the context bar, subordinate to the source and to why the page is
+   open, and it promises the document rather than the line — which is what keeps
+   it an escape hatch rather than the vendor pane returning by another route.
+   It renders only when a collector wrote a url; never constructed, never
+   guessed. */
+.rec-head .vendor {
+  margin-left:auto; font-family:var(--mono); font-size:10.5px; color:var(--ink-2);
+  text-decoration:underline; text-underline-offset:3px; white-space:nowrap;
+}
+.rec-head .vendor:hover { color:var(--ink); }
 .transcript { padding:22px var(--gutter) 28px; display:grid; gap:2px; }
-.line { display:grid; grid-template-columns:74px minmax(0,1fr); gap:0 16px; padding:8px 12px; border-radius:6px; margin:0 -12px; }
-.line time { font-family:var(--mono); font-size:11px; color:var(--ink-3); padding-top:3px; }
+/* `align-items:baseline` and NOT a hand-tuned nudge.
+   The stamp is 11px mono and the line is 16px sans, so top-aligning them
+   leaves the two texts sitting at different heights however the padding is
+   tweaked — and the tweak has to be re-found every time either font-size
+   moves. Baseline alignment is the property that means what is wanted:
+   the time and the words it stamps sit on one line. On a Slack record the
+   stamp is two lines and the FIRST baseline is the one that aligns, which
+   is the day — correct, because the clock beneath belongs to it. */
+.line { display:grid; grid-template-columns:74px minmax(0,1fr); gap:0 16px; padding:8px 12px; border-radius:6px; margin:0 -12px; align-items:baseline; }
+/* The `padding-top:3px` that used to be here was the nudge baseline alignment
+   replaces; kept, it shifts the stamp's baseline back down by exactly itself. */
+.line time { font-family:var(--mono); font-size:11px; color:var(--ink-3); white-space:pre-line; }
+/* A `<p>` with no reset carries the UA's `margin:1em 0`, which pushed the
+   words ~16px below the stamp beside them. Nothing here set it, so every
+   transcript and every channel has read this way. */
+.line .said { margin:0; }
+/* THE DAY IS A SEPARATOR, NOT PART OF THE STAMP.
+   A Slack record is a whole channel, so the day has to appear somewhere or
+   messages weeks apart read as one conversation. Carried inside `<time>` it
+   made that stamp two lines, and baseline alignment then put the DAY on the
+   message's line with the clock hanging below it — so the one thing the
+   column exists to say was the one thing not aligned with what it stamps.
+   Hoisted out, every stamp is a single line and sits on its message. */
+.daymark {
+  font-family:var(--mono); font-size:10px; letter-spacing:.08em; text-transform:uppercase;
+  color:var(--ink-3); padding:14px 12px 4px; margin:0 -12px;
+}
+.daymark:first-child { padding-top:0; }
 .line .said b { font-weight:600; margin-right:8px; }
 .line .said span { color:var(--ink-2); }
 .line.hit { background:var(--warn-bg); }

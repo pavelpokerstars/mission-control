@@ -11,5 +11,41 @@
     "Finn Frost",
     "Greta Gale"
   ],
-  "body": "Orbit Sprint Review 2026-07-30\n\nNumbers look fine.\n\nDev Dunne to confirm the migration window.\n\nSame as yesterday.\n\nCan we come back to this on Thursday?\n\nNumbers look fine.\n\nI will pick that up after standup."
+  "segments": [
+    {
+      "at": 60,
+      "speaker": "unattributed",
+      "text": "Orbit Sprint Review 2026-07-30"
+    },
+    {
+      "at": 173,
+      "speaker": "unattributed",
+      "text": "Numbers look fine."
+    },
+    {
+      "at": 286,
+      "speaker": "unattributed",
+      "text": "Dev Dunne to confirm the migration window."
+    },
+    {
+      "at": 399,
+      "speaker": "unattributed",
+      "text": "Same as yesterday."
+    },
+    {
+      "at": 512,
+      "speaker": "unattributed",
+      "text": "Can we come back to this on Thursday?"
+    },
+    {
+      "at": 625,
+      "speaker": "unattributed",
+      "text": "Numbers look fine."
+    },
+    {
+      "at": 738,
+      "speaker": "unattributed",
+      "text": "I will pick that up after standup."
+    }
+  ]
 }

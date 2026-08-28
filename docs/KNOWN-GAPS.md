@@ -34,6 +34,82 @@ interface already has a meaning for) or to delete and re-run those ceremonies,
 which mints new note ids and therefore new finding ids. Neither is free; pick
 per note rather than in bulk.
 
+### A deferred alert became one of its own sources
+
+**Fixed, and worth knowing because it was invisible by construction.** `act.ts`'s
+`defer` writes `relatedKeys: [f.subject.key]` on the note it creates, and
+`gatherWorkFacts` folded every vault note joined to a key into the ticket's
+trail with a `signal` read off its body. So parking a work-item alert made the
+reader's own note a source about that ticket, and `findContradictions` — which
+reads the trail — could pick it as one of the two disagreeing voices.
+
+Measured on the demo data, with a note whose body ended *"the schema change
+either landed or it did not"*:
+
+```
+“idea — ORB-1627 is called done and not done” says done,
+“#orbit-delivery — jonas.jost” says not — 1 day apart
+```
+
+The alert quoted the note back as evidence for itself and displaced the Slack
+message that actually made the claim. Nothing failed, and it is unobservable
+until the reminder lapses — a live deferral suppresses the alert — so it
+surfaces at the moment somebody has forgotten writing the note.
+
+The trail now skips any note carrying `about`, which is set only by `defer` and
+means "this is my handling of an alert" rather than anything said about the
+work. Notes written about the work itself carry no `about` and are unaffected.
+
+### `Open the alert` on a parked note was a dead link while its deferral ran
+
+**Fixed.** Reproduced against `fixtures/`, on a throwaway vault:
+
+```
+POST /api/findings/aging:PAY-9024/act  {"action":"defer","until":"2026-09-30"}
+GET  /api/findings/aging:PAY-9024   ->  404
+```
+
+`runFindings` drops what a human has already answered, which is right for the
+front door and wrong for a direct address — and `findingDetail` read through the
+same call, so an alert you deferred could not be opened at all until the
+reminder lapsed. The note that deferring creates carries `Open the alert`,
+`DESIGN.md` §4's one ACROSS link and the only route from a parked note back to
+what it is about, so it landed on *"That alert is not there"* for exactly the
+notes it exists for, with a perfectly good id in the address.
+
+**A list filters; an address does not.** `FindingsInput.includeAnswered` is
+opt-in — a new route that forgets it gets the safe behaviour — and
+`findingDetail` is the one caller that sets it. The same distinction the vault's
+decay model already draws, where a stale note still answers an explicit lookup
+and only stops being volunteered.
+
+A page that opens for a suppressed finding would then have silently contradicted
+the list it is missing from, and offered *Not now* on something already put
+away, so `FindingDetail.answered` carries the standing decision and the alert
+page states it beside the fired line — `Parked until 30 September`,
+`Parked — nothing brings it back until you ask` for an event-based reminder, or
+`Dismissed — you said this was not needed`. It is absent the moment a deferral
+lapses, because the alert is back on the list and the page has nothing to add.
+
+`Answer` gained a `dismissed` flag to make that sentence possible: `forever` is
+set by a dismissal **and** by a dateless deferral, which is right for
+suppressing and useless for saying which of the two happened.
+
+**And the same cause had a second symptom**, closed the same day. `Chip` in
+`Later.tsx` looks a note's alert up to draw its kind and severity, and it looked
+in `/api/findings` — the list — so a row could not name the alert it was parked
+from for as long as the deferral ran, which is the whole life of a parked note.
+`/api/findings` now answers with two arrays: `findings`, unchanged and still the
+list, and `parked` beside it. Nothing that reads `findings` changed behaviour,
+which is the point — folding the suppressed ones inline with a flag would have
+moved "a dismissal stays gone" from one place to every consumer. See
+`runAlertFindings`.
+
+A neutral `Alert` chip is still what a row gets when its alert has stopped
+firing altogether — the ticket was filed, the loop was broken — and that is the
+honest answer rather than a fallback: the note outlives the finding, and there
+is no kind left to name.
+
 ### `typecheck:all` skipped `@mc/vault` entirely, and nothing said so
 
 **Fixed, and worth knowing because the mechanism is invisible.** `.gitignore`
@@ -959,3 +1035,25 @@ anticipated, and widening it is a rule, not a prompt.
 `libs/vault/src/store.ts`. There is no locking, no merge, no conflict
 resolution, and the whole class of problems that makes shared knowledge bases
 hard is simply absent. If that assumption changes, that file breaks first.
+
+**The demo's parked notes all carry a reminder that has already lapsed.** Both
+fixtures ship four `idea` notes so `Later` opens on something (`buildParked` in
+`scripts/fixture/generate.ts`, and the matching block in the programme
+generator). The two tied to an alert carry a date in the PAST on purpose:
+deferring suppresses the alert it was deferred from (`suppressedIds`), and
+nothing seeds a `mc.finding_deferred` event to go with them — so a future date
+would draw a note claiming to hold an alert that is still on the front door. A
+lapsed deferral is the coherent shape: it came back, the alert is in the list,
+and the note says why it was pushed away. The two untied notes hold no alert, so
+one carries a future date and one carries none, which is also how all three
+branches of `Later`'s `due()` come to be drawn.
+
+**The demo's conversations are seeded in the browser, once.** `Ask` reads
+`localStorage`, because the gateway keeps no per-user state, so there is no
+server-side collection for a fixture to write into — `apps/shell/src/alerts/demo.ts`
+is the equivalent, and it binds each seeded conversation to whichever real
+finding of that KIND is on the front door rather than to a written-down id,
+which is what keeps `Open the alert` live on any graph. It runs only into a
+browser with no history and sets a flag whether or not it wrote anything, so
+deleting the rows is permanent — an undo nobody asked for would break the page's
+own rule that delete acts. Clear `mc-demo-seeded` to be offered them again.
