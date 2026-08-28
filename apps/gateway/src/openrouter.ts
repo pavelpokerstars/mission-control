@@ -37,9 +37,23 @@ import type { Agent, ProviderConfig } from './agent.js';
  * A specific free model can leave the pool without notice and take the demo
  * with it. `openrouter/free` selects whatever free endpoint is up, and — unlike
  * `openrouter/auto` — never falls through to a paid one, so a shared key cannot
- * quietly start spending. Override it when you want a specific model: anything
- * OpenAI-compatible that supports `response_format` works, and the cheap
- * metered ones cost small fractions of a cent per walkthrough.
+ * quietly start spending.
+ *
+ * BUT PIN A MODEL FOR ANYTHING PEOPLE WILL WATCH, because the pool's whole
+ * property — any free endpoint that is up — is also its hazard, and both ways
+ * it fails were seen on the deployed demo:
+ *
+ *   - a TOOL-TUNED model streamed `<dots_function_call> <invoke name="` into
+ *     the content channel, hallucinating the tool frame this provider
+ *     deliberately does not use, and the chat rendered the raw markup;
+ *   - a REASONING model returned a clean, empty, error-free stream, because
+ *     `reasoning: exclude` removes the only channel it wrote to.
+ *
+ * `supported_parameters` on `/api/v1/models` rules both out before you pay for
+ * the lesson: a model with no `tools` cannot emit the first, and one with no
+ * `reasoning` cannot produce the second. `mistralai/mistral-small-24b-instruct-2501`
+ * has neither, supports `response_format`, and runs about half a cent per
+ * walkthrough — which is what the deploy pins today.
  */
 export const OPENROUTER_MODEL = process.env.OPENROUTER_MODEL ?? 'openrouter/free';
 
@@ -183,6 +197,18 @@ export async function createOpenRouterAgent(cfg: ProviderConfig): Promise<Agent>
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let buffer = '';
+      /**
+       * AN EMPTY ANSWER IS INDISTINGUISHABLE FROM A BROKEN ONE, so it has to be
+       * caught here and named.
+       *
+       * A 200 that streams no content at all is a real and silent failure mode,
+       * and the way in is the model: on a REASONING model, `reasoning: exclude`
+       * strips the only channel it wrote to, and `max_tokens` is spent thinking.
+       * Measured on `qwen/qwen3.7-flash` against this exact request — a clean
+       * `[DONE]`, no error, no text, and a chat bubble that just sat there empty
+       * with nothing in the log to explain it.
+       */
+      let yielded = false;
 
       for (;;) {
         const { done, value } = await reader.read();
@@ -197,7 +223,10 @@ export async function createOpenRouterAgent(cfg: ProviderConfig): Promise<Agent>
           const trimmed = line.trim();
           if (!trimmed.startsWith('data:')) continue;
           const payload = trimmed.slice(5).trim();
-          if (payload === '[DONE]') return;
+          if (payload === '[DONE]') {
+            if (!yielded) throw new Error(emptyAnswer());
+            return;
+          }
 
           let frame: { choices?: { delta?: { content?: string } }[]; error?: { message?: string } };
           try {
@@ -209,12 +238,30 @@ export async function createOpenRouterAgent(cfg: ProviderConfig): Promise<Agent>
           }
           if (frame.error?.message) throw new Error(frame.error.message);
           const delta = frame.choices?.[0]?.delta?.content;
-          if (delta) yield delta;
+          if (delta) {
+            yielded = true;
+            yield delta;
+          }
         }
       }
+
+      // The stream ended without `[DONE]` — same failure, same explanation.
+      if (!yielded) throw new Error(emptyAnswer());
     },
     async dispose() {},
   };
+}
+
+/**
+ * Named, because the cause is almost always the model and almost never the
+ * gateway — and the reader is the one person who can change it.
+ */
+function emptyAnswer(): string {
+  return (
+    `${OPENROUTER_MODEL} returned an empty answer. Reasoning models spend their ` +
+    'budget on tokens this provider excludes; set OPENROUTER_MODEL to one without ' +
+    'a `reasoning` parameter.'
+  );
 }
 
 /**
