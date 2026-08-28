@@ -9,7 +9,7 @@
  */
 
 import { useEffect, useState } from 'react';
-import type { Evidence, Finding, Note, WorkItem } from '@mc/domain';
+import type { AskAudience, Evidence, Finding, Note, WorkItem } from '@mc/domain';
 
 /**
  * Where the gateway is.
@@ -30,7 +30,7 @@ export interface FindingDetail {
   note?: Note;
   item?: WorkItem;
   container?: { id: string; label: string; closedAt?: string };
-  checklist?: { title: string; tracked: boolean; ref: string }[];
+  checklist?: { title: string; tracked: boolean; ref: string; subject?: boolean }[];
   /**
    * The decision already made about this, while it still stands.
    *
@@ -40,6 +40,14 @@ export interface FindingDetail {
    * because the alert is then back on the list and the page has nothing to add.
    */
   answered?: { kind: 'deferred' | 'dismissed'; until?: string };
+  /**
+   * Who a message about this would be addressed to, and where it would go.
+   *
+   * The gateway's answer, and the only one — the buttons name these people
+   * before the click and the draft names them after it, so a second derivation
+   * in the browser is how the two come to disagree.
+   */
+  audience: AskAudience;
   /** Whether this instance may write to a vendor at all — see the gateway's `safe-mode.ts`. */
   safeMode?: boolean;
 }
@@ -172,15 +180,36 @@ export function dotClass(surface: Evidence['surface'] | string): string {
 
 export interface ActionResult {
   outcome: string;
-  proposal?: { kind: string; evidence: unknown[] };
+  /** The write was refused and nothing happened — no tick over that. */
+  failed?: true;
+  /** It has gone. The draft stops being editable, because it is no longer a draft. */
+  sent?: true;
+  /**
+   * The draft, so the page can SHOW it.
+   *
+   * `payload` was not in this type and nothing rendered it, which is how the
+   * result strip came to say *"read it before it goes"* over a message the
+   * interface never displayed. The gateway had been sending the whole proposal
+   * all along; only the shell's view of it was narrow.
+   */
+  proposal?: { kind: string; evidence: unknown[]; payload?: { text?: string; to?: string[] } };
   note?: Note;
 }
 
 export interface ActionInput {
-  action: 'primary' | 'ask' | 'defer' | 'dismiss';
+  /**
+   * `send` is not a fifth action on the alert — `DESIGN.md` §7 caps it at four.
+   * It is what you press inside the result of one of them, on a draft you have
+   * read. See the gateway's `ActionName`.
+   */
+  action: 'primary' | 'ask' | 'defer' | 'dismiss' | 'send';
   note?: string;
   until?: string;
   reason?: string;
+  /** "Ask" and "send": narrow it to these people. See the gateway's `ActionInput`. */
+  to?: string[];
+  /** "Send": the message as the reader left it, which may not be as we wrote it. */
+  text?: string;
 }
 
 export async function act(id: string, input: ActionInput): Promise<ActionResult> {

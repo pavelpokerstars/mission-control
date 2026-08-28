@@ -251,33 +251,33 @@
      flush. Without this each page needed its own ad-hoc top padding. */
   .back + .head, .back + .greet { padding-top:0; }
   .back + .stat-strip { margin-top:0; }
-  .head { padding:14px var(--gutter) 26px; border-bottom:1px solid var(--line); }
-  .head .meta { display:flex; align-items:center; gap:12px; margin-bottom:14px; flex-wrap:wrap; }
+  .head { padding:13px var(--gutter) 20px; border-bottom:1px solid var(--line); }
+  .head .meta { display:flex; align-items:center; gap:12px; margin-bottom:11px; flex-wrap:wrap; }
   .head .when { font-family:var(--mono); font-size:11px; color:var(--ink-3); }
   .claim {
-    margin:0 0 12px; font-size:clamp(1.35rem,3.4vw,1.85rem); font-weight:600;
+    margin:0 0 9px; font-size:clamp(1.35rem,3.4vw,1.85rem); font-weight:600;
     letter-spacing:-.022em; line-height:1.22; max-width:24ch; text-wrap:balance;
   }
   .impact { margin:0; color:var(--ink-2); font-size:1rem; max-width:60ch; }
   .impact b { color:var(--ink); font-weight:600; }
 
-  .block { padding:24px var(--gutter); border-bottom:1px solid var(--line); }
+  .block { padding:17px var(--gutter); border-bottom:1px solid var(--line); }
   .block.flush { border-bottom:0; }
   .block.topped { border-top:1px solid var(--line); }
-  .blocklead { margin:-6px 0 16px; font-size:.93rem; color:var(--ink-2); max-width:64ch; }
+  .blocklead { margin:-4px 0 11px; font-size:.93rem; color:var(--ink-2); max-width:64ch; }
   .failbox { border:1px solid var(--line); border-radius:8px; overflow:hidden; }
   .failbox .conn-row:not(:last-child) { border-bottom:1px solid var(--line); }
   .failbox .conn-row:last-child { border-bottom:0; }
   .brand.muted { color:var(--ink-3); }
   .block > h4 {
     font-family:var(--mono); font-size:10.5px; font-weight:600; letter-spacing:.12em;
-    text-transform:uppercase; color:var(--ink-3); margin:0 0 16px;
+    text-transform:uppercase; color:var(--ink-3); margin:0 0 10px;
   }
 
   /* checklist */
   .check { display:grid; gap:0; }
   .check li { list-style:none; display:grid; grid-template-columns:22px minmax(0,1fr) auto; gap:0 12px;
-    align-items:baseline; padding:10px 0; border-bottom:1px dashed var(--line); }
+    align-items:baseline; padding:8px 0; border-bottom:1px dashed var(--line); }
   .check li:last-child { border-bottom:0; }
   .check .mark { font-family:var(--mono); font-size:13px; font-weight:600; line-height:1.4; }
   .check .done .mark { color:var(--ok); }
@@ -289,10 +289,10 @@
   .check .miss .ref { color:var(--crit); }
 
   /* evidence */
-  .ev { display:grid; gap:10px; }
+  .ev { display:grid; gap:8px; }
   .ev article, .ev .evrow {
     display:grid; grid-template-columns:12px minmax(0,1fr); gap:0 12px;
-    padding:13px 15px; background:var(--sunk); border-radius:8px;
+    padding:11px 15px; background:var(--sunk); border-radius:8px;
     width:100%; text-align:left; font:inherit; color:inherit;
     border:1px solid transparent;
   }
@@ -328,6 +328,40 @@
     background:var(--ok-bg); border-radius:8px; padding:15px 17px;
   }
   .result .tick { color:var(--ok); font-family:var(--mono); font-weight:600; }
+  /* A refusal wears the severity it is. Every colour on the page means
+     something (§1), and a green panel over "that did not go through" means the
+     wrong one — the vendor said no and nothing was written. */
+  .result.failed { background:var(--crit-bg); }
+  .result.failed .tick { color:var(--crit); }
+  /* ---------------------------------------------------------------------------
+   * The message a proposal carries, drawn as the ARTEFACT rather than as more of
+   * the sentence above it.
+   *
+   * The strip reported the outcome and then printed the message in the same
+   * weight, the same colour and the same paragraph rhythm, so "Sent to jonas.jost
+   * and cleo.calder in #orbit-delivery." ran straight into "jonas.jost,
+   * cleo.calder — ORB-1627 is called done and not done." and there was no telling
+   * where the report ended and the thing being reported began. Two different
+   * voices need two surfaces.
+   *
+   * It sits on `--app` inside the outcome panel — a page-coloured card on a
+   * coloured ground, which is the same move `.ev article` makes for a citation —
+   * and the quoted records inside it get the left rule they have everywhere else
+   * in this app instead of a `>` typed into the prose.
+   * ------------------------------------------------------------------------- */
+  .result .draft {
+    margin:14px 0 0; padding:14px 16px; border-radius:8px;
+    background:var(--app); border:1px solid var(--line);
+    display:grid; gap:9px;
+  }
+  .result .draft .lab {
+    font-family:var(--mono); font-size:10px; font-weight:600; letter-spacing:.1em;
+    text-transform:uppercase; color:var(--ink-3);
+  }
+  .result .draft p { margin:0; font-size:.94rem; line-height:1.55; }
+  .result .draft .q { padding-left:12px; border-left:2px solid var(--line-2); color:var(--ink-2); }
+  .result .draft .noteedit { margin:0; }
+  .result .draft .editacts { margin:5px 0 0; align-items:center; }
   .result p { margin:0 0 8px; font-size:.95rem; }
   .result p:last-child { margin:0; }
   .deferform { max-width:62ch; }
@@ -754,11 +788,27 @@
      made that stamp two lines, and baseline alignment then put the DAY on the
      message's line with the clock hanging below it — so the one thing the
      column exists to say was the one thing not aligned with what it stamps.
-     Hoisted out, every stamp is a single line and sits on its message. */
+     Hoisted out, every stamp is a single line and sits on its message.
+
+     IT WAS FOLDED BACK IN ONCE, for a day that groups nothing — this fixture's
+     channel is one message per day, so the page drew a band per line. That
+     traded one problem for a worse one: Slack itself breaks a channel by day and
+     puts only a clock on each message, and a date repeated on every line is the
+     thing the divider exists to avoid. The divider stays, on every day change,
+     and it is drawn as a RULE rather than a heading so it costs a hairline
+     instead of a band. */
   .daymark {
+    display:grid; grid-template-columns:auto minmax(0,1fr); gap:0 14px; align-items:center;
     font-family:var(--mono); font-size:10px; letter-spacing:.08em; text-transform:uppercase;
-    color:var(--ink-3); padding:14px 12px 4px; margin:0 -12px;
+    color:var(--ink-3); padding:11px 12px 5px; margin:0 -12px; white-space:nowrap;
   }
+  /* The rule after the date is what makes it a DIVIDER rather than a heading —
+     Slack's own day break, in this app's hairline.
+     THE LABEL SIZES ITSELF, and `nowrap` is why. Pinned to the 74px stamp column
+     it lined up prettily with the clocks and then wrapped: "MON, JULY 20" is
+     ~78px at this size, so every divider became two lines and read as broken. The
+     column width is not ours to guarantee — the month's name is the locale's. */
+  .daymark::after { content:""; height:1px; background:var(--line); }
   .daymark:first-child { padding-top:0; }
   .line .said b { font-weight:600; margin-right:8px; }
   .line .said span { color:var(--ink-2); }
@@ -1453,7 +1503,19 @@
       actlead:'Both Ask buttons draft a Slack message to #eng-platform and send nothing until you read it. Not now parks this in Later.',
       actions: [
         { label:'Ask both, in one thread', primary:true,
-          result:'<p><b>Drafted to sam and dana</b> in #eng-platform, quoting both messages with their timestamps and asking only which is current. Nothing has been sent.</p>' },
+          /* The draft is SHOWN, and until it is sent it is editable: the words
+             go out over somebody's name, and we can say who and quote what but
+             not the sentence this team would actually use. The report and the
+             message are two voices, so they get two surfaces. */
+          result:'<p><b>Drafted to sam and dana</b> in #eng-platform, quoting both messages with their timestamps and asking only which is current. Nothing has been sent — read it before it goes.</p>'
+            + '<div class="draft"><span class="lab">The message</span>'
+            + '<div class="noteedit"><textarea class="tall" aria-label="The message, before it goes">'
+            + 'sam, dana — MC-102 is called done and not done.\n\n'
+            + '> MC-102 is done — merged and out on staging. — #standup — sam\n'
+            + '> MC-102 is not done — the provider secret is still missing. — #eng-payments — dana\n\n'
+            + 'Which of these is current?</textarea></div>'
+            + '<div class="editacts"><button type="button" class="primary">Send it</button>'
+            + '<button type="button" class="undo">choose something else</button></div></div>' },
         { label:'Open MC-102',
           result:'<p>Opened, with both records pinned beside the ticket so whoever picks it up sees the disagreement first.</p>' },
         { label:'Not now', defer:true },

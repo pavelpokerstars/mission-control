@@ -49,8 +49,12 @@ function stamp(l: { at?: number; when?: string }): string {
   if (!l.when) return '';
   const d = new Date(l.when);
   if (Number.isNaN(d.getTime())) return '';
-  const clock = d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
-  return clock;
+  /**
+   * A CLOCK, and only a clock. The day belongs to the divider above — see
+   * `dayMark`, which records why it was briefly folded in here and why it is
+   * not any more.
+   */
+  return d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
 }
 
 /**
@@ -61,6 +65,18 @@ function stamp(l: { at?: number; when?: string }): string {
  * fifteen days on this fixture. Without the day they read as one afternoon whose
  * clock jumps backwards, and the two messages the disagreement alert is about,
  * three days apart, both said 07:00.
+ *
+ * ON EVERY DAY CHANGE, INCLUDING A DAY THAT GROUPS ONE LINE. It was briefly
+ * drawn only where a day held several, on the grounds that this fixture's
+ * channel is one message per day for seventeen days and the page was more band
+ * than message — the date folding into the stamp beside the clock instead.
+ * That trades one problem for a worse one, and Slack settles it: a channel is
+ * broken by day and each message carries only a time. A date repeated on every
+ * line is the thing this divider exists to avoid.
+ *
+ * What the crowding complaint actually wanted is a divider that costs a
+ * HAIRLINE rather than a band, which is what it is now — the date in the stamp
+ * column, aligned with the clocks it labels, and a rule across the rest.
  */
 function dayMark(l: { when?: string }, prev?: { when?: string }): string | undefined {
   if (!l.when) return undefined;

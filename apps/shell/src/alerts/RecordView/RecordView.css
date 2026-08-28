@@ -68,9 +68,17 @@
    column exists to say was the one thing not aligned with what it stamps.
    Hoisted out, every stamp is a single line and sits on its message. */
 .daymark {
+  display:grid; grid-template-columns:auto minmax(0,1fr); gap:0 14px; align-items:center;
   font-family:var(--mono); font-size:10px; letter-spacing:.08em; text-transform:uppercase;
-  color:var(--ink-3); padding:14px 12px 4px; margin:0 -12px;
+  color:var(--ink-3); padding:11px 12px 5px; margin:0 -12px; white-space:nowrap;
 }
+/* The rule after the date is what makes it a DIVIDER rather than a heading —
+   Slack's own day break, in this app's hairline.
+   THE LABEL SIZES ITSELF, and `nowrap` is why. Pinned to the 74px stamp column
+   it lined up prettily with the clocks and then wrapped: "MON, JULY 20" is
+   ~78px at this size, so every divider became two lines and read as broken. The
+   column width is not ours to guarantee — the month's name is the locale's. */
+.daymark::after { content:""; height:1px; background:var(--line); }
 .daymark:first-child { padding-top:0; }
 .line .said b { font-weight:600; margin-right:8px; }
 .line .said span { color:var(--ink-2); }

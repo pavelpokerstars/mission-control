@@ -197,6 +197,24 @@ export function hrefFor(route: Route): string {
  */
 const MOVED = 'mc:navigated';
 
+/**
+ * WE PLACE THE PAGE, NOT THE BROWSER.
+ *
+ * `history.scrollRestoration` defaults to `auto`, which restores the offset a
+ * page had when you left it — right for a document you scrolled through, and
+ * wrong for an app whose every address is a different shape. Clicking an alert
+ * from a list you had scrolled halfway down opened that alert halfway down, at
+ * whatever sentence happened to sit at 900px, and coming back to the alert from
+ * a citation did it again. `pushState` does not reset the offset by itself, so
+ * without both halves of this the reader lands in the middle of something.
+ *
+ * `manual` here and a scroll on every address change in `AlertApp`, which is
+ * what the preview does on every screen it shows.
+ */
+if (typeof window !== 'undefined' && 'scrollRestoration' in window.history) {
+  window.history.scrollRestoration = 'manual';
+}
+
 /** Go to an address, without fetching the application again. */
 export function navigate(href: string): void {
   if (href === here()) return;

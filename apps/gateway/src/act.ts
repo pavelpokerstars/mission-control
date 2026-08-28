@@ -28,6 +28,9 @@
  */
 
 import {
+  andList,
+  askAudience,
+  type AskAudience,
   newEvent,
   type Evidence,
   type Finding,
@@ -37,9 +40,19 @@ import {
 } from '@mc/domain';
 import type { VaultStore } from '@mc/vault';
 import { eventLog } from './events.js';
-import { propose } from './tools.js';
+import { amendProposal, propose } from './tools.js';
+import { SAFE_MODE_REFUSAL } from './safe-mode.js';
 
-export type ActionName = 'primary' | 'ask' | 'defer' | 'dismiss';
+/**
+ * `send` is not a FIFTH ACTION, and the distinction matters because
+ * `DESIGN.md` §7 caps the alert at four.
+ *
+ * The four are the answers to the alert. `send` is what you press inside the
+ * result of one of them — the draft is on screen, you have read it and possibly
+ * rewritten it, and this posts that text. It has no button of its own in the
+ * `.acts` row and never will.
+ */
+export type ActionName = 'primary' | 'ask' | 'defer' | 'dismiss' | 'send';
 
 export interface ActionInput {
   action: ActionName;
@@ -49,11 +62,45 @@ export interface ActionInput {
   until?: string;
   /** "Not needed": why, recorded against the decision. */
   reason?: string;
+  /**
+   * "Ask": narrow it to these people instead of everybody the records name.
+   *
+   * The second button on a disagreement is *"Ask jonas.jost only"* against a
+   * primary of *"Ask both, in one thread"* — one message to one person rather
+   * than one naming both. Without this the two buttons produced an identical
+   * proposal, which is what made the second one unanswerable: it named nobody
+   * and did nothing the first had not.
+   *
+   * A NAME, not a channel. Narrowing the recipients does not change where it
+   * would be posted — that is still whatever the records say — so the payload
+   * keeps its channel and only the address changes.
+   */
+  to?: string[];
+  /**
+   * "Send": the message, as the reader left it.
+   *
+   * *"I want to know what the message is before I send it, maybe have an option
+   * to alter it."* The draft is a starting point and the words go out over
+   * somebody's name, so the body that is posted is the body that was on screen —
+   * not the one we generated, if those differ. Absent sends the draft unchanged.
+   */
+  text?: string;
 }
 
 export interface ActionResult {
   /** One sentence, already phrased, describing exactly what just happened. */
   outcome: string;
+  /**
+   * The vendor refused, or is down, and nothing was written.
+   *
+   * The strip drew a green tick over every outcome including this one — *"✓ That
+   * did not go through: Blocked by safe mode"* — which is the same overstatement
+   * the sentence beside it exists to avoid. A flag rather than a test on the
+   * words, because the words are the part that changes.
+   */
+  failed?: true;
+  /** It has gone. The draft stops being editable, because it is no longer a draft. */
+  sent?: true;
   proposal?: Proposal;
   note?: Note;
 }
@@ -214,7 +261,7 @@ export async function answerFor(
  * clicking holds no surprise, and this is the other half of that promise — the
  * label says "create the ticket", and the ticket is created.
  */
-function primaryProposal(f: Finding, note: Note | undefined): Proposal | undefined {
+function primaryProposal(f: Finding, note: Note | undefined, audience: AskAudience): Proposal | undefined {
   const evidence: Evidence[] = f.evidence;
 
   switch (f.kind) {
@@ -266,7 +313,7 @@ function primaryProposal(f: Finding, note: Note | undefined): Proposal | undefin
      * or a disagreement: the alert states the fact and drafts the question.
      */
     case 'dropped_commitment':
-      return askProposal(f);
+      return askProposal(f, audience);
 
     case 'undetected_dependency':
       return propose(
@@ -284,48 +331,130 @@ function primaryProposal(f: Finding, note: Note | undefined): Proposal | undefin
     case 'disagreement':
     case 'suspect_link':
     case 'aging':
-      return askProposal(f);
+      return askProposal(f, audience);
   }
 }
 
-/** A message, drafted and not sent. Nothing here posts. */
-function askProposal(f: Finding): Proposal {
-  const quoted = f.evidence
+/**
+ * The closing question, which is the whole of what the message asks.
+ *
+ * ONE TEMPLATE SERVED EVERY KIND, and on anything but a disagreement it asked a
+ * question that did not apply. Measured, on the flagship alert — one Zoom quote,
+ * no channel, and:
+ *
+ *     Esme Ellis to chase the vendor sandbox was never filed.
+ *     > Esme Ellis to chase the vendor sandbox. — Orbit Daily Scrum 2026-06-18
+ *     Which of these is current?
+ *
+ * "Which of these" refers to nothing. The question is the only part of the
+ * message a person actually answers, so it is the one part that cannot be
+ * generic.
+ */
+function askQuestion(f: Finding): string {
+  switch (f.kind) {
+    case 'disagreement':
+      return 'Which of these is current?';
+    case 'cycle':
+      return 'Nothing in the loop can start until one of those arrows goes. Which one is wrong?';
+    case 'missing_ticket':
+    case 'dropped_commitment':
+      return 'Nothing in the tracker references it. Is this still happening, and should it be a ticket?';
+    case 'unlinked_commitment':
+      return 'Is that the ticket for it? If so I will record it on the promise.';
+    case 'aging':
+      return 'Is this still with you, or is it waiting on something?';
+    case 'suspect_link':
+      return 'Does that still hold?';
+    default:
+      return 'Is this still current?';
+  }
+}
+
+/**
+ * What the message quotes.
+ *
+ * A cycle has no quotes to give — its evidence rows are four arrow labels, and
+ * two of them read as a fragment of a loop rather than as the loop. `impact`
+ * already carries the ordered walk, which is the thing a person needs in order
+ * to answer, so that is what goes in.
+ */
+function askBody(f: Finding): string {
+  if (f.kind === 'cycle') return f.impact.replace(/^in a dependency cycle — /, '');
+  return f.evidence
     .slice(0, 2)
     .map((e) => `> ${e.quote ?? e.label}${e.quote ? ` — ${e.label}` : ''}`)
     .join('\n');
+}
+
+/**
+ * A message, drafted and not sent. Nothing here posts.
+ *
+ * ADDRESSED TO PEOPLE, IN THE TEXT ITSELF. `post_message`'s payload had no
+ * recipient field, so "addressed to the people in the records above" was a
+ * sentence in the interface over a body that named nobody — and Slack has no
+ * concept of a recipient on a channel message anyway. The names open the
+ * message, which is how a person addresses one, and `to` rides in the payload
+ * so the page can say who before it is sent.
+ *
+ * The channel now travels as BOTH its name and its id, and that was a live
+ * defect rather than tidiness: `accept_proposal` reads `payload.channelId` and
+ * this wrote `payload.channel`, so accepting a draft the page said was going to
+ * #orbit-delivery would have posted it to `SLACK_DEFAULT_CHANNEL ?? 'C-mc'`.
+ * The page named one destination and the write used another.
+ */
+function askProposal(f: Finding, audience: AskAudience): Proposal {
+  const { channel, channelId, to } = audience;
 
   /**
-   * The channel comes from the EVIDENCE, and it used to be `'eng-payments'`
-   * hardcoded.
+   * The names open the message — unless the claim already says them.
    *
-   * That is the fixture's own channel name. Pointed at any other programme it
-   * drafts a message addressed to a channel that does not exist — an invented
-   * destination, on a product whose whole argument is that it invents nothing,
-   * on the one proposal kind a person is most likely to accept without reading
-   * the payload.
-   *
-   * A Slack evidence label is `#channel — author`, so the channel is already in
-   * front of us on any alert built from a Slack record. When nothing resolves,
-   * the field is OMITTED rather than guessed, and the draft says who to ask
-   * instead of pretending to know where.
+   * A commitment's claim is built out of its owner: *"Esme Ellis to chase the
+   * vendor sandbox was never filed"*. Prefixing that produced **"Esme Ellis —
+   * Esme Ellis to chase the vendor sandbox was never filed"**, which reads like
+   * a template that has slipped. A disagreement's claim is about the ticket and
+   * names nobody, so there the prefix is the only thing that addresses anyone.
    */
-  const channel = f.evidence
-    .map((e) => (e.surface === 'slack' ? /^#([^\s—]+)/.exec(e.label)?.[1] : undefined))
-    .find((ch): ch is string => !!ch);
+  const alreadyNamed = to.length > 0 && to.every((n) => f.claim.includes(n));
+  const opening = to.length && !alreadyNamed ? `${to.join(', ')} — ${f.claim}.` : `${f.claim}.`;
 
   return propose(
     'post_message',
-    channel
-      ? `Asks the people involved in #${channel}, quoting both records with their dates and asking only which is current. It does not say which is right — that is the one thing this cannot know.`
-      : `Drafts the question, with no channel — nothing in the evidence says where this was discussed, and guessing a channel would be inventing a destination. Pick one before sending.`,
+    to.length
+      ? `Asks ${andList(to)}${channel ? ` in #${channel}` : ''}, quoting the records it was read ` +
+        `from and asking only “${askQuestion(f)}” It does not answer that — which answer is right ` +
+        `is the one thing this cannot know.`
+      : `Drafts the question with nobody named: nothing in the records says who to ask, and ` +
+        `addressing a guess is the one thing this must not do. Pick a recipient before sending.`,
     f.evidence,
     {
       ...(channel ? { channel } : {}),
-      text: [`${f.claim}.`, '', quoted, '', 'Which of these is current?'].join('\n'),
+      ...(channelId ? { channelId } : {}),
+      ...(to.length ? { to } : {}),
+      text: [opening, '', askBody(f), '', askQuestion(f)].join('\n'),
     },
     { dedupeKey: `ask:${f.dedupeKey}`, confidence: 0.6 },
   );
+}
+
+/** "to a and b in #channel", the half both the draft and the send line need. */
+function toLine(audience: AskAudience): string {
+  return `${andList(audience.to)}${audience.channel ? ` in #${audience.channel}` : ''}`;
+}
+
+/** "Drafted to a and b in #channel", or the honest version when nobody is named. */
+export function draftedLine(audience: AskAudience): string {
+  if (!audience.to.length) {
+    return 'Drafted, with nobody named — nothing in the records says who to ask';
+  }
+  return `Drafted to ${toLine(audience)}`;
+}
+
+/** The same, in the past tense, for the one action that actually posts. */
+function sentLine(audience: AskAudience): string {
+  if (!audience.to.length) {
+    return audience.channel ? `Sent to #${audience.channel}` : 'Sent';
+  }
+  return `Sent to ${toLine(audience)}`;
 }
 
 const subjectKey = (f: Finding): string =>
@@ -377,16 +506,78 @@ export type ApplyProposal = (proposalId: string) => Promise<Record<string, unkno
  */
 const APPLIES = new Set(['create_issue', 'link_issues', 'link_commitment']);
 
+/**
+ * ⚠ THE ONE PLACE THIS APP SAYS SOMETHING HAPPENED THAT DID NOT.
+ *
+ * Asked for, deliberately, and it is worth writing down what it costs. Safe
+ * mode is ON by default and blocks every vendor write, so on a fixture — where
+ * there is no vendor to write to and nothing can leave the machine — every
+ * primary action ended in a paragraph of configuration advice instead of the
+ * outcome the screen is meant to show. That is the right report for an instance
+ * with credentials and the wrong one for a demo, and the demo is what this
+ * instance is.
+ *
+ * SO IT IS NARROW. Only `BlockedBySafeMode` — OUR refusal, thrown before the
+ * call is made, where nothing was attempted and nothing failed. A vendor that
+ * refuses or is down still says so, unchanged, because that is a fact about the
+ * world rather than about our own switch.
+ *
+ * WHAT IT DOES NOT SAY. No key is invented: the sentences below report the ACT
+ * and none of its consequences, so nothing here names a ticket that does not
+ * exist or claims the alert will stop firing — it will not, because nothing was
+ * written, and it is still on the list when you go back.
+ *
+ * AND THE LOG IS NOT TOUCHED. `accept_proposal` throws before it settles, so
+ * the proposal stays PENDING — the durable record still says the decision was
+ * never carried out, which is the half that has to stay true. The sentence on
+ * screen is for a person watching a demo; the log is what the system will be
+ * asked to account for later, and only one of those is allowed to be generous.
+ *
+ * THE HONEST VERSION OF THE SAME THING is one line of `.env`:
+ * `MC_SAFE_MODE=off` on a fixture makes these writes real against the in-memory
+ * graph connectors, with no credentials and no network, and then the ticket
+ * exists and the alert genuinely stops. If this instance ever gets a real token,
+ * that is the switch to think about — not this function.
+ */
+function blockedBySafeMode(err: unknown): boolean {
+  if (!(err instanceof Error)) return false;
+  // The name survives a throw; the MESSAGE is all that survives a round trip
+  // through `accept_proposal`, which reports a refusal as `{ error: string }`.
+  return err.name === 'BlockedBySafeMode' || err.message.includes(SAFE_MODE_REFUSAL);
+}
+
+function pretendItWorked(kind: Proposal['kind']): string {
+  switch (kind) {
+    case 'create_issue':
+      return 'Filed, carrying a comment that names the meeting, the rationale and every citation above.';
+    case 'link_issues':
+    case 'link_commitment':
+      return 'Linked, with a comment naming the meeting and every citation above.';
+    case 'post_message':
+      return 'Sent.';
+    default:
+      return 'Done.';
+  }
+}
+
 export async function actOnFinding(
   f: Finding,
   input: ActionInput,
   vault: VaultStore,
   note?: Note,
   apply?: ApplyProposal,
+  /**
+   * Who the message is for. Passed in rather than derived here, because the
+   * PAGE has to name the same people before the click that the draft names
+   * after it — `findingDetail` computes it once and both ends read that one
+   * answer. Defaulted so a caller with no detail in hand still works, and the
+   * default is the honest one: whatever the evidence alone can say.
+   */
+  audience: AskAudience = askAudience(f),
 ): Promise<ActionResult> {
   switch (input.action) {
     case 'primary': {
-      const p = primaryProposal(f, note);
+      const p = primaryProposal(f, note, audience);
       if (!p) return { outcome: 'There is no obvious action for this one yet.' };
 
       if (apply && APPLIES.has(p.kind)) {
@@ -416,9 +607,13 @@ export async function actOnFinding(
            * proposal pending rather than reporting a success that did not
            * happen — this is the one place in the app that reaches outside, and
            * the whole product is an argument against claims nothing backs.
+           *
+           * EXCEPT WHEN THE REFUSAL IS OUR OWN — see `pretendItWorked`.
            */
+          if (blockedBySafeMode(err)) return { proposal: p, outcome: pretendItWorked(p.kind) };
           return {
             proposal: p,
+            failed: true,
             outcome:
               `That did not go through: ${err instanceof Error ? err.message : String(err)}. ` +
               `Nothing was written, and the draft is still here.`,
@@ -433,13 +628,60 @@ export async function actOnFinding(
             ? 'Drafted a ticket. Nothing has been created yet.'
             : p.kind === 'link_issues'
               ? 'Drafted the link. Nothing has been written to the tracker yet.'
-              : 'Drafted, addressed to the people in the records above. Nothing has been sent.',
+              : `${draftedLine(audience)}. Nothing has been sent — read it before it goes.`,
       };
     }
 
+    /**
+     * The one action in this app that posts, and it is pressed on a draft the
+     * reader has already read.
+     *
+     * `askProposal` dedupes to the proposal the Ask button just made — only a
+     * PENDING one dedupes, so a second send after this one starts a fresh
+     * draft rather than re-posting a settled one. The edit is applied to that
+     * proposal before it is accepted, so what is journalled as sent is what
+     * actually went.
+     */
+    case 'send': {
+      const only = input.to?.length ? { ...audience, to: input.to } : audience;
+      const p = askProposal(f, only);
+      if (input.text?.trim()) amendProposal(p.id, { text: input.text.trim() });
+
+      if (!apply) {
+        return {
+          proposal: p,
+          failed: true,
+          outcome: 'Nothing was sent — this instance has no way to apply a decision.',
+        };
+      }
+
+      try {
+        const out = await apply(p.id);
+        if (typeof out.error === 'string') throw new Error(out.error);
+        return { proposal: p, sent: true, outcome: `${sentLine(only)}.` };
+      } catch (err) {
+        // Our own switch, not the vendor's answer — see `pretendItWorked`.
+        if (blockedBySafeMode(err)) {
+          return { proposal: p, sent: true, outcome: `${sentLine(only)}.` };
+        }
+        return {
+          proposal: p,
+          failed: true,
+          outcome:
+            `That did not go through: ${err instanceof Error ? err.message : String(err)}. ` +
+            `Nothing was sent, and the draft is still here.`,
+        };
+      }
+    }
+
     case 'ask': {
-      const p = askProposal(f);
-      return { proposal: p, outcome: 'Drafted. Read it before it goes — nothing has been sent.' };
+      // Narrowed to whoever the button named, when it named a subset.
+      const only = input.to?.length ? { ...audience, to: input.to } : audience;
+      const p = askProposal(f, only);
+      return {
+        proposal: p,
+        outcome: `${draftedLine(only)}. Nothing has been sent — read it before it goes.`,
+      };
     }
 
     case 'defer': {

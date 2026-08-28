@@ -28,6 +28,8 @@ import {
   tokens,
   type JoinCandidate,
   FINDING_RANK,
+  askAudience,
+  type AskAudience,
   isAlertKind,
   type Evidence,
   type Finding,
@@ -42,7 +44,7 @@ import { buildIdentities, type Connectors, type GraphSource } from '@mc/connecto
 import type { VaultStore } from '@mc/vault';
 import { gatherWorkFacts, workOpts, type CorpusEntry } from './work.js';
 import { safeMode } from './safe-mode.js';
-import { agingDays } from './graph-source.js';
+import { agingDays, personName } from './graph-source.js';
 import { answerFor, answeredFindingIds, type StandingAnswer } from './act.js';
 
 /**
@@ -979,7 +981,22 @@ export interface FindingDetail {
    * not. It is also free: the tick IS `relatedKeys.length > 0`, so nothing is
    * computed that the gap detector did not already need.
    */
-  checklist?: { title: string; tracked: boolean; ref: string }[];
+  checklist?: {
+    title: string;
+    tracked: boolean;
+    ref: string;
+    /**
+     * The one row this alert is actually about.
+     *
+     * The list is every promise made in the container, so several of them can be
+     * untracked at once — and the primary action files a ticket for THIS
+     * finding's note whatever row you pressed. Without this flag an inline
+     * "file it" on the third row would create the first row's ticket, silently
+     * and with a success message. Read off the note id rather than the title,
+     * because two promises in one sprint can be worded the same.
+     */
+    subject?: boolean;
+  }[];
   /**
    * The decision a human already made about this, while it still stands.
    *
@@ -989,6 +1006,16 @@ export interface FindingDetail {
    * lapsed: the alert is back on the list, so the page has nothing to add.
    */
   answered?: StandingAnswer;
+  /**
+   * Who a message about this would be addressed to, and where it would go.
+   *
+   * Computed HERE so the page and the draft cannot name different people: the
+   * buttons read this before the click and `actOnFinding` is handed the same
+   * object after it. Refined as the subject resolves — the evidence alone
+   * names the Slack authors, and only the note or the work item can name an
+   * owner.
+   */
+  audience: AskAudience;
   /**
    * Whether this instance may write to a vendor at all.
    *
@@ -1029,18 +1056,28 @@ export async function findingDetail(
   const finding = findings.find((f) => f.id === id);
   if (!finding) return undefined;
 
-  const detail: FindingDetail = { finding, safeMode: safeMode() };
+  const detail: FindingDetail = { finding, safeMode: safeMode(), audience: askAudience(finding) };
   const answered = await answerFor(vault, id);
   if (answered) detail.answered = answered;
 
   if (finding.subject.kind === 'workitem') {
     detail.item = items.find((i) => i.key === (finding.subject as { key: string }).key);
+    // An aging or cycle alert cites our own reading of Jira, so no Slack label
+    // names anybody — the assignee is the only person any record puts on it.
+    detail.audience = askAudience(finding, {
+      // `personName`, so the button reads "Ask Hugo Hart" rather than the login
+      // it joins on.
+      assignee: personName(detail.item?.assignee),
+    });
   }
 
   if (finding.subject.kind === 'commitment') {
     const note = vault.get(finding.subject.noteId);
     if (!note) return detail;
     detail.note = note;
+    // A commitment alert cites Zoom. The person who TOOK the promise is on the
+    // note, and is exactly who the preview addresses its draft to.
+    detail.audience = askAudience(finding, { owner: note.owner });
 
     if (note.container) {
       const c = source.graph.nodes.find((n) => n.id === note.container);
@@ -1061,6 +1098,7 @@ export async function findingDetail(
           return {
             title: n.title,
             tracked: filed.length > 0,
+            ...(n.id === note.id ? { subject: true as const } : {}),
             ref: filed.length
               ? filed
                   .map((k) => `${k}${byKey.get(k) ? ` · ${byKey.get(k)!.status.replace('_', ' ')}` : ''}`)

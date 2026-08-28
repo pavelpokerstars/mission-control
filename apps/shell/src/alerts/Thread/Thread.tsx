@@ -41,7 +41,27 @@ export function Turns({
   followups?: JSX.Element;
 }): JSX.Element {
   const end = useRef<HTMLDivElement>(null);
+  /**
+   * ON GROW, WHICH IS WHAT THE PROP IS CALLED AND WAS NOT WHAT IT DID.
+   *
+   * The effect fired on mount as well, so an alert that already had a
+   * conversation opened at the bottom of that conversation: click a row on the
+   * front door and the page arrives ~420px down, at whatever sentence the last
+   * answer ended on, with the claim and the evidence above the fold. The same
+   * on the way back from a citation. It looks like the router forgetting to
+   * scroll and it is this, one component lower — the address change DOES put
+   * the page at its top (`AlertApp`), and then the thread pulled it down again.
+   *
+   * A ref rather than a `useState`, because remembering the previous length
+   * must not itself cause a render — and the first run only records, so the
+   * tail of a thread you already had is where the page starts, not where it
+   * jumps to.
+   */
+  const seen = useRef<number | undefined>(undefined);
   useEffect(() => {
+    const before = seen.current;
+    seen.current = turns.length;
+    if (before === undefined || turns.length <= before) return;
     if (scrollOnGrow) end.current?.scrollIntoView({ block: 'nearest' });
   }, [turns.length, scrollOnGrow]);
 

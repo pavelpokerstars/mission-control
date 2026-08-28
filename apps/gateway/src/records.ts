@@ -25,6 +25,7 @@ import {
 } from '@mc/connectors';
 import { UNKNOWN_SPEAKER, type Owner, type Transcript, slackTsToIso } from '@mc/domain';
 import type { VaultStore } from '@mc/vault';
+import { personName } from './graph-source.js';
 
 export interface RecordResult {
   surface: Owner;
@@ -191,10 +192,12 @@ async function readRecordRaw(
         lines: [
           {
             id: 'status',
-            text: `${item.status.replace('_', ' ')}${item.assignee ? ` · ${item.assignee}` : ''}`,
+            // The name a reader knows. `item.assignee` stays the handle
+            // everywhere it is compared — see `personName`.
+            text: `${item.status.replace('_', ' ')}${item.assignee ? ` · ${personName(item.assignee)}` : ''}`,
             ...(item.updatedAt ? { when: item.updatedAt } : {}),
           },
-          ...comments.map((cm) => ({ id: cm.id, who: cm.author, text: cm.body })),
+          ...comments.map((cm) => ({ id: cm.id, who: personName(cm.author), text: cm.body })),
         ],
         cited: 'status',
         ...(item.updatedAt ? { when: item.updatedAt } : {}),
@@ -300,7 +303,7 @@ function slackRecord(name: string, messages: SlackMessage[], ts: string): Record
     container: `#${name}`,
     lines: messages.map((m) => ({
       id: m.ts,
-      who: m.author,
+      who: personName(m.author),
       text: m.text,
       when: slackTsToIso(m.ts),
     })),

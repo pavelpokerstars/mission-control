@@ -51,11 +51,13 @@
 import { readFile, readdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import {
+  buildIdentities,
   createGraphConnectors,
   createMiroConnector,
   setStatusWords,
   type Connectors,
   type GraphSource,
+  type Identities,
   type StatusMapReport,
 } from '@mc/connectors';
 import {
@@ -366,4 +368,42 @@ export function currentGraph(): GraphSource {
 export function installGraph(source: GraphSource): GraphSource {
   cell = source;
   return source;
+}
+
+/**
+ * The identity map for whatever graph is currently installed, built once.
+ *
+ * A cell beside the graph's own, for the same reason: `buildIdentities` walks
+ * every node, and the places that need it are per-message — a trail entry, a
+ * record line, the label on a citation — so rebuilding it per call would put a
+ * full node scan inside a loop over ninety Slack messages.
+ *
+ * Keyed on the SOURCE OBJECT rather than on a timestamp, so a collector's
+ * re-derive invalidates it by identity: `installGraph` swaps the cell and the
+ * next reader sees a different object and rebuilds. Nothing has to remember to
+ * clear it.
+ */
+let identityCell: { of: GraphSource; map: Identities } | undefined;
+
+export function currentIdentities(): Identities {
+  const source = currentGraph();
+  if (identityCell?.of !== source) {
+    identityCell = { of: source, map: buildIdentities(source.graph) };
+  }
+  return identityCell.map;
+}
+
+/**
+ * A person as a READER should see them, falling back to the identifier itself.
+ *
+ * The one function every display site calls, so "we show names and join on
+ * handles" is a fact about one place rather than a convention nine call sites
+ * are each expected to remember. Falls through unchanged when the map has never
+ * heard of the identifier — a name we do not have is not a name to invent.
+ */
+export function personName(raw: string): string;
+export function personName(raw: string | undefined): string | undefined;
+export function personName(raw: string | undefined): string | undefined {
+  if (!raw) return raw;
+  return currentIdentities().nameOf(raw) ?? raw;
 }

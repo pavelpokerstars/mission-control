@@ -520,10 +520,16 @@ export interface Evidence {
    * reason `TrailEntry` carries both.
    *
    * Absent when there is nothing to open, and that is a real state rather than
-   * missing data: "no issue references this" is our own observation, and the
-   * arrows in a cycle are a shape rather than a document. An evidence row with
-   * a ref becomes a link; one without stays a sentence, which is the difference
-   * between citing and asserting.
+   * missing data: "no issue references this" is our own observation and has no
+   * record behind it. An evidence row with a ref becomes a link; one without
+   * stays a sentence, which is the difference between citing and asserting.
+   *
+   * A CYCLE'S ARROWS USED TO BE THE OTHER EXAMPLE HERE, on the grounds that a
+   * loop is a shape rather than a document. It reads better than it worked:
+   * four unopenable sentences restating the walk already in the impact line,
+   * over a Miro dot on a programme with no board. They cite the ticket that
+   * WAITS now — a real record, and the place somebody goes to remove the link.
+   * The shape stays the shape; what was missing was somewhere to act.
    */
   ref?: RecordRef;
 }
@@ -2814,6 +2820,104 @@ export interface Finding {
    * `propose()` already enforces on proposals.
    */
   dedupeKey: string;
+}
+
+/**
+ * Who an alert's message is addressed to, and where it would go.
+ *
+ * THE COMPLAINT THIS ANSWERS, verbatim: *"'Ask someone' — who am I sending a
+ * message to, what message am I sending?"* The button named nobody, the
+ * `post_message` payload had no recipient field at all, and the result strip
+ * said "addressed to the people in the records above" over a payload that
+ * carried a channel and a body and nothing else. The preview always names
+ * them — *"Drafted to sam and dana in #eng-platform"*, *"addressed to Sanjay"*,
+ * *"Drafted to dana"* — so this is the missing half of a design that was
+ * already written down.
+ *
+ * ONE DEFINITION, HERE, because there were already two and the second one said
+ * so out loud: `askChannel` in `Actions.tsx` re-derived the channel from the
+ * same label `act.ts` parsed, under a comment reading *"deriving it twice is
+ * how the button and the message it produces come to name different channels,
+ * so if this ever needs more than the label, both should move to one place."*
+ * It now needs more than the label.
+ *
+ * NOTHING IS INVENTED. Every name comes from a record: a Slack label is
+ * `#channel — author`, a promise carries its `owner`, a ticket carries its
+ * `assignee`. When no record names anybody, `to` is empty and the interface
+ * says so rather than addressing a guess — the same rule that already stops
+ * the channel being guessed.
+ */
+export interface AskAudience {
+  /** The channel's NAME, for a reader: `orbit-delivery`. */
+  channel?: string;
+  /**
+   * The channel's ID, for the write: `slack-orbit-delivery`.
+   *
+   * Both, because they are different strings and the app needs each. The name
+   * is what a person recognises; `SlackConnector.post` takes the id and looks
+   * the name up from it. Carrying only the name is how the page came to promise
+   * #orbit-delivery over a write that went to `SLACK_DEFAULT_CHANNEL`.
+   */
+  channelId?: string;
+  /**
+   * The people, as a reader knows them, in the order the records mention them.
+   *
+   * NAMES, because that is what the labels now carry — `personName` resolves a
+   * Slack author through the identity map before it reaches a label, so
+   * "#orbit-delivery — Jonas Jost" is what this parses. Empty is a real answer.
+   *
+   * WORTH KNOWING BEFORE A REAL SLACK CONNECTOR SENDS ONE OF THESE: a name in
+   * the body reads correctly and does not NOTIFY anybody. A live sender wants
+   * `<@U…>`, and the way back is `Identities.canonical` — the same map that
+   * produced the name knows the handle it came from.
+   */
+  to: string[];
+}
+
+/** `#orbit-delivery — jonas.jost` — the shape every Slack evidence label has. */
+const SLACK_EVIDENCE_LABEL = /^#([^\s—]+)\s*—\s*(.+)$/;
+
+export function askAudience(
+  finding: Pick<Finding, 'evidence'>,
+  from: { owner?: string; assignee?: string } = {},
+): AskAudience {
+  const slack = finding.evidence.filter((e) => e.surface === 'slack');
+
+  const channel = slack.map((e) => /^#([^\s—]+)/.exec(e.label)?.[1]).find((c): c is string => !!c);
+  const channelId = slack.find((e) => e.ref?.parentId)?.ref?.parentId;
+
+  /**
+   * The people who SAID the things this alert is built on, first.
+   *
+   * A disagreement is two colleagues who have not seen each other, so both are
+   * named and in the order the evidence is ranked — newest first, which is the
+   * order the alert already prints them in.
+   */
+  const authors = [
+    ...new Set(
+      slack.map((e) => SLACK_EVIDENCE_LABEL.exec(e.label)?.[2]?.trim()).filter((a): a is string => !!a),
+    ),
+  ];
+  if (authors.length) return { ...(channel ? { channel } : {}), ...(channelId ? { channelId } : {}), to: authors };
+
+  /**
+   * Otherwise whoever the structured layer says owns it. A promise names the
+   * person who took it; a ticket names its assignee. Neither is on a Slack
+   * label, which is why the first branch cannot find them: a commitment alert
+   * cites Zoom, and an aging one cites our own reading of Jira.
+   */
+  const owner = from.owner ?? from.assignee;
+  return {
+    ...(channel ? { channel } : {}),
+    ...(channelId ? { channelId } : {}),
+    to: owner ? [owner] : [],
+  };
+}
+
+/** `a`, `a and b`, `a, b and c` — for a label and for a sentence. */
+export function andList(names: string[]): string {
+  if (names.length <= 1) return names[0] ?? '';
+  return `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
 }
 
 /**

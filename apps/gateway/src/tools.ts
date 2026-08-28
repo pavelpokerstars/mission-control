@@ -185,6 +185,27 @@ function settle(p: Proposal, verdict: 'accepted' | 'rejected', reason?: string):
  * replayed too so `dedupe` does not re-propose something already answered, and
  * so ids never collide with a previous run's.
  */
+/**
+ * Change a pending proposal's payload before it is applied.
+ *
+ * The one caller is a human editing the message they are about to send, which
+ * is the gate working rather than a way around it: `HUMAN_ONLY` withholds
+ * `accept_proposal` from every provider, and a person who may accept a draft may
+ * obviously also fix a word in it first.
+ *
+ * PENDING ONLY, and merged rather than replaced. A settled proposal is a record
+ * of what was decided and editing one would rewrite history; and a caller that
+ * knows about `text` must not be able to drop the `channelId` beside it, which
+ * is what a whole-payload swap would do the first time somebody sent only the
+ * field they changed.
+ */
+export function amendProposal(id: string, patch: Record<string, unknown>): Proposal | undefined {
+  const p = proposals.get(id);
+  if (!p || p.status !== 'pending') return undefined;
+  p.payload = { ...(p.payload as Record<string, unknown>), ...patch };
+  return p;
+}
+
 export async function rehydrateProposals(vault: VaultStore): Promise<number> {
   const events = await vault.readEvents({ limit: 5_000 });
   // readEvents hands back newest-first; replay wants the opposite.

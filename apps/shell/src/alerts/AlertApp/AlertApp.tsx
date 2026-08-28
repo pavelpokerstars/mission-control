@@ -20,7 +20,7 @@ import type { Note } from '@mc/domain';
 import { useFindings, useJson } from '../api';
 import { historyOf, useConversations } from '../conversations';
 import { seedDemoConversations } from '../demo';
-import { useRoute } from '../router';
+import { hrefFor, useRoute } from '../router';
 import { AlertList } from '../AlertList/AlertList';
 import { AlertPage } from '../AlertPage/AlertPage';
 import { Ask } from '../Ask/Ask';
@@ -98,6 +98,24 @@ export default function AlertApp(): JSX.Element {
   useEffect(() => {
     if (findings.data) seedDemoConversations(findings.data.findings);
   }, [findings.data]);
+
+  /**
+   * EVERY PAGE OPENS AT ITS TOP.
+   *
+   * Keyed on the whole ADDRESS rather than on `at` below, which collapses every
+   * record to one key — two citations opened one after the other are two pages
+   * and the second one has to be placed too.
+   *
+   * The record view then scrolls itself to the cited line, and the order works
+   * out: this runs on the route change, that one runs when the fetch resolves,
+   * so the line wins and the page never rests where the last one happened to
+   * be. `router.ts` turns off the browser's own restoration for the same
+   * reason.
+   */
+  const address = hrefFor(route);
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [address]);
 
   /**
    * Re-read the counts on every navigation.

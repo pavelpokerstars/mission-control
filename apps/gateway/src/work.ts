@@ -61,7 +61,7 @@ import {
   type GraphSource,
   type StatusObservation,
 } from '@mc/connectors';
-import { agingDays } from './graph-source.js';
+import { agingDays, personName } from './graph-source.js';
 import type { VaultStore } from '@mc/vault';
 import { boardArrows, TRAIL_DAYS } from './issue.js';
 import { stripHtml } from './format.js';
@@ -294,7 +294,10 @@ export async function gatherWorkFacts(
         keep({
           surface: 'slack',
           ts,
-          label: `#${ch.name} — ${m.author}`,
+          // The NAME, not the login. `m.author` stays the handle everywhere it
+          // is COMPARED — `classifySignalFor`, the assignee filter, the identity
+          // map itself — and this is the half a reader sees. See `personName`.
+          label: `#${ch.name} — ${personName(m.author)}`,
           tokens: [...tokens(m.text)],
           ref: { surface: 'slack', id: m.ts, parentId: ch.id },
         });
@@ -303,7 +306,7 @@ export async function gatherWorkFacts(
         add(key, {
           surface: 'slack',
           ts,
-          label: `#${ch.name} — ${m.author}`,
+          label: `#${ch.name} — ${personName(m.author)}`,
           quote: m.text,
           signal: classifySignalFor(m.text, key),
           // The channel rides along as `parentId`: a Slack message is
@@ -470,9 +473,27 @@ export async function gatherWorkFacts(
         tone: 'alarm',
         text: `in a dependency cycle — ${loop?.join(' → ') ?? 'nothing in the loop can start'}`,
         /**
-         * The arrows themselves, one row each. The loop IS the evidence: there
-         * is no quote to show, and naming each link is what lets somebody decide
-         * which one is wrong.
+         * The arrows themselves, one row each — and each one CITES THE TICKET
+         * IT IS ABOUT, so there is something to do with it.
+         *
+         * These rows said `miro` and carried no `ref`, which was wrong twice.
+         * Wrong about the surface: the findings pass reads its arrows from
+         * `projectArrows` over the graph's `depends_on` edges — `workOpts` sets
+         * `arrows` on every path that reaches a finding — so on a programme with
+         * no board at all, four rows claimed Miro. And wrong about being
+         * unopenable: four grey sentences restating the walk already printed in
+         * the impact line, with nothing to click, which is a citation block that
+         * asks the reader to take our word for it.
+         *
+         * The row now cites the ticket that WAITS, which is both a real record
+         * and the place a person goes to break the loop — the arrow is a link on
+         * that issue. Same shape as the aging signal's own row a few lines
+         * above: our observation in the label, the Jira record in the ref.
+         *
+         * If the lane is ever fed `boardArrows` instead — a live Miro canvas —
+         * the label becomes Miro's account of the arrow while the citation stays
+         * the ticket. That is still true, and still the right place to act, but
+         * it is the assumption to check first if these rows start looking wrong.
          *
          * Deduplicated first, because `findCycles` returns a closed walk with
          * the start key repeated at the end — `[A,B,C,D,A]`. Mapping that
@@ -483,8 +504,9 @@ export async function gatherWorkFacts(
         evidence: (() => {
           const ring = [...new Set(loop ?? [])];
           return ring.map((key, i) => ({
-            surface: 'miro' as const,
+            surface: 'jira' as const,
             label: `${key} waits on ${ring[(i + 1) % ring.length]}`,
+            ref: { surface: 'jira' as const, id: key },
           }));
         })(),
       });

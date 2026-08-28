@@ -13,7 +13,7 @@
  * what to do — with no context borrowed from the screen before it.
  */
 
-import type { JSX } from 'react';
+import { useState, type JSX } from 'react';
 import type { Evidence } from '@mc/domain';
 import { explain, dotClass, useFinding, type FindingDetail } from '../api';
 import { AppWindow, BackLink, type Counts } from '../Chrome/Chrome';
@@ -44,7 +44,22 @@ import './AlertPage.css';
  * — so a past-tense heading over it is wrong about the one fact that separates
  * the two alerts.
  */
-function Checklist({ detail }: { detail: FindingDetail }): JSX.Element | null {
+function Checklist({
+  detail,
+  onFile,
+}: {
+  detail: FindingDetail;
+  /**
+   * File the ticket from the row that says there is none.
+   *
+   * *"If it says 'no ticket', I would be able to open a ticket right there"* —
+   * and the point is the distance: the cross is the sentence that states the
+   * problem, and the button that answers it was two bands and a scroll below.
+   * The row does not grow a second result surface; it presses the same primary
+   * action and `Actions` reports it where it always does.
+   */
+  onFile: () => void;
+}): JSX.Element | null {
   const list = detail.checklist;
   if (!list?.length) return null;
   const where = detail.container?.label ?? 'the sprint';
@@ -71,7 +86,33 @@ function Checklist({ detail }: { detail: FindingDetail }): JSX.Element | null {
               {i.tracked ? '✓' : '✕'}
             </span>
             <span className="txt">{i.title}</span>
-            <span className="ref">{i.ref}</span>
+            {/*
+              ONLY ON THE ROW THIS ALERT IS ABOUT. The list is every promise in
+              the container and more than one of them can be untracked, while
+              the primary action files a ticket for this finding's own note
+              whatever was pressed — so an inline button on somebody else's row
+              would create the wrong ticket and report success. `subject` is set
+              from the note id by `findingDetail`, not matched on the title.
+
+              `rowmain` is the button reset the row components share; `.check
+              .ref` still supplies the mono, the size and the crit colour, and
+              both are selectors the preview already draws.
+            */}
+            {!i.tracked && i.subject ? (
+              <button type="button" className="ref rowmain" onClick={onFile}>
+                {/*
+                  UNDERLINED, because it looked exactly like the two plain
+                  `no ticket` labels above it — same mono, same size, same crit
+                  red — and nothing said the third one was a button. `<u>` and
+                  not a class: the underline is the affordance and it needs no
+                  rule, which keeps this off a stylesheet the preview would then
+                  have to grow a matching one for.
+                */}
+                {i.ref} · <u>file it →</u>
+              </button>
+            ) : (
+              <span className="ref">{i.ref}</span>
+            )}
           </li>
         ))}
       </ul>
@@ -238,6 +279,15 @@ export function AlertPage({
   onActed?: () => void;
 }): JSX.Element {
   const { data, error, loading, reload } = useFinding(id);
+  /**
+   * A counter and not a boolean, because the same request can be made twice.
+   *
+   * The checklist's inline `file it` is a second way to press the primary
+   * action; `Actions` owns whether it is running and what it reported, and this
+   * is the whole of what has to cross between them. Bumping it fires once —
+   * `Actions` remembers the value it last acted on.
+   */
+  const [fileNow, setFileNow] = useState(0);
 
   return (
     <AppWindow route={route} counts={counts}>
@@ -262,7 +312,15 @@ export function AlertPage({
             <div className="meta">
               <span className={`chip ${data.finding.severity}`}>{KIND_LABEL[data.finding.kind]}</span>
               <span className="when">{firedLine(data)}</span>
-              {answeredLine(data) && <span className="when">{answeredLine(data)}</span>}
+              {/*
+                THE SEPARATOR IS IN THE TEXT, not a gap. Three mono spans of the
+                same size and colour, nine pixels apart, read as one string —
+                "Fired August 17 Batch the nav rewrite" is two facts and looks
+                like one, and adding "Parked until August 27" between them made
+                it three. A middot is what every other multi-part line in this
+                app uses, and it needs no rule the preview does not have.
+              */}
+              {answeredLine(data) && <span className="when">· {answeredLine(data)}</span>}
               {/*
                 WHAT THE TICKET ACTUALLY IS, which the page never said.
                 "ORB-1641 has not moved" names a key and nothing else, and the
@@ -271,13 +329,13 @@ export function AlertPage({
                 read it — the same omission on `cycle` and `disagreement`, whose
                 headlines are also bare keys.
               */}
-              {data.item?.title && <span className="when">{data.item.title}</span>}
+              {data.item?.title && <span className="when">· {data.item.title}</span>}
             </div>
             <h1 className="claim">{data.finding.claim}</h1>
             <p className="impact">{data.finding.impact}</p>
           </div>
 
-          <Checklist detail={data} />
+          <Checklist detail={data} onFile={() => setFileNow((n) => n + 1)} />
 
           <div className="block">
             <h4>{EVIDENCE_HEADING[data.finding.kind] ?? 'The records this stands on'}</h4>
@@ -304,16 +362,36 @@ export function AlertPage({
             </div>
           </div>
 
-          {data.note?.body && (
-            <div className="block">
-              <h4>How it was recorded when it was said</h4>
-              <p className="blocklead">{data.note.body}</p>
-            </div>
-          )}
+          {/*
+            THE NOTE'S BODY IS NOT A BAND, and it never was in the design: the
+            preview's alert is head → checklist → evidence → actions → ask, and
+            `How it was recorded when it was said` was a sixth band this file
+            grew on its own.
+
+            It cost 137px between the evidence and the answer, and every clause
+            of it was already on screen — measured on `missing_ticket:promise-005`,
+            where the body reads "Dev Dunne to confirm the migration window.
+            Promised in Orbit Sprint Review 2026-07-30. Dev Dunne took it. No
+            date was given, so it is checked against Orbit 32's close. Nothing in
+            the tracker references it yet." The first sentence is the claim AND
+            the evidence quote directly above; the meeting is that quote's label;
+            the date clause is the impact line; the tail is both the impact's
+            tail and the jira observation row.
+
+            A HAND-WRITTEN NOTE CAN SAY MORE, and on `fixtures/` one does —
+            "he moved to Payments Core on 31 July, so whoever picks this up is
+            not who agreed it" is on no other part of the page. The design's
+            answer to that is not a band either: the preview puts that exact
+            fact in an ANSWER to a suggested question. The note is untouched in
+            the vault, is what the agent reads, and the ask box is directly
+            below.
+          */}
 
           <Actions
             finding={data.finding}
+            audience={data.audience}
             safeMode={data.safeMode}
+            fileNow={fileNow}
             onDone={() => {
               reload();
               onActed?.();

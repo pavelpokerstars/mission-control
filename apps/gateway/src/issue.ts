@@ -44,6 +44,7 @@ import { lookupStatusWord } from '@mc/connectors';
 import type { Connectors } from '@mc/connectors';
 import type { VaultStore } from '@mc/vault';
 import type { EventLog } from './events.js';
+import { personName } from './graph-source.js';
 
 /**
  * How far back the trail reaches, in days — and how far back a lane is measured.
@@ -174,10 +175,10 @@ export async function buildDossier(
     trail.push({
       surface: 'jira',
       ts: cm.createdAt,
-      label: `comment — ${cm.author}`,
+      label: `comment — ${personName(cm.author)}`,
       quote: cm.body,
       signal: classifySignalFor(cm.body, key),
-      who: cm.author,
+      who: personName(cm.author),
     });
   }
 
@@ -191,11 +192,11 @@ export async function buildDossier(
       slack.push({
         surface: 'slack',
         ts,
-        label: `#${ch.name} — ${m.author}`,
+        label: `#${ch.name} — ${personName(m.author)}`,
         quote: m.text,
         signal: classifySignalFor(m.text, key),
         ref: { surface: 'slack', id: m.ts, parentId: ch.id },
-        who: m.author,
+        who: personName(m.author),
         // The channel travels on the entry rather than being re-derived from
         // the label: `#eng-platform — sam` is a string built for a human, and
         // parsing it back to get an id is the kind of round trip that breaks

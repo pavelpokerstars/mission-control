@@ -47,6 +47,22 @@ import { historyOf, useConversations, type Conversation } from './conversations'
  */
 const SEEDED_KEY = 'mc-demo-seeded';
 
+/**
+ * Bumped when the seeded CONTENT changes, so a browser holding an older vintage
+ * gets the current one.
+ *
+ * The answers are composed from the findings at seed time and then frozen in
+ * `localStorage`, which is right — a conversation is a record of what was said —
+ * and it means a change to what the app says about its data does not reach rows
+ * that already exist. It showed: after the identity map started resolving Slack
+ * authors to names, every alert and every citation read "Jonas Jost" while the
+ * seeded answers went on quoting `jonas.jost`.
+ *
+ * Only OUR rows are replaced — see the `demo-` test below. A browser with a
+ * conversation somebody actually had is never touched, whatever the version.
+ */
+const SEED_VERSION = '2';
+
 const HOUR = 3_600_000;
 const DAY = 24 * HOUR;
 
@@ -223,19 +239,29 @@ export function seedDemoConversations(findings: Finding[]): void {
     // for, and a browser that cannot persist would re-seed on every reload.
     return;
   }
-  if (seen) return;
+  if (seen === SEED_VERSION) return;
 
   const mark = (): void => {
     try {
-      localStorage.setItem(SEEDED_KEY, new Date().toISOString());
+      localStorage.setItem(SEEDED_KEY, SEED_VERSION);
     } catch {
       // As above.
     }
   };
 
-  // Already in use. The offer is spent, and nothing demo-shaped goes into a
-  // history somebody has been writing.
-  if (historyOf(useConversations.getState().conversations).length) {
+  /**
+   * Already in use — and the test is whether the rows are OURS, not whether
+   * there are any.
+   *
+   * A history of nothing but `demo-` rows is a previous vintage of this seed and
+   * is ours to replace; anything else is a conversation somebody had, and
+   * nothing demo-shaped goes near it whatever the version says. Deleting the
+   * seeded rows leaves an empty history, which re-seeds — that is the same
+   * offer, not a resurrection, because the flag has moved on and only a NEW
+   * vintage gets past the check above.
+   */
+  const history = historyOf(useConversations.getState().conversations);
+  if (history.length && !history.every((c) => c.id.startsWith('demo-'))) {
     mark();
     return;
   }

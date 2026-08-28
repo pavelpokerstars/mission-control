@@ -45,10 +45,20 @@ export function safeMode(): boolean {
   return !['off', 'false', '0', 'no'].includes(raw);
 }
 
+/**
+ * The prefix, as a constant, because one caller has to RECOGNISE this refusal.
+ *
+ * `accept_proposal` reports a failure as `{ error: string }` rather than by
+ * throwing, so by the time `actOnFinding` sees it the class is gone and only the
+ * sentence is left. Matching on a literal in the other file is how the two drift
+ * apart the first time this wording is improved.
+ */
+export const SAFE_MODE_REFUSAL = 'Blocked by safe mode:';
+
 export class BlockedBySafeMode extends Error {
   constructor(what: string) {
     super(
-      `Blocked by safe mode: ${what}. ` +
+      `${SAFE_MODE_REFUSAL} ${what}. ` +
         'Mission Control is running read-only. Nothing was written to the source. ' +
         'Set MC_SAFE_MODE=off in .env and restart the gateway to allow writes.',
     );

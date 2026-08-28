@@ -21,11 +21,11 @@
  */
 
 .page { padding:0; }
-.head { padding:14px var(--gutter) 26px; border-bottom:1px solid var(--line); }
-.head .meta { display:flex; align-items:center; gap:12px; margin-bottom:14px; flex-wrap:wrap; }
+.head { padding:13px var(--gutter) 20px; border-bottom:1px solid var(--line); }
+.head .meta { display:flex; align-items:center; gap:12px; margin-bottom:11px; flex-wrap:wrap; }
 .head .when { font-family:var(--mono); font-size:11px; color:var(--ink-3); }
 .claim {
-    margin:0 0 12px; font-size:clamp(1.35rem,3.4vw,1.85rem); font-weight:600;
+    margin:0 0 9px; font-size:clamp(1.35rem,3.4vw,1.85rem); font-weight:600;
     letter-spacing:-.022em; line-height:1.22; max-width:24ch; text-wrap:balance;
   }
 .impact { margin:0; color:var(--ink-2); font-size:1rem; max-width:60ch; }
@@ -33,7 +33,7 @@
 /* checklist */
 .check { display:grid; gap:0; }
 .check li { list-style:none; display:grid; grid-template-columns:22px minmax(0,1fr) auto; gap:0 12px;
-    align-items:baseline; padding:10px 0; border-bottom:1px dashed var(--line); }
+    align-items:baseline; padding:8px 0; border-bottom:1px dashed var(--line); }
 .check li:last-child { border-bottom:0; }
 .check .mark { font-family:var(--mono); font-size:13px; font-weight:600; line-height:1.4; }
 .check .done .mark { color:var(--ok); }
@@ -44,10 +44,10 @@
 .check .ref { font-family:var(--mono); font-size:11px; color:var(--ink-3); white-space:nowrap; }
 .check .miss .ref { color:var(--crit); }
 /* evidence */
-.ev { display:grid; gap:10px; }
+.ev { display:grid; gap:8px; }
 .ev article, .ev .evrow {
     display:grid; grid-template-columns:12px minmax(0,1fr); gap:0 12px;
-    padding:13px 15px; background:var(--sunk); border-radius:8px;
+    padding:11px 15px; background:var(--sunk); border-radius:8px;
     width:100%; text-align:left; font:inherit; color:inherit;
     border:1px solid transparent;
   }

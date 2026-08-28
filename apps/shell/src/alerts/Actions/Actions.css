@@ -35,6 +35,41 @@
     background:var(--ok-bg); border-radius:8px; padding:15px 17px;
   }
 .result .tick { color:var(--ok); font-family:var(--mono); font-weight:600; }
+/* A refusal wears the severity it is — DESIGN.md §1, every colour means
+   something. The strip drew a green panel and a green tick over "that did not
+   go through: blocked by safe mode", which says the opposite of the sentence
+   inside it. */
+.result.failed { background:var(--crit-bg); }
+.result.failed .tick { color:var(--crit); }
+/* ---------------------------------------------------------------------------
+ * The message a proposal carries, drawn as the ARTEFACT rather than as more of
+ * the sentence above it.
+ *
+ * The strip reported the outcome and then printed the message in the same
+ * weight, the same colour and the same paragraph rhythm, so "Sent to jonas.jost
+ * and cleo.calder in #orbit-delivery." ran straight into "jonas.jost,
+ * cleo.calder — ORB-1627 is called done and not done." and there was no telling
+ * where the report ended and the thing being reported began. Two different
+ * voices need two surfaces.
+ *
+ * It sits on `--app` inside the outcome panel — a page-coloured card on a
+ * coloured ground, which is the same move `.ev article` makes for a citation —
+ * and the quoted records inside it get the left rule they have everywhere else
+ * in this app instead of a `>` typed into the prose.
+ * ------------------------------------------------------------------------- */
+.result .draft {
+  margin:14px 0 0; padding:14px 16px; border-radius:8px;
+  background:var(--app); border:1px solid var(--line);
+  display:grid; gap:9px;
+}
+.result .draft .lab {
+  font-family:var(--mono); font-size:10px; font-weight:600; letter-spacing:.1em;
+  text-transform:uppercase; color:var(--ink-3);
+}
+.result .draft p { margin:0; font-size:.94rem; line-height:1.55; }
+.result .draft .q { padding-left:12px; border-left:2px solid var(--line-2); color:var(--ink-2); }
+.result .draft .noteedit { margin:0; }
+.result .draft .editacts { margin:5px 0 0; align-items:center; }
 .result p { margin:0 0 8px; font-size:.95rem; }
 .result p:last-child { margin:0; }
 .deferform { max-width:62ch; }

@@ -34,6 +34,194 @@ interface already has a meaning for) or to delete and re-run those ceremonies,
 which mints new note ids and therefore new finding ids. Neither is free; pick
 per note rather than in bulk.
 
+### `Ask someone` named nobody, said nothing, and was often the same button twice
+
+**Fixed.** Four separate defects behind one complaint — *"'Ask someone' — who am
+I sending a message to, what message am I sending?"*
+
+**Nobody.** `post_message`'s payload was `{channel?, text}`. There was no
+recipient field at all, so the result strip's *"addressed to the people in the
+records above"* was a sentence in the interface over a body that named nobody.
+`askAudience` in `@mc/domain` derives them from the records and from nowhere
+else — Slack labels are `#channel — author`, a promise carries its `owner`, a
+ticket its `assignee` — and `FindingDetail.audience` carries the answer, so the
+buttons name the same people before the click that the draft names after it.
+Empty is a real answer and the lead says it out loud: *"to nobody yet — nothing
+in the records names who to ask."*
+
+**Nothing.** The strip said *"Drafted. Read it before it goes"* and then printed
+a citation COUNT. The draft itself was never rendered anywhere in the app, so
+the one instruction it gave could not be followed. Worse, the count's sentence —
+*"the meeting, the rationale and the records it was read from"* — is
+`create_issue`'s, printed over a Slack message that has no meeting. The message
+is now shown verbatim, one line per line, because the `>` quotes are Slack's own
+syntax and joining them into a paragraph would show something other than what
+would be posted.
+
+**The same button twice.** `primaryProposal` returns `askProposal(f)` for
+`cycle`, `disagreement`, `suspect_link`, `aging` and `dropped_commitment`, so on
+five of the eight kinds the second button re-pressed the first. Where the records
+name more than one person the two are now different acts — all of them together,
+or one of them alone — and where they do not, the lead says they coincide. See
+`DESIGN.md` §9 for why the preview's own answer (`Open MC-102`) is not available.
+
+**One template for every kind**, which asked a question that did not apply.
+Measured on the flagship alert, over a single Zoom quote:
+
+```
+Esme Ellis to chase the vendor sandbox was never filed.
+> Esme Ellis to chase the vendor sandbox. — Orbit Daily Scrum 2026-06-18
+Which of these is current?
+```
+
+"Which of these" refers to nothing. `askQuestion` is per-kind now — the question
+is the only part of the message a person actually answers, so it is the one part
+that cannot be generic.
+
+**And the channel it named was not the channel it would have used.**
+`accept_proposal` reads `payload.channelId`; `askProposal` wrote
+`payload.channel`. So accepting a draft the page said was going to
+#orbit-delivery would have posted it to `SLACK_DEFAULT_CHANNEL ?? 'C-mc'`. The
+audience carries both now, because they are different strings and the app needs
+each: the name is what a reader recognises, and `SlackConnector.post` takes the
+id.
+
+**Still open.** On an alert where only one person is named, the two ask buttons
+genuinely do draft the same message and the lead admits it rather than hiding
+it. The fix is a second act that is not an ask, and the preview's is a Jira
+write — pinning both records on the ticket — which is a feature rather than a
+correction.
+
+### People were addressed by their login everywhere a person appeared
+
+**Fixed.** The graph has carried `displayName` beside `handles.slack` on every
+person node since the identity map was built — Slack's `users.list` has
+`real_name` and `import-slack-messages.mts --users` merges it into the person
+Jira wrote — and nothing read it. `buildIdentities` indexed every alias, and
+both of the questions it could answer (`resolve`, `canonical`) come back with a
+HANDLE, which is right for joining and wrong for reading. So an alert said
+*"#orbit-delivery — jonas.jost"*, a button said *"Ask hugo.hart"*, and a drafted
+message opened *"jonas.jost, cleo.calder —"*.
+
+`Identities.nameOf` is the third question, and `personName` in `graph-source.ts`
+is the one function every display site calls, so "we show names and join on
+handles" is a fact about one place rather than a convention nine call sites are
+expected to remember. It is memoised against the graph OBJECT, so a collector's
+re-derive invalidates it by identity and a per-message lookup does not walk every
+node.
+
+It falls through to the identifier when nobody is known, and `nameOf` returns
+`undefined` rather than the handle so a caller has to make that choice — a name
+we do not have is not a name to invent. The `label` fallback is skipped when it
+is just the handle or the email again, for the same reason.
+
+**Changed at the display sites only.** `m.author`, `item.assignee` and
+`cm.author` stay handles everywhere they are compared — `classifySignalFor`, the
+lane's assignee filter, `?assignee=`, the identity map itself — because they are
+join keys. One consequence worth knowing before a live Slack connector sends a
+draft: a name in the body reads correctly and does not NOTIFY anybody, and the
+way back to `<@U…>` is `Identities.canonical` on the same map.
+
+The seeded demo conversations froze the old wording in `localStorage`, so
+`demo.ts` gained a `SEED_VERSION`: a history of nothing but `demo-` rows is a
+previous vintage and is replaced, and anything else is a conversation somebody
+had and is never touched.
+
+### Every alert with a conversation opened part-way down itself
+
+**Fixed.** Clicking a row on the front door landed ~420px into the alert, at
+whatever sentence the last answer ended on, with the claim and the evidence
+above the fold; coming back from a citation did the same. It reads as the router
+forgetting to scroll and it was one component lower: `Turns` in `Thread.tsx`
+takes `scrollOnGrow`, and its effect fired on MOUNT as well as on growth, so an
+alert that already had an inline exchange scrolled itself to the bottom of it.
+Seeding demo conversations is what made it happen on every alert rather than the
+few somebody had used.
+
+The effect records the previous length and only scrolls when it increases, so
+the tail of a thread you already had is where the page starts rather than where
+it jumps to. Two things went in beside it, because the browser's default is
+wrong here for a second reason: `history.scrollRestoration` is `manual` now, and
+`AlertApp` scrolls to the top on every address change — keyed on the whole
+address, since `at` collapses every record to one key and two citations opened
+one after the other are two pages. The record view's scroll to its cited line
+runs when the fetch resolves, after that one, so it still wins.
+
+### A cycle's four citations said Miro, opened nothing, and repeated the impact
+
+**Fixed.** The rows were built in `work.ts` with `surface: 'miro'` hardcoded and
+no `ref`, which was wrong twice over. Wrong about the surface: every path that
+reaches a finding sets `arrows` from `projectArrows` over the graph's
+`depends_on` edges, so on a programme with no board at all — `/api/health`
+reports `miro: mock` — four rows claimed Miro. And wrong about being unopenable:
+four grey sentences restating the walk already printed in the impact line, with
+nothing to click, which is a citation block asking the reader to take our word.
+
+Each row now cites the ticket that WAITS — a real record, and the place somebody
+goes to remove the link, which is the only act that breaks a loop. Same shape as
+the aging signal's own row a few lines above it: our observation in the label,
+the Jira record in the ref. `Evidence.ref`'s doc comment used to give a cycle's
+arrows as its example of "nothing to open"; it now says what changed and why.
+
+If the lane is ever fed `boardArrows` — a live Miro canvas — the label becomes
+Miro's account of the arrow while the citation stays the ticket. Still true,
+still the right place to act, and the first assumption to check if these rows
+start looking wrong.
+
+### The action was three bands below the sentence that stated the problem
+
+**Fixed, narrowly.** *"If it says 'no ticket', I would be able to open a ticket
+right there."* The checklist's cross is where the problem is named and the button
+that answers it was two bands and a scroll away, so the `no ticket` cell is now
+`no ticket · file it →` and presses the same primary action. The row grows no
+second result surface: `Actions` reports it where it always does, and scrolls
+there, because the reader is up at the checklist and the answer arrives below.
+
+**Only on the row the alert is about**, and that guard is the whole reason this
+needed a gateway change. The checklist is every promise made in the container and
+several can be untracked at once — Orbit 32 has three — while the primary action
+files a ticket for THIS finding's note whatever was pressed. Without a flag, an
+inline button on the third row would have created the first row's ticket and
+reported success. `FindingDetail.checklist[].subject` is set from the note id, not
+matched on the title, because two promises in one sprint can be worded the same.
+
+Two things fell out of testing it, both older than the button. The strip drew a
+green panel and a green tick over *"That did not go through: blocked by safe
+mode"* — `ActionResult.failed` now carries the refusal and `.result.failed`
+wears the severity it is, which is `DESIGN.md` §1's rule that every colour means
+something. And the scroll was written in the `then` of the call, where the block
+it scrolls to has not mounted yet; it is an effect on `result` now.
+
+### Seventeen date bands for seventeen messages
+
+**Fixed, and the first fix was the wrong one — worth recording because it is the
+kind that looks right in the diff.** `dayMark` draws the day as its own row
+rather than squeezing it into the 74px stamp, which is right whenever a day
+holds several messages and pure cost when it holds one. This fixture's Slack
+channel is one message per day for seventeen days, so the record page was more
+band than message, with the date on one row and the clock it belongs to on the
+next.
+
+The first attempt drew the band **only where a day grouped more than one line**
+and folded `Fri 14 Aug` into the stamp everywhere else. It halved the height and
+it was wrong: Slack itself breaks a channel by day and puts only a clock on each
+message, and a date repeated on every line is precisely what the divider exists
+to avoid.
+
+So the divider is back on every day change, and what the crowding actually
+wanted is a divider that costs a **hairline rather than a band** — the date, then
+a rule across the rest, which is Slack's own day break in this app's own
+vocabulary. 31px down to 21px, and it now separates rather than merely labels.
+
+The label sizes itself and carries `white-space: nowrap`. Pinned to the 74px
+stamp column it lined up prettily with the clocks and then wrapped — "MON, JULY
+20" is ~78px at 10px mono with this letter-spacing, so every divider became two
+lines and read as broken. The column width is not ours to guarantee; the month's
+name belongs to the reader's locale.
+
+A Zoom transcript is unaffected and draws none: its lines carry an offset rather
+than a wall clock, and a meeting is one day by construction.
+
 ### A deferred alert became one of its own sources
 
 **Fixed, and worth knowing because it was invisible by construction.** `act.ts`'s
@@ -1035,6 +1223,21 @@ anticipated, and widening it is a rule, not a prompt.
 `libs/vault/src/store.ts`. There is no locking, no merge, no conflict
 resolution, and the whole class of problems that makes shared knowledge bases
 hard is simply absent. If that assumption changes, that file breaks first.
+
+**A vendor write blocked by SAFE MODE is reported as though it had happened.**
+Asked for, and it is the one place this app says something happened that did
+not — so it is worth knowing exactly how narrow it is. Only
+`BlockedBySafeMode`, which is OUR refusal, thrown before the call is made, where
+nothing was attempted and nothing failed; a vendor that refuses or is down still
+says so, unchanged. No key is invented, and none of the consequences are
+claimed — the sentences report the act alone, so nothing names a ticket that
+does not exist or says the alert will stop firing, which it will not. And the
+LOG is untouched: `accept_proposal` throws before it settles, so the proposal
+stays pending and the durable record still says the decision was never carried
+out. The honest version of the same thing is one line — `MC_SAFE_MODE=off` on a
+fixture makes these writes real against the in-memory graph connectors, with no
+credentials and no network, and then the ticket exists and the alert genuinely
+stops. See `pretendItWorked` in `act.ts`.
 
 **The demo's parked notes all carry a reminder that has already lapsed.** Both
 fixtures ship four `idea` notes so `Later` opens on something (`buildParked` in

@@ -565,10 +565,28 @@ async function main(): Promise<void> {
       if (!detail) return res.status(404).json({ error: 'no such finding' });
 
       const body = req.body as ActionInput;
-      if (!['primary', 'ask', 'defer', 'dismiss'].includes(body?.action)) {
-        return res.status(400).json({ error: 'action must be primary, ask, defer or dismiss' });
+      /**
+       * `send` is here and is not a fifth action on the alert — `DESIGN.md` §7
+       * caps that at four, and this one has no button in the `.acts` row. It is
+       * what the result strip offers once a draft is on screen and has been
+       * read, which is the only place in the app that posts.
+       */
+      if (!['primary', 'ask', 'defer', 'dismiss', 'send'].includes(body?.action)) {
+        return res
+          .status(400)
+          .json({ error: 'action must be primary, ask, defer, dismiss or send' });
       }
-      res.json(await actOnFinding(detail.finding, body, vault, detail.note, applyProposal));
+      res.json(
+        await actOnFinding(
+          detail.finding,
+          body,
+          vault,
+          detail.note,
+          applyProposal,
+          // The same audience the page named before the click.
+          detail.audience,
+        ),
+      );
     } catch (err) {
       res.status(500).json({ error: String(err) });
     }

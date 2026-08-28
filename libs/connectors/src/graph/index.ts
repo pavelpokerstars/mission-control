@@ -303,6 +303,23 @@ export interface Identities {
    * which would have sent somebody writing an identity map they did not need.
    */
   canonical: (raw: string) => string | null;
+  /**
+   * The name a PERSON would recognise, for any alias of theirs.
+   *
+   * `resolve` and `canonical` both answer with a handle, which is right for
+   * joining and wrong for reading: an alert that says *"#orbit-delivery —
+   * jonas.jost"*, a button that says *"Ask hugo.hart"* and a drafted message
+   * that opens *"jonas.jost, cleo.calder —"* are all addressing people by their
+   * login. The collector already has the answer — Slack's `users.list` carries
+   * `real_name`, and `import-slack-messages.mts --users` merges it into the
+   * person Jira wrote as `displayName` — and nothing was reading it.
+   *
+   * `undefined` rather than falling through, so a caller has to decide what to
+   * show when nobody is known. Every one of them shows the raw handle, which is
+   * today's behaviour and the honest one: a name we do not have is not a name to
+   * invent.
+   */
+  nameOf: (raw: string) => string | undefined;
 }
 
 export function buildIdentities(g: StoredGraph): Identities {
@@ -314,6 +331,8 @@ export function buildIdentities(g: StoredGraph): Identities {
    * the lane and the trail back out of step.
    */
   const byAlias = new Map<string, string>();
+  /** The same aliases, pointing at the display name rather than the handle. */
+  const nameByAlias = new Map<string, string>();
 
   for (const n of g.nodes) {
     if (n.kind !== 'person') continue;
@@ -332,12 +351,30 @@ export function buildIdentities(g: StoredGraph): Identities {
       person.email.split('@')[0],
     ].filter((a): a is string => !!a && a.length > 0);
 
-    for (const alias of aliases) byAlias.set(alias.toLowerCase(), canonical);
+    /**
+     * `label` is the fallback, and only where it is a NAME.
+     *
+     * `StoredPerson.label` is what a collector wrote for a reader and is
+     * usually the same string as `displayName`; on a graph that carries only
+     * one of them it is the one that is there. It is skipped when it is just
+     * the handle or the email again, because "Jonas Jost" and "jonas.jost" are
+     * different answers and returning the second is worse than returning
+     * nothing — a caller that gets `undefined` shows the handle, which is
+     * exactly what it would have shown anyway.
+     */
+    const shown = person.displayName ?? person.label;
+    const isName = !!shown && shown !== person.email && !Object.values(handles).includes(shown);
+
+    for (const alias of aliases) {
+      byAlias.set(alias.toLowerCase(), canonical);
+      if (isName && shown) nameByAlias.set(alias.toLowerCase(), shown);
+    }
   }
 
   return {
     resolve: (raw) => (raw ? byAlias.get(raw.toLowerCase()) ?? raw : raw),
     canonical: (raw) => (raw ? byAlias.get(raw.toLowerCase()) ?? null : null),
+    nameOf: (raw) => (raw ? nameByAlias.get(raw.toLowerCase()) : undefined),
   };
 }
 

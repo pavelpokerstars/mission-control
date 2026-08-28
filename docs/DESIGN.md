@@ -92,6 +92,36 @@ every content edge on every screen resolves to a **single x**.
 (`calc(var(--gutter) - 3px)`), because a border adds to layout and would
 otherwise indent stripe rows 3px past every heading above them.
 
+### The vertical rhythm is set at real density
+
+A band pads `17px` and its label clears `10px`; a checklist row is `8px`, an
+evidence card `11px`, and the gap between cards is `8px`. These were `24`, `16`,
+`10`, `13` and `10` — drawn against a preview showing **three alerts with
+one-line impacts**, and measured against the app they produced a missing-ticket
+page 1606px tall whose `What now` band began 1051px down. On any laptop the
+answer to the alert was below the fold on arrival, every time.
+
+The rhythm is 119px of that, and it applies to every page: the same five rules
+set Later, Ask, Sources and the note page. Nothing is reordered by it and
+nothing is removed; the page simply stops spending a quarter of its height on
+air before it answers.
+
+**The other 137px was a band that was never in this document.** The alert is
+head → checklist → evidence → actions → ask, and the app had grown a sixth —
+`How it was recorded when it was said`, printing the vault note's body between
+the evidence and the answer. Every clause of it was already on screen: measured
+on one alert, the body's first sentence is the claim *and* the evidence quote
+directly above it, the meeting is that quote's own label, the date clause is the
+impact line, and the tail is both the impact's tail and the jira observation row.
+Together the two changes take the page from 1606px to 1350px and put all four
+actions on the first screen of a 1000px window.
+
+A hand-written note can of course say more than the generated ones do, and one
+in `fixtures/` does. The design's answer to that is not a band either: the
+preview puts that same fact in an **answer** to a suggested question. The note
+is untouched in the vault, it is what the agent reads, and the ask box is
+directly below the actions.
+
 ### Back links own their space
 
 `.back` supplies the gap beneath itself and the next band starts flush
@@ -231,6 +261,34 @@ Its label states what it will do, so clicking holds no surprise:
 | 1 | `1 earlier conversation · open it →` | straight into it |
 | n | `n earlier conversations · see them →` | Ask, filtered to that issue |
 
+### You read the message before it goes, and you may rewrite it
+
+A drafted message is shown **in full**, in the result strip, in an editable box
+with `Send it` beside the way out. The strip used to say *"Drafted. Read it
+before it goes"* and then print a citation count, which is an instruction the
+interface made impossible to follow.
+
+**The report and the message are two voices, so they get two surfaces.** The
+outcome sentence is the app speaking; the message is the artefact it is speaking
+about. Run together in one weight they read as one paragraph — *"Sent to
+jonas.jost and cleo.calder in #orbit-delivery."* straight into *"jonas.jost,
+cleo.calder — ORB-1627 is called done and not done."* — so the message sits in a
+labelled card (`THE MESSAGE`, or `WHAT WENT` once it has gone) on the page
+surface inside the coloured panel, the same move `.ev article` makes for a
+citation. A quoted record inside it is drawn with the left rule it has
+everywhere else rather than the `>` it is typed with: the marker is Slack's
+syntax, and the reader is looking at a record, not at markup.
+
+Two things follow from the words going out over somebody's name. The draft names
+who it is addressed to — read from the records, never guessed, and absent when
+no record names anybody. And what is posted is what is in the box: we can say
+who and quote what, and we cannot know the sentence this team would actually
+use.
+
+**`Send it` is not a fifth action.** The four are the answers to the alert; this
+is what you press inside the result of one of them, on a draft already on
+screen. It never appears in the `.acts` row.
+
 ### Delete acts, and stays undoable
 
 No "are you sure?". Deleting removes the row immediately and puts an **undo strip
@@ -330,7 +388,7 @@ which is the rung a fresh checkout reaches first. See `KNOWN-GAPS.md` §1.
 ### Where the built app knowingly differs from the preview
 
 The preview wins by default, so a difference has to be argued rather than
-allowed to drift. Three are:
+allowed to drift. Four are:
 
 - **A Miro citation opens the record, not the live board.** The preview's map
   card promises "the real board, framed on the stickies or arrows the alert is
@@ -351,6 +409,24 @@ allowed to drift. Three are:
   the effect the app can actually deliver. **This reverts to the preview's
   wording the moment the evidence view lands**, and it is the only alert whose
   primary label differs; every dismiss label matches the preview exactly.
+
+- **The second action is an ask on every alert, where the preview gives each
+  one its own.** The preview's second button is `Ask the platform team` on a
+  missing ticket, `Ask dana about this morning's arrow` on a cycle, and on a
+  disagreement it is not an ask at all — `Open MC-102`, whose result is *"opened,
+  with both records pinned beside the ticket"*. That last one is a Jira write we
+  do not make, and a button that merely **navigated** to the record would break
+  two rules at once: §4's "a record — click a citation, there is no other way
+  in", and the in-place rule `verify-design.mts` enforces, which is that an
+  action resolves where it was pressed. So the slot stays an ask, and the
+  difference between the two is made real rather than decorative: where the
+  records name more than one person the primary asks all of them together and
+  the second asks one alone — `Ask both, in one thread` beside `Ask jonas.jost
+  only`. Where only one person is named the two do coincide, and the lead says
+  so in the preview's own words: *"Both Ask buttons draft a Slack message… and
+  send nothing until you read it."* **This reverts to the preview's per-alert
+  buttons when there is something for them to do** — for the disagreement, that
+  is pinning records on a ticket.
 
 And one piece of the preview is **specified and not built**: Sources is where
 "the animated brain" belongs — the preview says so twice, and it is the reason
