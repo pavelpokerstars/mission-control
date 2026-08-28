@@ -182,6 +182,16 @@
     display:flex; align-items:center; justify-content:space-between; gap:20px; flex-wrap:wrap;
     padding:13px 22px; border-bottom:1px solid var(--line); background:var(--app);
   }
+
+  /* The footer closes the window the topbar opens: same padding, same rule, the
+     other way up. Muted and mono, because it is a signature rather than
+     something to read. */
+  .appfoot {
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+    padding:12px 22px; border-top:1px solid var(--line);
+    font-family:var(--mono); font-size:11px; letter-spacing:.04em; color:var(--ink-3);
+  }
+  .appfoot .yr { font-variant-numeric:tabular-nums; }
   .brand { font-family:var(--mono); font-size:12px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; }
 
   /* the optional toolbar — compare it against no toolbar with the switch above */
@@ -1208,7 +1218,11 @@
       </div>
 
       <p class="quiet">Nothing else changed overnight. <code>Ask anything →</code></p>
-    </div>
+          <footer class="appfoot">
+        <span>Mission Control Hub</span>
+        <span class="yr"></span>
+      </footer>
+</div>
 
     <div class="notes">
       <h3>What is deliberately not here</h3>
@@ -1244,7 +1258,11 @@
       </div>
       <button class="back" data-go="list">← back to the list</button>
       <div class="page" id="page"></div>
-    </div>
+          <footer class="appfoot">
+        <span>Mission Control Hub</span>
+        <span class="yr"></span>
+      </footer>
+</div>
 
     <div class="notes" id="alert-notes">
       <h3>The rules every alert page follows</h3>
@@ -1285,7 +1303,11 @@
       </div>
 
       <div id="askbody"></div>
-    </div>
+          <footer class="appfoot">
+        <span>Mission Control Hub</span>
+        <span class="yr"></span>
+      </footer>
+</div>
 
     <div class="notes">
       <h3>Four rules the chat follows</h3>
@@ -1350,7 +1372,11 @@
 
       <p class="quiet">When one comes back it arrives the same way anything else does — as a notification,
         carrying the note you left yourself.</p>
-    </div>
+          <footer class="appfoot">
+        <span>Mission Control Hub</span>
+        <span class="yr"></span>
+      </footer>
+</div>
 
     <div class="notes">
       <h3>Why this page exists at all</h3>
@@ -1396,7 +1422,11 @@
         <div class="line"><time>14:12:27</time><p class="said"><b>you</b><span>Great. Then MC-104 can go ahead on the assumption it exists.</span></p></div>
         <div class="line"><time>14:12:41</time><p class="said"><b>riya</b><span>I will write the decision record up in Confluence this afternoon.</span></p></div>
       </div>
-    </div>
+          <footer class="appfoot">
+        <span>Mission Control Hub</span>
+        <span class="yr"></span>
+      </footer>
+</div>
 
     <div class="notes">
       <h3>Why this is not a Zoom pane</h3>
@@ -1471,7 +1501,11 @@
             <span class="count">Zoom</span><span class="chip warn">Look</span></div>
         </div>
       </div>
-    </div>
+          <footer class="appfoot">
+        <span>Mission Control Hub</span>
+        <span class="yr"></span>
+      </footer>
+</div>
 
     <div class="notes">
       <h3>You cannot read records here — and that is the point</h3>
@@ -2352,6 +2386,11 @@
   // The fixture's today. Every relative option resolves against it, so the list
   // can show the actual date rather than making you work it out.
   var TODAY = new Date(2026, 7, 21);
+  // The footer year comes from TODAY like every other date here, so the
+  // preview never carries a hand-written one — DESIGN.md §8.
+  [].forEach.call(document.querySelectorAll('.appfoot .yr'), function (el) {
+    el.textContent = String(TODAY.getFullYear());
+  });
   function plusDays(n) { var d = new Date(TODAY); d.setDate(d.getDate() + n); return d; }
   /** The next real Monday, rather than an offset that happens to be wrong. */
   function nextWeekday(dow) {

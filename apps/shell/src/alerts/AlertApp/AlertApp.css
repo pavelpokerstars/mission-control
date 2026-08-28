@@ -54,10 +54,26 @@
  * it looked fine and was 140px narrower than the design at every width above
  * 1000. Nothing about that is visible without measuring two pages side by side.
  * ------------------------------------------------------------------------- */
+/**
+ * FULL HEIGHT, MINUS ANYTHING ABOVE IT.
+ *
+ * A flat `100vh` is right for the product, where the shell is the whole page,
+ * and wrong the moment something is stacked on top of it: demo mode renders its
+ * guide strip as a SIBLING above this, so the two came to 100vh + 73px and the
+ * page scrolled by exactly the strip's height with nothing in the gap. Harmless
+ * while the footer was the last thing in flow; visible the moment it was pinned
+ * to the bottom, which put it below the fold on a page with four lines on it.
+ *
+ * The variable is declared here with a zero default, so the product is
+ * unchanged and needs nobody to set it. Whoever stacks something above the app
+ * is the only one who knows how tall it is, and sets it — see `GuideBar`.
+ */
 .app-shell {
-  min-height: 100vh;
+  min-height: calc(100vh - var(--mc-chrome-above, 0px));
   background: var(--app);
   overflow-x: clip;
+  display: flex;
+  flex-direction: column;
 }
 /**
  * The header spans the page; its CONTENTS stay on the column.
@@ -99,9 +115,33 @@
   border: 0;
   border-radius: 0;
   box-shadow: none;
-  min-height: 100vh;
+  /* Fills the shell rather than restating the viewport — the shell is the one
+   * that knows what is above it. */
+  flex: 1;
   /* The preview clips to its rounded corners. There are no corners here, and
    * clipping would cut off the date picker's popup where it opens past the
    * bottom of a short page. */
   overflow: visible;
+  /**
+   * A COLUMN, SO THE FOOTER CAN BE PUSHED TO THE BOTTOM OF IT.
+   *
+   * The window was already `min-height:100vh`, so it always filled the screen —
+   * but the footer is the last child in normal flow, so on a short page (a
+   * record with four lines, an empty Later) it sat directly under the content
+   * with the rest of the screen blank beneath it, looking dropped rather than
+   * placed. As a column with `margin-top:auto` on the footer, the spare height
+   * goes ABOVE it instead and it lands on the bottom edge at any content length.
+   *
+   * Not in the preview, and it belongs in this block for the same reason the
+   * three rules above it do: there the window is a card on a documentation
+   * page, sized to the screen it is a picture of, and a viewport-tall card with
+   * its footer pinned to the bottom would be a picture of nothing.
+   */
+  display: flex;
+  flex-direction: column;
+}
+
+/* The spare height collects above it. See the column note above. */
+.app-shell .appfoot {
+  margin-top: auto;
 }

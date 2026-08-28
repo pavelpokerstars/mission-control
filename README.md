@@ -134,8 +134,9 @@ the person who can tell, with their dates.
 
 The fixture contains a deliberate four-ticket cycle
 (`PAY-9042 → PAY-9041 → PAY-9044 → PAY-9043 → PAY-9042`, as the alert prints
-it — each arrow reads *waits on*), invisible in a
-backlog and obvious the moment something looks across it. Every planted case is
+it — **blocker first, so each arrow reads *blocks***, the board's own convention
+and the one `blocksPairOf` projects into), invisible in a backlog and obvious the
+moment something looks across it. Every planted case is
 listed in [docs/GRAPH-SCHEMA.md](docs/GRAPH-SCHEMA.md) §8, and
 `scripts/verify-graph.mts` runs the detectors over the fixture and asserts that
 the missing ticket, the unrecorded dependency and the stale link all fire — the

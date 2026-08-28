@@ -174,10 +174,12 @@ export function GuideBar({
    * fallback clears the tallest toolbar measured.
    */
   const laneRef = useRef<HTMLDivElement | null>(null);
+  /** The band itself, present collapsed AND expanded — the lane is not. */
+  const stripRef = useRef<HTMLDivElement | null>(null);
   useLayoutEffect(() => {
     const lane = laneRef.current;
-    if (!lane) return;
     const measure = (): void => {
+      if (!lane) return;
       /**
        * ONE RULE ON BOTH SURFACES: sit 11px under whatever chrome the page has
        * at the top of it. The app's is `.topbar`, the introduction's is its own
@@ -195,9 +197,37 @@ export function GuideBar({
         : 0;
       lane.style.setProperty('--mcdemo-float-top', `${(bottom || 108) + 11}px`);
     };
-    measure();
-    window.addEventListener('resize', measure);
-    return () => window.removeEventListener('resize', measure);
+    /**
+     * AND TELL THE APP HOW MUCH ROOM THIS STRIP IS TAKING.
+     *
+     * `.app-shell` is `100vh` minus `--mc-chrome-above`, which defaults to zero
+     * — the product has nothing above it. This strip is a SIBLING stacked on
+     * top, so without this the two came to 100vh plus the strip and the page
+     * scrolled by exactly its height with nothing in the gap, putting the
+     * footer below the fold on a short page.
+     *
+     * Set on the document element rather than through a class, because
+     * `alerts/` owns `.app-shell` and the demo layer may not restyle it — the
+     * variable is the seam the app declared for exactly this. Collapsed the
+     * strip is zero-height and this correctly reports 0.
+     */
+    const publish = (): void => {
+      const strip = stripRef.current;
+      const h = strip ? Math.round(strip.getBoundingClientRect().height) : 0;
+      document.documentElement.style.setProperty('--mc-chrome-above', `${h}px`);
+    };
+
+    const sync = (): void => {
+      measure();
+      publish();
+    };
+
+    sync();
+    window.addEventListener('resize', sync);
+    return () => {
+      window.removeEventListener('resize', sync);
+      document.documentElement.style.removeProperty('--mc-chrome-above');
+    };
   });
 
   const complete = (key: ActionKey): void =>
@@ -298,7 +328,7 @@ export function GuideBar({
   if (!guidance || hidden || !step) {
     const restorable = guidance && hidden;
     return (
-      <div className="mcdemo-strip" data-over={over} data-collapsed="">
+      <div className="mcdemo-strip" ref={stripRef} data-over={over} data-collapsed="">
         <div className="mcdemo-lane" ref={laneRef}>
           {restorable ? (
             <button
@@ -322,7 +352,7 @@ export function GuideBar({
   }
 
   return (
-    <div className="mcdemo-strip" data-over={over}>
+    <div className="mcdemo-strip" ref={stripRef} data-over={over}>
       <div className="mcdemo-bar" role="status" aria-live="polite">
         <span className="mcdemo-step">{step.label}</span>
         <span className="mcdemo-text">{step.text}</span>

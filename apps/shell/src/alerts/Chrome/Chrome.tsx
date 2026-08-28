@@ -155,7 +155,26 @@ export function AppWindow({
     <div className="appwin">
       <TopBar route={route} counts={counts} />
       {children}
+      <AppFoot />
     </div>
+  );
+}
+
+/**
+ * Who built it, and when — on every page, because `AppWindow` wraps all eight.
+ *
+ * THE YEAR IS COMPUTED, NOT TYPED. `DESIGN.md` §8's rule is that no date in this
+ * interface is ever written by hand; the preview takes this one from its `TODAY`
+ * constant and the app takes it from the live clock, so neither can be a year
+ * that has quietly stopped being true. Nothing asserts that — it is honoured by
+ * never writing one down.
+ */
+function AppFoot(): JSX.Element {
+  return (
+    <footer className="appfoot">
+      <span>Mission Control Hub</span>
+      <span className="yr">{new Date().getFullYear()}</span>
+    </footer>
   );
 }
 

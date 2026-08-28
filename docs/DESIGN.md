@@ -264,6 +264,14 @@ rather than work, but which is otherwise the same page.
 offering a related page, then the content. An alert, a conversation, a note, a
 record.
 
+Both shapes sit inside the same window, and it is closed at the bottom the way
+it is opened at the top: a footer carrying the team name and the year, on the
+same padding and the same rule as the toolbar, muted and in mono because it is a
+signature rather than something to read. It lives on `AppWindow`, so every one
+of the eight routes has it without any page asking for it. **The year is
+computed** — from the live clock in the app, from `TODAY` in the preview — under
+§8's rule that no date here is ever written by hand.
+
 ### A row
 
 ```

@@ -25,6 +25,16 @@
     background:var(--app); border:1px solid var(--line); border-radius:var(--r);
     box-shadow:var(--shadow); overflow:hidden;
   }
+/* The footer closes the window the topbar opens: same padding, same rule, the
+   other way up. Muted and mono, because it is a signature rather than something
+   to read. Copied from the preview, which has it first — see DESIGN.md. */
+.appfoot {
+  display:flex; align-items:center; justify-content:space-between; gap:12px;
+  padding:12px 22px; border-top:1px solid var(--line);
+  font-family:var(--mono); font-size:11px; letter-spacing:.04em; color:var(--ink-3);
+}
+.appfoot .yr { font-variant-numeric:tabular-nums; }
+
 .topbar {
     display:flex; align-items:center; justify-content:space-between; gap:20px; flex-wrap:wrap;
     padding:13px 22px; border-bottom:1px solid var(--line); background:var(--app);

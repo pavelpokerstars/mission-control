@@ -490,6 +490,26 @@ export async function gatherWorkFacts(
          * that issue. Same shape as the aging signal's own row a few lines
          * above: our observation in the label, the Jira record in the ref.
          *
+         * AND THE RING RUNS BLOCKER-FIRST, which is the whole of the bug this
+         * comment used to sit above. `findCycles` walks `arrows`, and an arrow is
+         * `projectArrows`' output: `blocksPairOf` turns `A depends_on B` (A waits
+         * for B) into `{ from: B, to: A }`, because `DEPENDS_ON_IS_REVERSED`. So
+         * a step `ring[i]` to `ring[i+1]` means **ring[i] BLOCKS ring[i+1]**, and
+         * it is ring[i+1] that is waiting.
+         *
+         * Written the obvious way round — "ring[i] waits on ring[i+1]" — every
+         * one of the four rows stated its dependency backwards, on a `crit` alert
+         * on the front door, while the impact line directly above them printed
+         * the same walk correctly. `CLAUDE.md` calls a reversed dependency the
+         * most expensive mistake available here, and this is why: nothing fails,
+         * the loop is still a loop whichever way it is read, and the only way to
+         * catch it is to check a row against `graph.json`.
+         *
+         * So the row is built from the WAITER's side: `waiter` waits on `key`,
+         * and `waiter` is what it cites — which is also what the paragraph above
+         * says it does. Over a full ring every key is the waiter exactly once, so
+         * the four rows still name four distinct tickets.
+         *
          * If the lane is ever fed `boardArrows` instead — a live Miro canvas —
          * the label becomes Miro's account of the arrow while the citation stays
          * the ticket. That is still true, and still the right place to act, but
@@ -503,11 +523,15 @@ export async function gatherWorkFacts(
          */
         evidence: (() => {
           const ring = [...new Set(loop ?? [])];
-          return ring.map((key, i) => ({
-            surface: 'jira' as const,
-            label: `${key} waits on ${ring[(i + 1) % ring.length]}`,
-            ref: { surface: 'jira' as const, id: key },
-          }));
+          return ring.map((key, i) => {
+            // `key` blocks `waiter` — see the direction note above.
+            const waiter = ring[(i + 1) % ring.length]!;
+            return {
+              surface: 'jira' as const,
+              label: `${waiter} waits on ${key}`,
+              ref: { surface: 'jira' as const, id: waiter },
+            };
+          });
         })(),
       });
     }
