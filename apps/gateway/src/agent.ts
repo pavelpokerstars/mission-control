@@ -29,6 +29,7 @@ import { recall, type VaultStore } from '@mc/vault';
 import { eventLog } from './events.js';
 import { buildCrossSurfaceTools, type AgentTool } from './tools.js';
 import { COPILOT_MODEL, copilotSdkInstalled, copilotToken, createCopilotAgent } from './copilot.js';
+import { createOpenRouterAgent, OPENROUTER_MODEL, openRouterAvailable } from './openrouter.js';
 import { CLAUDE_EFFORT, CLAUDE_MODEL, createClaudeAgent } from './claude.js';
 import { CLAUDE_CLI_MODEL, claudeCliAvailable, createClaudeCliAgent } from './claude-cli.js';
 
@@ -169,11 +170,19 @@ export function agentStatus(): {
   /** Which provider the mode selects — named even when its key is missing, so
    *  the panel can label itself without guessing. `live` is the truth about
    *  whether it will answer. */
-  provider: 'copilot' | 'claude' | 'claude-cli';
+  provider: 'copilot' | 'claude' | 'claude-cli' | 'openrouter';
   live: boolean;
   model: string;
   effort?: string;
 } {
+  if (mode() === 'openrouter') {
+    // The one provider whose readiness IS just "is the key set". There is no
+    // login to probe and no runtime to start, so unlike Copilot and the CLI
+    // there is nothing here that can lie about being able to answer.
+    return openRouterAvailable()
+      ? { provider: 'openrouter', live: true, model: OPENROUTER_MODEL }
+      : { provider: 'openrouter', live: false, model: 'stub (OPENROUTER_API_KEY not set)' };
+  }
   if (mode() === 'live') {
     // Deliberately not gated on GITHUB_TOKEN. The runtime authenticates from
     // stored OAuth or `gh` CLI auth when no token is set, so "no token" is not
@@ -296,6 +305,30 @@ export async function createAgent(
     system: SYSTEM_PROMPT,
     withMemory,
   };
+
+  /**
+   * A FOURTH MODE, not a fourth rung. `openrouter` is chosen instead of the
+   * ladder rather than inside it, because it answers the opposite question:
+   * the ladder asks "what is this developer already logged into", and this asks
+   * "what can a container with one shared key reach". Putting it in the ladder
+   * would mean a laptop with a Claude login silently spending somebody's
+   * OpenRouter credits, or the reverse — a demo host quietly answering from a
+   * credential that is not there.
+   *
+   * Missing key falls to the stub rather than to the mock ladder, which is the
+   * same shape `live` uses two blocks down: naming a provider and then quietly
+   * answering from a different one is worse than not answering, because the
+   * `/api/health` panel would still say `openrouter` while something else did
+   * the talking.
+   */
+  if (mode() === 'openrouter') {
+    if (openRouterAvailable()) return createOpenRouterAgent(cfg);
+    console.warn(
+      '[agent] MC_MODE=openrouter but OPENROUTER_API_KEY is not set — falling back to the ' +
+        'scripted stub. Set the key, or unset MC_MODE to use the Claude CLI / ANTHROPIC_API_KEY ladder.',
+    );
+    return scriptedStub(cfg);
+  }
 
   if (mode() === 'live') {
     // No `GITHUB_TOKEN` is not a reason to give up. The SDK's `useLoggedInUser`

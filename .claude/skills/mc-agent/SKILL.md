@@ -284,6 +284,14 @@ choice with two fallbacks:
 | `copilot` | one `defineTool` recorder — JSON Schema native, no MCP | Copilot auth |
 | `prompt-json` | CLI with **no tools** — schema in the prompt, JSON parsed back | the `claude` CLI login |
 
+`openrouter` sits fourth, ahead of `prompt-json`: a provider that honours
+`response_format` is a better bet than asking a model to hand-write a fenced
+object, and it is behind the other three because it is the only one that spends
+somebody's money. It is available whenever `OPENROUTER_API_KEY` is set —
+unprobed, because a key is either set or it is not and there is no login to
+inspect or runtime to start, which is exactly what the other two probes exist to
+catch lying about.
+
 `auto` (the default) walks that ladder; naming one pins it and fails rather than
 falling through, because a pin that silently degrades is not a pin.
 `prompt-json` is deliberately last: a real schema is doing work prose cannot, and

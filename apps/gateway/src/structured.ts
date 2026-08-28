@@ -64,6 +64,7 @@ import { createSdkMcpServer, query, tool } from '@anthropic-ai/claude-agent-sdk'
 import Anthropic from '@anthropic-ai/sdk';
 import { claudeCliAvailable, zodShape } from './claude-cli.js';
 import { askCopilotStructured, copilotAvailable } from './copilot.js';
+import { askOpenRouterStructured, openRouterAvailable } from './openrouter.js';
 
 /** One request for a typed answer, in the form every caller already had. */
 export interface StructuredAsk {
@@ -89,7 +90,12 @@ export interface StructuredAsk {
   model: string;
 }
 
-export type StructuredBackend = 'sdk-mcp' | 'messages-api' | 'copilot' | 'prompt-json';
+export type StructuredBackend =
+  | 'sdk-mcp'
+  | 'messages-api'
+  | 'copilot'
+  | 'openrouter'
+  | 'prompt-json';
 
 /**
  * What this machine can actually reach, probed once at boot rather than here.
@@ -102,6 +108,12 @@ export type StructuredBackend = 'sdk-mcp' | 'messages-api' | 'copilot' | 'prompt
 export interface ProviderCaps {
   claudeCli: boolean;
   copilot: boolean;
+  /**
+   * Not probed, because there is nothing to probe: a key is either set or it is
+   * not, and OpenRouter has no login to inspect and no runtime to start. The
+   * other two cost a real round trip precisely because their cheap checks lie.
+   */
+  openrouter: boolean;
 }
 
 /**
@@ -129,8 +141,11 @@ export function providerCaps(): Promise<ProviderCaps> {
       claudeCliAvailable().catch(() => false),
       copilotAvailable().catch(() => false),
     ]);
-    console.log(`[structured] providers — claude-cli=${claudeCli} copilot=${copilot}`);
-    return { claudeCli, copilot };
+    const openrouter = openRouterAvailable();
+    console.log(
+      `[structured] providers — claude-cli=${claudeCli} copilot=${copilot} openrouter=${openrouter}`,
+    );
+    return { claudeCli, copilot, openrouter };
   })();
   return caps;
 }
@@ -165,7 +180,16 @@ function requestedBackend(): StructuredBackend | 'auto' {
   return (process.env.MC_STRUCTURED ?? 'auto').trim() as StructuredBackend | 'auto';
 }
 
-const BACKENDS: readonly StructuredBackend[] = ['sdk-mcp', 'messages-api', 'copilot', 'prompt-json'];
+const BACKENDS: readonly StructuredBackend[] = [
+  'sdk-mcp',
+  'messages-api',
+  'copilot',
+  // Ahead of `prompt-json`: a provider that honours `response_format` is a
+  // better bet than asking a model to hand-write a fenced object. Behind the
+  // other three because it is the only one that spends somebody's money.
+  'openrouter',
+  'prompt-json',
+];
 
 // ---------------------------------------------------------------------------
 // The backends
@@ -336,6 +360,8 @@ function available(backend: StructuredBackend, caps: ProviderCaps): boolean {
       return !!process.env.ANTHROPIC_API_KEY;
     case 'copilot':
       return caps.copilot;
+    case 'openrouter':
+      return caps.openrouter;
   }
 }
 
@@ -373,7 +399,14 @@ export function createStructured(caps: ProviderCaps, label: string): Structured 
 
   return {
     backend,
-    provider: backend === 'messages-api' ? 'messages-api' : backend === 'copilot' ? 'copilot' : 'claude-cli',
+    provider:
+      backend === 'messages-api'
+        ? 'messages-api'
+        : backend === 'copilot'
+          ? 'copilot'
+          : backend === 'openrouter'
+            ? 'openrouter'
+            : 'claude-cli',
     ask: (req) => {
       switch (backend) {
         case 'sdk-mcp':
@@ -385,6 +418,14 @@ export function createStructured(caps: ProviderCaps, label: string): Structured 
             name: req.name,
             description: req.description,
             parameters: req.schema,
+            system: req.system,
+            prompt: req.prompt,
+          });
+        case 'openrouter':
+          return askOpenRouterStructured({
+            name: req.name,
+            description: req.description,
+            schema: req.schema,
             system: req.system,
             prompt: req.prompt,
           });
