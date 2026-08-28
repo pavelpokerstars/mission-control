@@ -175,7 +175,9 @@ export default function AlertApp(): JSX.Element {
           counts={counts}
         />
       )}
-      {route.name === 'ask' && <Ask about={route.about} route={route} counts={counts} />}
+      {route.name === 'ask' && (
+        <Ask about={route.about} route={route} counts={counts} alerts={namedAlerts} />
+      )}
       {route.name === 'conversation' && (
         <ConversationPage id={route.id} route={route} counts={counts} />
       )}

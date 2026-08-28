@@ -15,6 +15,7 @@
  */
 
 import { useEffect, useState, type JSX } from 'react';
+import { KIND_LABEL } from '../AlertList/AlertList';
 import { ask, suggestions, type Starter, type Subject } from '../chat';
 import { useConversations } from '../conversations';
 import { useJson, type FindingDetail } from '../api';
@@ -141,7 +142,17 @@ export function ConversationPage({
       <BackLink to={{ name: 'ask' }} label="all conversations" />
 
       <div className="ctxbar">
-        <span className="chip plain">{c.alertId ? 'Alert' : 'General'}</span>
+        {/* The alert's own kind and severity, for the reason the row in `Ask`
+            carries them: `Alert` names the category, not the thing. The finding
+            is already fetched above for the checklist, so this costs nothing —
+            and when it has been answered and left `/api/findings`, the neutral
+            word is the honest answer rather than a fallback. */}
+        {(() => {
+          const f = detail.data?.finding;
+          if (!c.alertId) return <span className="chip plain">General</span>;
+          if (!f) return <span className="chip plain">Alert</span>;
+          return <span className={`chip ${f.severity}`}>{KIND_LABEL[f.kind]}</span>;
+        })()}
         {c.alertId ? (
           <>
             <span className="about">

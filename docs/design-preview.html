@@ -723,7 +723,16 @@
     padding:5px 15px; font-size:.85rem; font-weight:600; color:var(--ink); white-space:nowrap;
   }
   .undobar button:hover { border-color:var(--ink-3); background:var(--app); }
-  .convrow.tied::before    { background:var(--crit); }
+  /* The mark takes the ALERT's severity, not a single colour for "is about an
+     alert". It was `--crit` for every tied row, which said `critical` about a
+     conversation that might be neither. `tied` survives for the row whose alert
+     has been answered and left `/api/findings`: there is no severity left to
+     read, and a neutral mark is better than none — the conversation is still
+     about something. */
+  .convrow.crit::before    { background:var(--crit); }
+  .convrow.warn::before    { background:var(--warn); }
+  .convrow.ok::before      { background:var(--ok); }
+  .convrow.tied::before    { background:var(--line-2); }
   .convrow.general::before { background:var(--line-2); }
   .convrow .top { display:flex; align-items:center; gap:9px; flex-wrap:wrap; margin-bottom:6px; }
   .convrow .m { display:flex; }

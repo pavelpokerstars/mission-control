@@ -15,8 +15,10 @@
  */
 
 import { Fragment, useState, type JSX } from 'react';
+import type { Finding } from '@mc/domain';
 import { ask } from '../chat';
 import { historyOf, relativeTime, useConversations, type Conversation } from '../conversations';
+import { KIND_LABEL } from '../AlertList/AlertList';
 import { AppWindow, BackLink, UndoStrip, type Counts } from '../Chrome/Chrome';
 import { Composer } from '../Thread/Thread';
 import { go, hrefFor, type Route } from '../router';
@@ -32,13 +34,44 @@ import './Ask.css';
  * costs both the delete and the styling: `a.convrow` underlines, which is the
  * same defect `a.row` and `a.rowmain` each needed a rule for.
  */
-function Row({ c, onDelete }: { c: Conversation; onDelete: () => void }): JSX.Element {
+/**
+ * WHAT THE ROW IS ABOUT, in the alert's own words and its own colour.
+ *
+ * Every tied row used to read `Alert` in a neutral chip, which named the
+ * category rather than the thing: six conversations about six different
+ * findings were six identical grey labels, and the mark beside them was
+ * `--crit` whatever the alert's severity actually was. `AlertList` and `Later`
+ * both already resolve `KIND_LABEL[kind]` in `chip <severity>`; this is the
+ * third place it belongs and the last one that was still generic.
+ *
+ * RESOLVED LIVE, AND `Alert` IS STILL THE ANSWER WHEN IT CANNOT BE. An answered
+ * alert leaves `/api/findings` — that is the good outcome — so a conversation
+ * outlives the finding it was about. `Later`'s Chip made this decision first and
+ * its comment is the reasoning: there is no kind left to name, and the neutral
+ * word is honest rather than a fallback. The row keeps its mark either way.
+ */
+function chipFor(c: Conversation, alerts: Finding[]): { label: string; sev: string } {
+  if (!c.alertId) return { label: 'General', sev: 'general' };
+  const f = alerts.find((a) => a.id === c.alertId);
+  return f ? { label: KIND_LABEL[f.kind], sev: f.severity } : { label: 'Alert', sev: 'tied' };
+}
+
+function Row({
+  c,
+  alerts,
+  onDelete,
+}: {
+  c: Conversation;
+  alerts: Finding[];
+  onDelete: () => void;
+}): JSX.Element {
   const question = c.turns.find((t) => t.role === 'user')?.text ?? '';
+  const { label, sev } = chipFor(c, alerts);
   return (
-    <div className={`convrow ${c.alertId ? 'tied' : 'general'}`}>
+    <div className={`convrow ${sev}`}>
       <a className="rowmain" href={hrefFor({ name: 'conversation', id: c.id })}>
         <span className="top">
-          <span className="chip plain">{c.alertId ? 'Alert' : 'General'}</span>
+          <span className={`chip ${sev === 'general' || sev === 'tied' ? 'plain' : sev}`}>{label}</span>
           <span className="t">{c.alertClaim ?? c.title}</span>
         </span>
         <span className="m">
@@ -67,11 +100,20 @@ export function Ask({
   about,
   route,
   counts,
+  alerts,
 }: {
   /** Filtered to one alert's conversations — `DESIGN.md` §7's third case. */
   about?: string;
   route: Route;
   counts: Counts;
+  /**
+   * The open findings, so a row can name the KIND of alert it is about rather
+   * than the category. Passed in for the reason `Later` takes the same prop:
+   * `AlertApp` has already fetched them for the toolbar counts, and a second
+   * request for the same list is how a badge and the page it counts come to
+   * disagree.
+   */
+  alerts: Finding[];
 }): JSX.Element {
   const conversations = useConversations((s) => s.conversations);
   const newChat = useConversations((s) => s.newChat);
@@ -117,6 +159,7 @@ export function Ask({
           {undone?.index === i && undoBar}
           <Row
             c={c}
+            alerts={alerts}
             onDelete={() => {
               setUndone({ c, index: i });
               removeConversation(c.id);
