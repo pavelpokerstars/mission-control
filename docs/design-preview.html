@@ -306,6 +306,38 @@
     color:var(--ink-3); opacity:0;
   }
   .ev .evrow:hover .open, .ev .evrow:focus-visible .open { opacity:1; }
+
+  /* ---------- the source rail ----------
+   *
+   * A row's SURFACE, readable without reading it. The dot and the `.src` label
+   * already name the tool; neither survives a glance down a column of six
+   * citations, which is what somebody actually does on an alert. A rail on the
+   * edge of the row is the one treatment that groups by tool at a distance and
+   * costs no space.
+   *
+   * `data-surface` and NOT a `.jira` / `.slack` class, which is the trap this
+   * design has already sprung once: those are the DOT's colours in shared.css
+   * (`.jira{background:var(--s-jira)}`), so putting one on the row paints the
+   * whole row solid. An attribute cannot collide with a class, in any file, in
+   * any order.
+   *
+   * `box-shadow: inset` and not `border-left`, because the row already carries
+   * `border:1px solid transparent` and `:hover` sets `border-color` on all four
+   * sides — a coloured left border would be wiped by the hover it shares a
+   * property with. An inset shadow is outside that fight entirely. */
+  /* `.ev [data-surface]` and NOT `.ev article[data-surface], .ev .evrow[data-surface]`,
+     which was the first version and was wrong in a way that renders: naming the
+     element takes the fallback to 0,3,0 and every surface rule below it stays at
+     0,2,0, so a slack row measured `--s-vault` grey with `data-surface="slack"`
+     sitting on it. Flat specificity, so the later rule wins, which is what the
+     order of these lines is for. */
+  .ev [data-surface] { box-shadow:inset 3px 0 0 var(--s-vault); }
+  .ev [data-surface="jira"] { box-shadow:inset 3px 0 0 var(--s-jira); }
+  .ev [data-surface="slack"] { box-shadow:inset 3px 0 0 var(--s-slack); }
+  .ev [data-surface="zoom"] { box-shadow:inset 3px 0 0 var(--s-zoom); }
+  .ev [data-surface="conf"] { box-shadow:inset 3px 0 0 var(--s-conf); }
+  .ev [data-surface="miro"] { box-shadow:inset 3px 0 0 var(--s-miro); }
+  .ev [data-surface="github"] { box-shadow:inset 3px 0 0 var(--s-github); }
   .ev .dot { margin-top:7px; }
   .ev .hd { display:flex; align-items:baseline; gap:9px; flex-wrap:wrap; margin-bottom:5px; }
   .ev .hd b { font-size:.86rem; font-weight:600; }
@@ -768,6 +800,18 @@
     display:inline-flex; align-items:center; gap:7px; font-family:var(--mono);
     font-size:11px; color:var(--ink-2); letter-spacing:.04em;
   }
+
+  /* The record page IS one surface — unlike the alert list, which is the whole
+     point of the product — so it can say which across the top of the band it
+     already has. Same reasoning as the rail, one element larger. */
+  .rec-head[data-surface] { box-shadow:inset 0 3px 0 var(--s-vault); }
+  .rec-head[data-surface="jira"] { box-shadow:inset 0 3px 0 var(--s-jira); }
+  .rec-head[data-surface="slack"] { box-shadow:inset 0 3px 0 var(--s-slack); }
+  .rec-head[data-surface="zoom"] { box-shadow:inset 0 3px 0 var(--s-zoom); }
+  .rec-head[data-surface="conf"] { box-shadow:inset 0 3px 0 var(--s-conf); }
+  .rec-head[data-surface="miro"] { box-shadow:inset 0 3px 0 var(--s-miro); }
+  .rec-head[data-surface="github"] { box-shadow:inset 0 3px 0 var(--s-github); }
+
   .rec-head .why { font-family:var(--mono); font-size:10.5px; color:var(--ink-3); }
   /* The ONE affordance in this app that leaves it, and the only place an arrow
      points out rather than across. `←` means back, `→` means another of our
@@ -1297,7 +1341,7 @@
         </button>
       </div>
       <button class="back" data-go="alert">← back to the alert</button>
-      <div class="rec-head">
+      <div class="rec-head" data-surface="zoom">
         <span class="src"><i class="dot zoom"></i>Zoom · Sprint 12 planning · 8 July</span>
         <span class="why">opened on the line the promise nobody filed is about · 8 July 2026</span>
         <a class="vendor" href="#">the original in Zoom ↗</a>
@@ -1589,7 +1633,8 @@
       // hold — so the fixture marks those `opens` and they link too.
       var opens = e.quote || e.opens;
       var tag = opens ? 'button' : 'article';
-      var attrs = opens ? ' type="button" class="evrow" data-go="record"' : '';
+      var attrs = (opens ? ' type="button" class="evrow" data-go="record"' : '')
+                 + ' data-surface="' + e.cls + '"';
       html += '<' + tag + attrs + '><i class="dot ' + e.cls + '" aria-hidden="true"></i><div>'
             +   '<div class="hd">'
             +     '<span class="src">' + esc(e.src) + '</span>'

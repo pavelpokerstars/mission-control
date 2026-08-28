@@ -174,7 +174,7 @@ function EvidenceRow({ e, from, kind }: { e: Evidence; from: string; kind: strin
    */
   if (!e.ref) {
     return (
-      <article>
+      <article data-surface={dotClass(e.surface)}>
         <i className={`dot ${dotClass(e.surface)}`} aria-hidden="true" />
         <div>
           {head}
@@ -184,7 +184,7 @@ function EvidenceRow({ e, from, kind }: { e: Evidence; from: string; kind: strin
     );
   }
   return (
-    <a className="evrow" href={recordHref(e, from, kind)}>
+    <a className="evrow" data-surface={dotClass(e.surface)} href={recordHref(e, from, kind)}>
       <i className={`dot ${dotClass(e.surface)}`} aria-hidden="true" />
       <div>
         {head}

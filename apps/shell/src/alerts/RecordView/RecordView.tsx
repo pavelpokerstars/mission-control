@@ -227,7 +227,7 @@ export function RecordView({
 
       {data && (
         <>
-          <div className="rec-head">
+          <div className="rec-head" data-surface={dotClass(data.surface)}>
             <span className="src">
               <i className={`dot ${dotClass(data.surface)}`} />
               {data.surface} · {data.title}

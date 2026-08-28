@@ -29,6 +29,17 @@
     display:inline-flex; align-items:center; gap:7px; font-family:var(--mono);
     font-size:11px; color:var(--ink-2); letter-spacing:.04em;
   }
+
+/* The record page IS one surface — unlike the alert list, which is the whole
+   point of the product — so it can say which across the top of the band it
+   already has. Same reasoning as the rail, one element larger. */
+.rec-head[data-surface] { box-shadow:inset 0 3px 0 var(--s-vault); }
+.rec-head[data-surface="jira"] { box-shadow:inset 0 3px 0 var(--s-jira); }
+.rec-head[data-surface="slack"] { box-shadow:inset 0 3px 0 var(--s-slack); }
+.rec-head[data-surface="zoom"] { box-shadow:inset 0 3px 0 var(--s-zoom); }
+.rec-head[data-surface="conf"] { box-shadow:inset 0 3px 0 var(--s-conf); }
+.rec-head[data-surface="miro"] { box-shadow:inset 0 3px 0 var(--s-miro); }
+.rec-head[data-surface="github"] { box-shadow:inset 0 3px 0 var(--s-github); }
 .rec-head .why { font-family:var(--mono); font-size:10.5px; color:var(--ink-3); }
 /* The ONE affordance in this app that leaves it, and the only place an arrow
    points out rather than across. `←` means back, `→` means another of our

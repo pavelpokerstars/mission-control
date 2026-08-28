@@ -57,6 +57,38 @@
     color:var(--ink-3); opacity:0;
   }
 .ev .evrow:hover .open, .ev .evrow:focus-visible .open { opacity:1; }
+
+/* ---------- the source rail ----------
+ *
+ * A row's SURFACE, readable without reading it. The dot and the `.src` label
+ * already name the tool; neither survives a glance down a column of six
+ * citations, which is what somebody actually does on an alert. A rail on the
+ * edge of the row is the one treatment that groups by tool at a distance and
+ * costs no space.
+ *
+ * `data-surface` and NOT a `.jira` / `.slack` class, which is the trap this
+ * design has already sprung once: those are the DOT's colours in shared.css
+ * (`.jira{background:var(--s-jira)}`), so putting one on the row paints the
+ * whole row solid. An attribute cannot collide with a class, in any file, in
+ * any order.
+ *
+ * `box-shadow: inset` and not `border-left`, because the row already carries
+ * `border:1px solid transparent` and `:hover` sets `border-color` on all four
+ * sides — a coloured left border would be wiped by the hover it shares a
+ * property with. An inset shadow is outside that fight entirely. */
+/* `.ev [data-surface]` and NOT `.ev article[data-surface], .ev .evrow[data-surface]`,
+   which was the first version and was wrong in a way that renders: naming the
+   element takes the fallback to 0,3,0 and every surface rule below it stays at
+   0,2,0, so a slack row measured `--s-vault` grey with `data-surface="slack"`
+   sitting on it. Flat specificity, so the later rule wins, which is what the
+   order of these lines is for. */
+.ev [data-surface] { box-shadow:inset 3px 0 0 var(--s-vault); }
+.ev [data-surface="jira"] { box-shadow:inset 3px 0 0 var(--s-jira); }
+.ev [data-surface="slack"] { box-shadow:inset 3px 0 0 var(--s-slack); }
+.ev [data-surface="zoom"] { box-shadow:inset 3px 0 0 var(--s-zoom); }
+.ev [data-surface="conf"] { box-shadow:inset 3px 0 0 var(--s-conf); }
+.ev [data-surface="miro"] { box-shadow:inset 3px 0 0 var(--s-miro); }
+.ev [data-surface="github"] { box-shadow:inset 3px 0 0 var(--s-github); }
 .ev .dot { margin-top:7px; }
 .ev .hd { display:flex; align-items:baseline; gap:9px; flex-wrap:wrap; margin-bottom:5px; }
 .ev .hd b { font-size:.86rem; font-weight:600; }
