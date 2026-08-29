@@ -379,7 +379,16 @@
   }
   .ev q { display:block; font-size:.96rem; color:var(--ink); font-style:italic; }
   .ev q::before { content:"“"; } .ev q::after { content:"”"; }
-  .ev .plain { font-size:.95rem; color:var(--ink); }
+  .ev .plain {
+    /* MARGIN ZERO, AND IT IS NOT COSMETIC. This is the quote-less half of a
+       citation — the row whose label IS the observation. Its sibling is a `q`
+       set to `display:block`, which carries no default margin; a `p` carries
+       `1em 0`. At .95rem that is 15px above and below, so a jira row asserting
+       "no issue references this" stood about 30px taller than the zoom row
+       quoting what somebody said, in a block whose whole job is to look like one
+       list. Every other `p` in this app is reset the same way. */
+    margin:0; font-size:.95rem; color:var(--ink);
+  }
 
   /* actions */
   .acts { display:flex; gap:10px; flex-wrap:wrap; }

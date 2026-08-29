@@ -347,7 +347,17 @@ export function AlertPage({
                   citation: the tracker's silence is exactly what makes this a
                   finding, and it has no record to open. */}
               {data.finding.kind === 'missing_ticket' && (
-                <article>
+                /*
+                 * `data-surface` because this row is hand-written and drifted
+                 * without it. Every other row in this block gets one from
+                 * `EvidenceRow`, and `.ev [data-surface]` is what draws the
+                 * source's colour down the left edge — so the one row not built
+                 * by that component was the one row with no segment, in a list
+                 * whose whole job is to look like one list. The preview sets it
+                 * on the quote-less `article` exactly as it does on a linked
+                 * row; this is the app catching up.
+                 */
+                <article data-surface="jira">
                   <i className="dot jira" aria-hidden="true" />
                   <div>
                     <div className="hd">
