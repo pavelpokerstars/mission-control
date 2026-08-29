@@ -205,7 +205,18 @@ async function main(): Promise<void> {
   const inference = startInference(
     connectors,
     vault,
-    await createRelationizer(await providerCaps()),
+    /**
+     * NOTHING RUNS UNATTENDED IN DEMO MODE, and a null relationizer is how this
+     * one stops: `startInference` checks `!r` before every pass, so it returns a
+     * live object that simply never asks anything.
+     *
+     * A demo instance is a shared URL that spends somebody's key and writes to a
+     * mounted volume with nobody watching. Inference re-asks the model every ten
+     * minutes whether or not a visitor is there, and its result — a handful of
+     * dashed edges — is not on the walkthrough. Skipping it also skips the
+     * `providerCaps` probe at boot, which is one fewer thing to be slow.
+     */
+    demoMode() ? null : await createRelationizer(await providerCaps()),
     currentGraph,
   );
   // Inference is handed to the tools as a getter rather than a snapshot: it is
@@ -265,7 +276,14 @@ async function main(): Promise<void> {
 
   const stopSync = startSync(connectors, vault);
   const stopCanvasPoll = startCanvasPoll(connectors);
-  const stopScheduler = startScheduler(connectors, vault);
+  /**
+   * The ceremonies do not run on a demo either, and this is the one that matters
+   * most. `startScheduler` writes to the vault — `/data` on the deployment, a
+   * mounted volume — from a `setInterval` that nobody is looking at, to produce
+   * a standup and a tidy no visitor will ever open. It is unattended work whose
+   * only observable effect is risk.
+   */
+  const stopScheduler = demoMode() ? (): void => {} : startScheduler(connectors, vault);
 
   /**
    * The instrument panel for going live, and it has to be right.
@@ -364,6 +382,11 @@ async function main(): Promise<void> {
        * answer for every instance nobody has deliberately turned it on for.
        */
       demo: demoConfig(),
+      // What is NOT running, so "why is there no standup" has an answer that
+      // does not require reading main.ts.
+      background: demoMode()
+        ? { scheduler: false, inference: false, why: 'demo mode runs nothing unattended' }
+        : { scheduler: true, inference: true },
       vault: { dir: VAULT_DIR, notes: vault.list().length },
     });
   });
@@ -1077,6 +1100,27 @@ async function main(): Promise<void> {
   };
   process.on('SIGINT', () => void shutdown());
   process.on('SIGTERM', () => void shutdown());
+
+  /**
+   * A BACKGROUND FAILURE MUST NOT KILL THE SERVER.
+   *
+   * Express 5 catches a rejected promise from a route handler and turns it into
+   * a 500, so a request that fails costs a request. Nothing catches the timers:
+   * `startScheduler` and `startCanvasPoll` both tick with `void tick()`, which
+   * discards the promise, and an unhandled rejection terminates the process on
+   * Node by default. So a write to the vault failing — a volume gone briefly
+   * unavailable, a disk full — takes the whole instance down rather than losing
+   * one background pass, and it comes back as a bare 502 with no explanation.
+   *
+   * Logged and survived instead. This is deliberately NOT a handler for
+   * `uncaughtException`: an exception nobody expected can leave state that is
+   * genuinely unsafe to keep serving from, and swallowing it hides real bugs. A
+   * rejected background promise is a different thing — it is an operation that
+   * failed, which is what the log line is for.
+   */
+  process.on('unhandledRejection', (reason) => {
+    console.error('[gateway] unhandled rejection in background work — continuing:', reason);
+  });
 }
 
 void main();
