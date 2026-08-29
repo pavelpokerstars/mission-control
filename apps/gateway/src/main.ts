@@ -202,21 +202,25 @@ async function main(): Promise<void> {
    * Null when nothing can answer, and then the graph is exactly what it was
    * before this existed.
    */
+  const relationizer = demoMode() ? null : await createRelationizer(await providerCaps());
   const inference = startInference(
     connectors,
     vault,
     /**
-     * NOTHING RUNS UNATTENDED IN DEMO MODE, and a null relationizer is how this
+     * NO TIMER RUNS UNATTENDED IN DEMO MODE, and a null relationizer is how this
      * one stops: `startInference` checks `!r` before every pass, so it returns a
      * live object that simply never asks anything.
      *
      * A demo instance is a shared URL that spends somebody's key and writes to a
      * mounted volume with nobody watching. Inference re-asks the model every ten
      * minutes whether or not a visitor is there, and its result — a handful of
-     * dashed edges — is not on the walkthrough. Skipping it also skips the
-     * `providerCaps` probe at boot, which is one fewer thing to be slow.
+     * dashed edges — is not on the walkthrough.
+     *
+     * It does NOT skip the `providerCaps` probe: the extractor and the summariser
+     * below both await it unconditionally, and it is memoised, so the probe
+     * happens at boot either way. That sentence used to be here and was wrong.
      */
-    demoMode() ? null : await createRelationizer(await providerCaps()),
+    relationizer,
     currentGraph,
   );
   // Inference is handed to the tools as a getter rather than a snapshot: it is
@@ -274,8 +278,20 @@ async function main(): Promise<void> {
    */
   void boardArrows(connectors, process.env.MIRO_BOARD_ID ?? 'demo-board').catch(() => {});
 
+  /**
+   * `startSync` is NOT gated, and that is deliberate rather than an oversight.
+   * It is `eventLog.subscribe` — no timer, no clock, nothing to fire on its own.
+   * With no webhooks pointed at a demo it never wakes, and gating it would only
+   * make our own event handling differ between demo and not for no gain.
+   *
+   * `startCanvasPoll` is the opposite and so it is gated: `setInterval` plus a
+   * `void tick()` at boot, and each pass may `saveBaseline` into the vault —
+   * `/data` on the deployment, the same mounted volume the scheduler is gated
+   * for. On a demo the board is the in-memory connector and never changes, so
+   * the poll can only ever rewrite the baseline it just wrote.
+   */
   const stopSync = startSync(connectors, vault);
-  const stopCanvasPoll = startCanvasPoll(connectors);
+  const stopCanvasPoll = demoMode() ? (): void => {} : startCanvasPoll(connectors);
   /**
    * The ceremonies do not run on a demo either, and this is the one that matters
    * most. `startScheduler` writes to the vault — `/data` on the deployment, a
@@ -382,11 +398,22 @@ async function main(): Promise<void> {
        * answer for every instance nobody has deliberately turned it on for.
        */
       demo: demoConfig(),
-      // What is NOT running, so "why is there no standup" has an answer that
-      // does not require reading main.ts.
-      background: demoMode()
-        ? { scheduler: false, inference: false, why: 'demo mode runs nothing unattended' }
-        : { scheduler: true, inference: true },
+      /**
+       * What is NOT running, so "why is there no standup" has an answer that
+       * does not require reading main.ts.
+       *
+       * EVERY FIELD IS DERIVED, never asserted. It used to hardcode `true` off
+       * the demo branch and was wrong twice over: `MC_SCHEDULER=off` still
+       * reported a scheduler, and a machine where nothing can answer still
+       * reported inference. Those are precisely the two cases somebody reads
+       * this field to diagnose, so a confident wrong answer is worse than none.
+       */
+      background: {
+        scheduler: !demoMode() && (scheduleSummary()[0]?.enabled ?? false),
+        inference: relationizer !== null,
+        canvasPoll: !demoMode() && Number(process.env.MC_CANVAS_POLL_MS ?? 1) !== 0,
+        ...(demoMode() ? { why: 'demo mode starts no unattended timer' } : {}),
+      },
       vault: { dir: VAULT_DIR, notes: vault.list().length },
     });
   });
