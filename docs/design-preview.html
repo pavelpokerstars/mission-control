@@ -589,7 +589,16 @@
     width:30px; height:30px; border-radius:7px; display:grid; place-items:center;
     font-family:var(--mono); font-size:10px; font-weight:600;
   }
-  .turn.you .badge { grid-column:2; grid-row:1; background:var(--sunk); color:var(--ink-2); }
+  .turn.you .badge {
+    grid-column:2; grid-row:1; background:var(--sunk); color:var(--ink-2);
+    /* A BORDER, BECAUSE THE FILL ALONE IS NOT A FRAME. `--sunk` against
+       `--app` is #1A1F26 on #14181E in dark — six values per channel, which
+       is invisible. The agent's badge is a filled bright chip and the
+       reader's read as nothing at all beside it. `--line` gives it an edge
+       without making it shout; `border-box` is global, so the box stays
+       30x30 and no layout moves. */
+    border:1px solid var(--line);
+  }
   .turn.mc  .badge { background:var(--btn); color:var(--btn-ink); }
   /* `overflow-wrap` because a chat is where a URL gets pasted. Without it a long
      unbreakable token sets the box's content minimum, and a capped box cannot

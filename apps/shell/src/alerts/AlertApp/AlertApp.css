@@ -72,8 +72,6 @@
   min-height: calc(100vh - var(--mc-chrome-above, 0px));
   background: var(--app);
   overflow-x: clip;
-  display: flex;
-  flex-direction: column;
 }
 /**
  * The header spans the page; its CONTENTS stay on the column.
@@ -115,14 +113,27 @@
   border: 0;
   border-radius: 0;
   box-shadow: none;
-  /* Fills the shell rather than restating the viewport — the shell is the one
-   * that knows what is above it. */
-  flex: 1;
   /* The preview clips to its rounded corners. There are no corners here, and
    * clipping would cut off the date picker's popup where it opens past the
    * bottom of a short page. */
   overflow: visible;
   /**
+   * THE HEIGHT LIVES HERE, NOT ON THE SHELL — and that distinction cost a
+   * layout.
+   *
+   * Making `.app-shell` the flex column looked equivalent and is not: it turns
+   * this into a flex ITEM, and an item with `margin-inline:auto` does not
+   * stretch. Auto cross-axis margins suppress `align-items:stretch`, so instead
+   * of "fill the shell, capped at 1000px" the window became "shrink to fit your
+   * content, then centre" — which is 1000px on a page whose content is wide
+   * (the alert list, Later, a conversation) and a narrow strip on one whose
+   * content is not (a note, Ask, a record). Half the app looked right, which is
+   * why it shipped.
+   *
+   * So the shell stays a block, this stays a block child of it — `max-width`
+   * plus `margin:0 auto` behaving the ordinary way — and the column lives here,
+   * on the element that is already the full height.
+   *
    * A COLUMN, SO THE FOOTER CAN BE PUSHED TO THE BOTTOM OF IT.
    *
    * The window was already `min-height:100vh`, so it always filled the screen —
@@ -137,6 +148,7 @@
    * page, sized to the screen it is a picture of, and a viewport-tall card with
    * its footer pinned to the bottom would be a picture of nothing.
    */
+  min-height: calc(100vh - var(--mc-chrome-above, 0px));
   display: flex;
   flex-direction: column;
 }
